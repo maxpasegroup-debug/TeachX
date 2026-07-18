@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "TeachX",
+    name: "TeachX Guru",
     short_name: "TeachX",
-    description: "Learn, teach, and earn with an AI powered education platform.",
+    description: "The AI Powered Teaching & Learning Ecosystem.",
     start_url: "/",
     scope: "/",
     display: "standalone",

@@ -11,13 +11,13 @@ const inter = Inter({
   display: "swap"
 });
 
-const appTitle = process.env.NEXT_PUBLIC_APP_TITLE ?? "TeachX";
-const appDescription = process.env.NEXT_PUBLIC_APP_DESCRIPTION ?? "Learn, teach, and earn with an AI powered education platform.";
+const appTitle = process.env.NEXT_PUBLIC_APP_TITLE ?? "TeachX Guru";
+const appDescription = process.env.NEXT_PUBLIC_APP_DESCRIPTION ?? "The AI Powered Teaching & Learning Ecosystem.";
 const baseUrl = getPublicBaseUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  applicationName: "TeachX",
+  applicationName: "TeachX Guru",
   title: {
     default: appTitle,
     template: `%s | ${appTitle}`
@@ -29,13 +29,13 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "TeachX",
+    title: "TeachX Guru",
     statusBarStyle: "default"
   },
   openGraph: {
     type: "website",
     url: "/",
-    siteName: "TeachX",
+    siteName: "TeachX Guru",
     title: appTitle,
     description: appDescription
   },

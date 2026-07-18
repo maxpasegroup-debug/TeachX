@@ -20,10 +20,27 @@ const config: Config = {
         secondary: "hsl(var(--secondary))",
         "secondary-foreground": "hsl(var(--secondary-foreground))",
         surface: "hsl(var(--surface))",
-        accent: "hsl(var(--accent))"
+        accent: "hsl(var(--accent))",
+        "brand-blue": "hsl(var(--brand-blue))",
+        "brand-blue-soft": "hsl(var(--brand-blue-soft))",
+        "brand-ink": "hsl(var(--brand-ink))",
+        "brand-gold": "hsl(var(--brand-gold))"
+      },
+      borderRadius: {
+        "brand-button": "var(--radius-brand-button)",
+        "brand-card": "var(--radius-brand-card)",
+        "brand-shell": "var(--radius-brand-shell)"
       },
       boxShadow: {
-        soft: "0 18px 60px rgba(15, 23, 42, 0.08)"
+        soft: "0 18px 60px rgba(15, 23, 42, 0.08)",
+        brand: "var(--shadow-brand)",
+        "brand-soft": "var(--shadow-brand-soft)"
+      },
+      transitionDuration: {
+        brand: "var(--motion-base)"
+      },
+      transitionTimingFunction: {
+        brand: "var(--motion-ease)"
       }
     }
   },
