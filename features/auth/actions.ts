@@ -17,6 +17,11 @@ const loginSchema = z.object({
   callbackUrl: z.string().optional()
 });
 
+function getSafeEntryTarget(path?: string) {
+  if (!path || !path.startsWith("/") || path.startsWith("//")) return "/dashboard";
+  return path;
+}
+
 export async function loginAction(previousState: string | undefined, formData: FormData) {
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -27,7 +32,7 @@ export async function loginAction(previousState: string | undefined, formData: F
     await signIn("credentials", {
       email: parsed.data.email.toLowerCase(),
       password: parsed.data.password,
-      redirectTo: parsed.data.callbackUrl || "/dashboard"
+      redirectTo: `/entry?mode=login&next=${encodeURIComponent(getSafeEntryTarget(parsed.data.callbackUrl))}`
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -88,7 +93,7 @@ export async function signupAction(_: string | undefined, formData: FormData) {
   await signIn("credentials", {
     email: user.email,
     password: parsed.data.password,
-    redirectTo: parsed.data.userType === "teacher" ? "/teacher" : "/student"
+    redirectTo: `/entry?mode=signup&next=${encodeURIComponent(parsed.data.userType === "teacher" ? "/teacher" : "/student")}`
   });
 }
 

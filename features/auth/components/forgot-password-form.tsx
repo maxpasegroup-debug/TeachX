@@ -15,13 +15,13 @@ export function ForgotPasswordForm() {
     <form action={action} className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" placeholder="teacher@school.edu" required />
+        <Input className="rounded-2xl bg-white/85 transition duration-brand ease-brand focus:border-brand-blue focus:shadow-brand-soft" id="email" name="email" type="email" autoComplete="email" placeholder="teacher@teachx.guru" required />
       </div>
-      {message ? <p className="rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">{message}</p> : null}
-      <Button className="w-full" disabled={pending} type="submit">
-        {pending ? "Checking" : "Send reset link"}
+      {message ? <p className="rounded-2xl border border-brand-blue/10 bg-brand-blue-soft px-4 py-3 text-sm font-medium text-brand-blue">{message}</p> : null}
+      <Button className="h-13 w-full rounded-2xl shadow-brand transition duration-brand ease-brand hover:-translate-y-0.5" disabled={pending} type="submit">
+        {pending ? "Checking" : "Continue"}
       </Button>
-      <Link className="block text-center text-sm font-medium text-muted-foreground hover:text-foreground" href="/login">
+      <Link className="block text-center text-sm font-semibold text-muted-foreground transition hover:text-brand-blue" href="/login">
         Back to login
       </Link>
     </form>

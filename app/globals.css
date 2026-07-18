@@ -95,6 +95,150 @@ select {
   transition: transform var(--motion-base) var(--motion-ease);
 }
 
+.cinematic-scroll {
+  min-height: 185vh;
+  view-timeline-name: --teachx-journey;
+  view-timeline-axis: block;
+}
+
+.cinematic-stage {
+  top: 1rem;
+}
+
+.hero-copy {
+  opacity: 1;
+  position: relative;
+  top: auto;
+  transform: none;
+}
+
+.journey-selection {
+  opacity: 1;
+  filter: none;
+  margin-top: 2rem;
+  position: relative;
+  top: auto;
+  transform: none;
+}
+
+@supports (animation-timeline: view()) {
+  .cinematic-stage {
+    position: sticky;
+  }
+
+  .scroll-teacher {
+    animation: teachx-teacher-open linear both;
+    animation-timeline: --teachx-journey;
+    animation-range: entry 4% exit 72%;
+  }
+
+  .scroll-student {
+    animation: teachx-student-open linear both;
+    animation-timeline: --teachx-journey;
+    animation-range: entry 4% exit 72%;
+  }
+
+  .ecosystem-float {
+    animation-name: teachx-float, teachx-card-open;
+    animation-duration: 7s, 1s;
+    animation-timing-function: ease-in-out, linear;
+    animation-iteration-count: infinite, 1;
+    animation-fill-mode: none, both;
+    animation-timeline: auto, --teachx-journey;
+    animation-range: normal, entry 10% exit 72%;
+  }
+
+  .scroll-center {
+    animation: teachx-center-depth linear both;
+    animation-timeline: --teachx-journey;
+    animation-range: entry 8% exit 72%;
+  }
+
+  .platform-glow {
+    animation-name: teachx-glow, teachx-platform-glow;
+    animation-duration: 5s, 1s;
+    animation-timing-function: ease-in-out, linear;
+    animation-iteration-count: infinite, 1;
+    animation-fill-mode: none, both;
+    animation-timeline: auto, --teachx-journey;
+    animation-range: normal, entry 14% exit 78%;
+  }
+
+  .platform-ring {
+    animation-name: teachx-rotate, teachx-platform-ring;
+    animation-duration: 16s, 1s;
+    animation-timing-function: linear, linear;
+    animation-iteration-count: infinite, 1;
+    animation-fill-mode: none, both;
+    animation-timeline: auto, --teachx-journey;
+    animation-range: normal, entry 14% exit 78%;
+  }
+
+  .journey-door-left {
+    animation: teachx-door-left linear both;
+    animation-timeline: --teachx-journey;
+    animation-range: entry 18% exit 76%;
+  }
+
+  .journey-door-right {
+    animation: teachx-door-right linear both;
+    animation-timeline: --teachx-journey;
+    animation-range: entry 18% exit 76%;
+  }
+
+  .hero-copy {
+    position: absolute;
+    top: 50%;
+    animation: teachx-copy-fade linear both;
+    animation-timeline: --teachx-journey;
+    animation-range: entry 22% exit 70%;
+  }
+
+  .journey-selection {
+    margin-top: 0;
+    position: absolute;
+    top: 50%;
+    opacity: 0;
+    filter: blur(18px);
+    transform: translateY(-45%) scale(0.92);
+    animation: teachx-journey-emerge linear both;
+    animation-timeline: --teachx-journey;
+    animation-range: entry 24% exit 82%;
+  }
+}
+
+.journey-card {
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+}
+
+.journey-card:hover {
+  box-shadow: 0 28px 90px rgba(37, 99, 235, 0.18);
+  transform: perspective(1000px) rotateX(1deg) rotateY(-1deg) translateY(-0.5rem);
+}
+
+.entry-logo-pulse {
+  animation: teachx-entry-pulse 1.2s var(--motion-ease) infinite;
+}
+
+.entry-progress span {
+  animation: teachx-entry-progress 1.05s var(--motion-ease) both;
+  transform-origin: left center;
+}
+
+.entry-orbit {
+  animation: teachx-rotate 11s linear infinite;
+}
+
+.entry-particle {
+  position: absolute;
+  height: 0.55rem;
+  width: 0.55rem;
+  border-radius: 9999px;
+  background: hsl(var(--brand-blue) / 0.34);
+  box-shadow: 0 0 32px hsl(var(--brand-blue) / 0.36);
+  animation: teachx-entry-particle 4.8s ease-in-out infinite;
+}
+
 @keyframes teachx-fade-up {
   from {
     opacity: 0;
@@ -168,6 +312,169 @@ select {
   }
 }
 
+@keyframes teachx-teacher-open {
+  0% {
+    transform: translateX(0) scale(1);
+  }
+  54% {
+    transform: translateX(-4vw) scale(0.98);
+  }
+  100% {
+    transform: translateX(-7vw) scale(0.94);
+  }
+}
+
+@keyframes teachx-student-open {
+  0% {
+    transform: translateX(0) scale(1);
+  }
+  54% {
+    transform: translateX(4vw) scale(0.98);
+  }
+  100% {
+    transform: translateX(7vw) scale(0.94);
+  }
+}
+
+@keyframes teachx-card-open {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  62% {
+    opacity: 0.72;
+  }
+  100% {
+    opacity: 0.16;
+    transform: translateY(-16px) scale(0.9);
+  }
+}
+
+@keyframes teachx-center-depth {
+  0% {
+    transform: scale(1);
+  }
+  55% {
+    transform: scale(1.025);
+  }
+  100% {
+    transform: scale(1.055);
+  }
+}
+
+@keyframes teachx-copy-fade {
+  0%,
+  42% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(-50%) scale(1);
+  }
+  72%,
+  100% {
+    opacity: 0;
+    filter: blur(14px);
+    transform: translateY(-52%) scale(0.96);
+  }
+}
+
+@keyframes teachx-journey-emerge {
+  0%,
+  44% {
+    opacity: 0;
+    filter: blur(18px);
+    transform: translateY(-45%) scale(0.92);
+  }
+  78%,
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+@keyframes teachx-platform-glow {
+  0% {
+    opacity: 0.34;
+    transform: translateX(-50%) scale(1);
+  }
+  100% {
+    opacity: 0.88;
+    transform: translateX(-50%) scale(1.55);
+  }
+}
+
+@keyframes teachx-platform-ring {
+  0% {
+    opacity: 0.36;
+    transform: translateX(-50%) scale(1) rotate(0deg);
+  }
+  100% {
+    opacity: 0.78;
+    transform: translateX(-50%) scale(1.72) rotate(24deg);
+  }
+}
+
+@keyframes teachx-door-left {
+  0% {
+    opacity: 0;
+    transform: translateX(0) scaleX(0.92);
+  }
+  35% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-42%) scaleX(0.82);
+  }
+}
+
+@keyframes teachx-door-right {
+  0% {
+    opacity: 0;
+    transform: translateX(0) scaleX(0.92);
+  }
+  35% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(42%) scaleX(0.82);
+  }
+}
+
+@keyframes teachx-entry-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(37, 99, 235, 0));
+  }
+  50% {
+    transform: scale(1.035);
+    filter: drop-shadow(0 18px 36px rgba(37, 99, 235, 0.18));
+  }
+}
+
+@keyframes teachx-entry-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes teachx-entry-particle {
+  0%,
+  100% {
+    opacity: 0.32;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 0.86;
+    transform: translateY(-14px) scale(1.22);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -176,5 +483,28 @@ select {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 1ms !important;
+  }
+
+  .cinematic-scroll {
+    min-height: auto;
+  }
+
+  .cinematic-stage {
+    position: relative;
+    top: auto;
+  }
+
+  .journey-selection {
+    opacity: 1;
+    filter: none;
+    margin-top: 2rem;
+    position: relative;
+    transform: none;
+  }
+
+  .hero-copy {
+    opacity: 1;
+    position: relative;
+    transform: none;
   }
 }

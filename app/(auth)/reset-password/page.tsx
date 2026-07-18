@@ -5,7 +5,7 @@ export default async function ResetPasswordPage({ searchParams }: { searchParams
   const params = await searchParams;
 
   return (
-    <AuthFormShell title="New password" subtitle="Choose a strong password for your account.">
+    <AuthFormShell journey="recovery" title="New Password" subtitle="Choose a strong password for your TeachX Guru account.">
       <ResetPasswordForm token={params.token ?? ""} />
     </AuthFormShell>
   );

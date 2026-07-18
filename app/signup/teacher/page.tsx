@@ -3,7 +3,7 @@ import { SignupForm } from "@/features/auth/components/signup-form";
 
 export default function TeacherSignupPage() {
   return (
-    <AuthFormShell title="Teacher signup" subtitle="Create your TeachX teacher workspace for AI assisted classes, resources, marketplace, and earnings.">
+    <AuthFormShell journey="teacher" title="Create Your TeachX Guru Account" subtitle="Start your teacher journey with a premium workspace for creating, teaching, growing, and earning.">
       <SignupForm userType="teacher" />
     </AuthFormShell>
   );

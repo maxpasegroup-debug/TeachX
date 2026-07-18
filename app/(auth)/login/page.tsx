@@ -5,7 +5,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const params = await searchParams;
 
   return (
-    <AuthFormShell title="Welcome back" subtitle="Sign in to TeachX and continue learning, teaching, or building your education business.">
+    <AuthFormShell journey="login" title="Welcome Back" subtitle="Continue your learning journey.">
       <LoginForm callbackUrl={params.callbackUrl} />
     </AuthFormShell>
   );

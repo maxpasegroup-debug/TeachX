@@ -3,7 +3,7 @@ import { ForgotPasswordForm } from "@/features/auth/components/forgot-password-f
 
 export default function ForgotPasswordPage() {
   return (
-    <AuthFormShell title="Reset password" subtitle="Enter your email. We will prepare a secure reset link.">
+    <AuthFormShell journey="recovery" title="Reset Password" subtitle="Enter your email and continue securely.">
       <ForgotPasswordForm />
     </AuthFormShell>
   );
