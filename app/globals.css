@@ -23,10 +23,13 @@
   --radius-brand-shell: 2rem;
   --shadow-brand: 0 24px 80px rgba(15, 23, 42, 0.12);
   --shadow-brand-soft: 0 18px 60px rgba(37, 99, 235, 0.12);
+  --shadow-brand-hover: 0 34px 100px rgba(37, 99, 235, 0.18);
   --motion-fast: 160ms;
   --motion-base: 260ms;
   --motion-slow: 720ms;
+  --motion-xslow: 1100ms;
   --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-spring: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * {
@@ -37,6 +40,8 @@ body {
   min-height: 100vh;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
 }
 
 button,
@@ -51,23 +56,23 @@ select {
 }
 
 .motion-fade-up {
-  animation: teachx-fade-up var(--motion-slow) var(--motion-ease) both;
+  animation: teachx-fade-up var(--motion-slow) var(--motion-spring) both;
 }
 
 .motion-fade-left {
-  animation: teachx-fade-left var(--motion-slow) var(--motion-ease) both;
+  animation: teachx-fade-left var(--motion-slow) var(--motion-spring) both;
 }
 
 .motion-fade-right {
-  animation: teachx-fade-right var(--motion-slow) var(--motion-ease) both;
+  animation: teachx-fade-right var(--motion-slow) var(--motion-spring) both;
 }
 
 .motion-scale {
-  animation: teachx-scale var(--motion-slow) var(--motion-ease) both;
+  animation: teachx-scale var(--motion-slow) var(--motion-spring) both;
 }
 
 .motion-float {
-  animation: teachx-float 7s ease-in-out infinite;
+  animation: teachx-float 7.6s ease-in-out infinite;
 }
 
 .motion-rotate {
@@ -91,12 +96,114 @@ select {
 }
 
 .mouse-parallax {
-  transform: translate3d(var(--parallax-x, 0), var(--parallax-y, 0), 0);
-  transition: transform var(--motion-base) var(--motion-ease);
+  transform: perspective(1400px) translate3d(var(--parallax-x, 0), var(--parallax-y, 0), 0) rotateX(var(--parallax-rotate-x, 0)) rotateY(var(--parallax-rotate-y, 0));
+  transition: transform var(--motion-base) var(--motion-spring);
+  transform-style: preserve-3d;
+}
+
+.premium-button,
+.premium-button-light,
+.premium-glass-card,
+.premium-soft-tile,
+.nav-link {
+  will-change: transform;
+}
+
+.premium-button,
+.premium-button-light {
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-button::after,
+.premium-button-light::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.22), transparent 42%, rgba(255, 255, 255, 0.14));
+  opacity: 0;
+  transition: opacity var(--motion-base) var(--motion-ease);
+}
+
+.premium-button:hover,
+.premium-button-light:hover {
+  box-shadow: var(--shadow-brand-hover);
+  transform: translateY(-0.2rem) scale(1.012);
+}
+
+.premium-button:hover svg,
+.premium-button-light:hover svg {
+  transform: translateX(0.18rem);
+}
+
+.premium-button:hover::after,
+.premium-button-light:hover::after {
+  opacity: 1;
+}
+
+.premium-button:active,
+.premium-button-light:active,
+.journey-card:active {
+  transform: translateY(-0.05rem) scale(0.992);
+}
+
+.premium-glass-card {
+  transition: border-color var(--motion-base) var(--motion-ease), box-shadow var(--motion-base) var(--motion-ease), transform var(--motion-base) var(--motion-spring), background-color var(--motion-base) var(--motion-ease);
+}
+
+.premium-glass-card:hover {
+  border-color: hsl(var(--brand-blue) / 0.22);
+  box-shadow: var(--shadow-brand-hover);
+  transform: translateY(-0.22rem) rotateX(0.35deg) rotateY(-0.35deg);
+}
+
+.premium-glass-card:hover svg,
+.premium-soft-tile:hover svg {
+  transform: translateY(-0.08rem) scale(1.06);
+}
+
+.premium-soft-tile {
+  transition: border-color var(--motion-base) var(--motion-ease), box-shadow var(--motion-base) var(--motion-ease), transform var(--motion-base) var(--motion-spring), background-color var(--motion-base) var(--motion-ease);
+}
+
+.premium-soft-tile:hover {
+  border-color: hsl(var(--brand-blue) / 0.18);
+  background-color: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--shadow-brand-soft);
+  transform: translateY(-0.12rem);
+}
+
+.nav-link {
+  position: relative;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  inset-inline: 1rem;
+  bottom: 0.35rem;
+  height: 1px;
+  border-radius: 9999px;
+  background: hsl(var(--brand-blue));
+  opacity: 0;
+  transform: scaleX(0.45);
+  transition: opacity var(--motion-base) var(--motion-ease), transform var(--motion-base) var(--motion-spring);
+}
+
+.nav-link:hover::after,
+.nav-link:focus-visible::after {
+  opacity: 0.75;
+  transform: scaleX(1);
+}
+
+.brand-header {
+  animation: teachx-header-enter var(--motion-xslow) var(--motion-spring) both;
 }
 
 .cinematic-scroll {
-  min-height: 185vh;
+  min-height: 150vh;
   view-timeline-name: --teachx-journey;
   view-timeline-axis: block;
 }
@@ -129,13 +236,13 @@ select {
   .scroll-teacher {
     animation: teachx-teacher-open linear both;
     animation-timeline: --teachx-journey;
-    animation-range: entry 4% exit 72%;
+    animation-range: entry 4% exit 64%;
   }
 
   .scroll-student {
     animation: teachx-student-open linear both;
     animation-timeline: --teachx-journey;
-    animation-range: entry 4% exit 72%;
+    animation-range: entry 4% exit 64%;
   }
 
   .ecosystem-float {
@@ -145,13 +252,13 @@ select {
     animation-iteration-count: infinite, 1;
     animation-fill-mode: none, both;
     animation-timeline: auto, --teachx-journey;
-    animation-range: normal, entry 10% exit 72%;
+    animation-range: normal, entry 8% exit 64%;
   }
 
   .scroll-center {
     animation: teachx-center-depth linear both;
     animation-timeline: --teachx-journey;
-    animation-range: entry 8% exit 72%;
+    animation-range: entry 8% exit 64%;
   }
 
   .platform-glow {
@@ -161,7 +268,7 @@ select {
     animation-iteration-count: infinite, 1;
     animation-fill-mode: none, both;
     animation-timeline: auto, --teachx-journey;
-    animation-range: normal, entry 14% exit 78%;
+    animation-range: normal, entry 12% exit 68%;
   }
 
   .platform-ring {
@@ -171,19 +278,19 @@ select {
     animation-iteration-count: infinite, 1;
     animation-fill-mode: none, both;
     animation-timeline: auto, --teachx-journey;
-    animation-range: normal, entry 14% exit 78%;
+    animation-range: normal, entry 12% exit 68%;
   }
 
   .journey-door-left {
     animation: teachx-door-left linear both;
     animation-timeline: --teachx-journey;
-    animation-range: entry 18% exit 76%;
+    animation-range: entry 16% exit 68%;
   }
 
   .journey-door-right {
     animation: teachx-door-right linear both;
     animation-timeline: --teachx-journey;
-    animation-range: entry 18% exit 76%;
+    animation-range: entry 16% exit 68%;
   }
 
   .hero-copy {
@@ -191,7 +298,7 @@ select {
     top: 50%;
     animation: teachx-copy-fade linear both;
     animation-timeline: --teachx-journey;
-    animation-range: entry 22% exit 70%;
+    animation-range: entry 20% exit 62%;
   }
 
   .journey-selection {
@@ -203,7 +310,7 @@ select {
     transform: translateY(-45%) scale(0.92);
     animation: teachx-journey-emerge linear both;
     animation-timeline: --teachx-journey;
-    animation-range: entry 24% exit 82%;
+    animation-range: entry 22% exit 70%;
   }
 }
 
@@ -286,10 +393,16 @@ select {
 @keyframes teachx-float {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0) rotate(-0.35deg);
+  }
+  28% {
+    transform: translate3d(3px, -5px, 0) rotate(0.3deg);
   }
   50% {
-    transform: translateY(-8px);
+    transform: translate3d(-2px, -9px, 0) rotate(0.5deg);
+  }
+  76% {
+    transform: translate3d(-4px, -3px, 0) rotate(-0.2deg);
   }
 }
 
@@ -317,10 +430,10 @@ select {
     transform: translateX(0) scale(1);
   }
   54% {
-    transform: translateX(-4vw) scale(0.98);
+    transform: translateX(-2.75vw) scale(0.99);
   }
   100% {
-    transform: translateX(-7vw) scale(0.94);
+    transform: translateX(-4.5vw) scale(0.97);
   }
 }
 
@@ -329,10 +442,10 @@ select {
     transform: translateX(0) scale(1);
   }
   54% {
-    transform: translateX(4vw) scale(0.98);
+    transform: translateX(2.75vw) scale(0.99);
   }
   100% {
-    transform: translateX(7vw) scale(0.94);
+    transform: translateX(4.5vw) scale(0.97);
   }
 }
 
@@ -372,7 +485,7 @@ select {
   72%,
   100% {
     opacity: 0;
-    filter: blur(14px);
+    filter: blur(8px);
     transform: translateY(-52%) scale(0.96);
   }
 }
@@ -381,8 +494,8 @@ select {
   0%,
   44% {
     opacity: 0;
-    filter: blur(18px);
-    transform: translateY(-45%) scale(0.92);
+    filter: blur(10px);
+    transform: translateY(-46%) scale(0.94);
   }
   78%,
   100% {
@@ -398,8 +511,8 @@ select {
     transform: translateX(-50%) scale(1);
   }
   100% {
-    opacity: 0.88;
-    transform: translateX(-50%) scale(1.55);
+    opacity: 0.68;
+    transform: translateX(-50%) scale(1.35);
   }
 }
 
@@ -409,8 +522,8 @@ select {
     transform: translateX(-50%) scale(1) rotate(0deg);
   }
   100% {
-    opacity: 0.78;
-    transform: translateX(-50%) scale(1.72) rotate(24deg);
+    opacity: 0.58;
+    transform: translateX(-50%) scale(1.48) rotate(20deg);
   }
 }
 
@@ -475,6 +588,17 @@ select {
   }
 }
 
+@keyframes teachx-header-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.6rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -506,5 +630,13 @@ select {
     opacity: 1;
     position: relative;
     transform: none;
+  }
+
+  .premium-button,
+  .premium-button-light,
+  .premium-glass-card,
+  .premium-soft-tile,
+  .mouse-parallax {
+    transform: none !important;
   }
 }

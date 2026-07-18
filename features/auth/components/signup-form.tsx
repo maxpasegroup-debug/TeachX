@@ -64,7 +64,7 @@ export function SignupForm({ userType }: SignupFormProps) {
         I agree to use TeachX Guru responsibly and understand that provider integrations may be enabled later by the platform team.
       </label>
       {error ? <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
-      <Button className="h-13 w-full rounded-2xl shadow-brand transition duration-brand ease-brand hover:-translate-y-0.5" disabled={pending} type="submit">
+      <Button className="premium-button h-13 w-full rounded-2xl shadow-brand transition duration-brand ease-brand" disabled={pending} type="submit">
         {pending ? "Creating account" : "Create Account"}
       </Button>
       <p className="text-center text-sm text-muted-foreground">

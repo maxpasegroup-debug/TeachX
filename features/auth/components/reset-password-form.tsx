@@ -18,7 +18,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         <Input className="rounded-2xl bg-white/85 transition duration-brand ease-brand focus:border-brand-blue focus:shadow-brand-soft" id="password" name="password" type="password" autoComplete="new-password" placeholder="Minimum 8 characters" required />
       </div>
       {message ? <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{message}</p> : null}
-      <Button className="h-13 w-full rounded-2xl shadow-brand transition duration-brand ease-brand hover:-translate-y-0.5" disabled={pending} type="submit">
+      <Button className="premium-button h-13 w-full rounded-2xl shadow-brand transition duration-brand ease-brand" disabled={pending} type="submit">
         {pending ? "Updating" : "Reset password"}
       </Button>
     </form>

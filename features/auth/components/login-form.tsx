@@ -33,7 +33,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
         </Link>
       </div>
       {error ? <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
-      <Button className="h-13 w-full rounded-2xl shadow-brand transition duration-brand ease-brand hover:-translate-y-0.5" disabled={pending} type="submit">
+      <Button className="premium-button h-13 w-full rounded-2xl shadow-brand transition duration-brand ease-brand" disabled={pending} type="submit">
         {pending ? "Signing in" : "Sign In"}
       </Button>
       <div className="rounded-2xl border border-white/80 bg-white/60 px-4 py-3 text-sm text-muted-foreground">

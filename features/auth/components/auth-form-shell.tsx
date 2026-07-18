@@ -57,14 +57,14 @@ export function AuthFormShell({ title, subtitle, children, journey = "login" }: 
 
       <header className="mx-auto flex w-full max-w-7xl items-center justify-between">
         <BrandLogo />
-        <a className="rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition duration-brand ease-brand hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" href="/">
+        <a className="nav-link rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition duration-brand ease-brand hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" href="/">
           Back Home
         </a>
       </header>
 
       <section className="mx-auto grid min-h-[calc(100vh-7rem)] w-full max-w-7xl items-center gap-10 py-10 lg:grid-cols-[0.95fr_0.8fr]">
         <MotionPrimitive className="order-2 lg:order-1" variant="fade-right">
-          <div className="relative overflow-hidden rounded-[2.25rem] border border-white/75 bg-white/65 p-7 shadow-brand backdrop-blur-xl sm:p-10">
+          <div className="premium-glass-card relative overflow-hidden rounded-[2.25rem] border border-white/75 bg-white/65 p-7 shadow-brand backdrop-blur-xl sm:p-10">
             <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-brand-blue/10 blur-3xl" />
             <div className="pointer-events-none absolute bottom-8 left-8 h-24 w-24 rounded-full border border-brand-blue/15 motion-rotate" />
             <div className="relative">
@@ -80,8 +80,8 @@ export function AuthFormShell({ title, subtitle, children, journey = "login" }: 
                   const TrustIcon = item.icon;
 
                   return (
-                    <div className="rounded-2xl border border-white/80 bg-white/70 px-4 py-4 text-sm font-semibold text-muted-foreground shadow-sm backdrop-blur" key={item.label}>
-                      <TrustIcon className="mb-3 h-5 w-5 text-brand-blue" />
+                    <div className="premium-soft-tile rounded-2xl border border-white/80 bg-white/70 px-4 py-4 text-sm font-semibold text-muted-foreground shadow-sm backdrop-blur" key={item.label}>
+                      <TrustIcon className="mb-3 h-5 w-5 text-brand-blue transition-transform duration-brand ease-brand" />
                       {item.label}
                     </div>
                   );
@@ -92,7 +92,7 @@ export function AuthFormShell({ title, subtitle, children, journey = "login" }: 
         </MotionPrimitive>
 
         <MotionPrimitive className="order-1 lg:order-2" variant="scale">
-          <section aria-labelledby="auth-title" className="rounded-[2rem] border border-white/80 bg-white/78 p-6 shadow-brand backdrop-blur-2xl sm:p-8">
+          <section aria-labelledby="auth-title" className="premium-glass-card rounded-[2rem] border border-white/80 bg-white/78 p-6 shadow-brand backdrop-blur-2xl sm:p-8">
             <div className="mb-8 text-center">
               <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-ink text-sm font-semibold text-white shadow-brand-soft">TX</div>
               <h1 className="text-3xl font-semibold tracking-normal text-foreground sm:text-4xl" id="auth-title">{title}</h1>

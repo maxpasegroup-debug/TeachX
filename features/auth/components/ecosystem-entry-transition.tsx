@@ -57,7 +57,7 @@ export function EcosystemEntryTransition({ name, mode = "login", journey = "dash
       <div className="entry-particle bottom-[22%] left-[25%]" />
       <div className="entry-particle bottom-[26%] right-[24%]" />
 
-      <section className="motion-scale w-full max-w-xl rounded-[2.25rem] border border-white/80 bg-white/76 p-7 text-center shadow-brand backdrop-blur-2xl sm:p-9">
+      <section className="premium-glass-card motion-scale w-full max-w-xl rounded-[2.25rem] border border-white/80 bg-white/76 p-7 text-center shadow-brand backdrop-blur-2xl sm:p-9">
         <div className="mx-auto mb-7 flex justify-center">
           <BrandLogo className="entry-logo-pulse" markClassName="h-16 w-16" textClassName="text-center" />
         </div>
@@ -77,7 +77,7 @@ export function EcosystemEntryTransition({ name, mode = "login", journey = "dash
             const Icon = icons[index] ?? BadgeCheck;
 
             return (
-              <div className="flex items-center gap-3 rounded-2xl border border-white/80 bg-white/68 px-4 py-3 text-sm font-semibold text-muted-foreground shadow-sm" key={item}>
+              <div className="premium-soft-tile flex items-center gap-3 rounded-2xl border border-white/80 bg-white/68 px-4 py-3 text-sm font-semibold text-muted-foreground shadow-sm" key={item}>
                 <CheckCircle2 className="h-4 w-4 text-brand-blue" />
                 <Icon className="h-4 w-4 text-brand-blue" />
                 {item}

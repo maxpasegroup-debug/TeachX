@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 const appTitle = process.env.NEXT_PUBLIC_APP_TITLE ?? "TeachX Guru";
-const appDescription = process.env.NEXT_PUBLIC_APP_DESCRIPTION ?? "The AI Powered Teaching & Learning Ecosystem.";
+const appDescription = process.env.NEXT_PUBLIC_APP_DESCRIPTION ?? "TeachX Guru is an AI powered teaching and learning ecosystem where teachers create, students learn, and knowledge grows into opportunity.";
 const baseUrl = getPublicBaseUrl();
 
 export const metadata: Metadata = {
@@ -37,12 +37,14 @@ export const metadata: Metadata = {
     url: "/",
     siteName: "TeachX Guru",
     title: appTitle,
-    description: appDescription
+    description: appDescription,
+    images: [{ url: "/icons/icon.svg", width: 512, height: 512, alt: "TeachX Guru" }]
   },
   twitter: {
     card: "summary_large_image",
     title: appTitle,
-    description: appDescription
+    description: appDescription,
+    images: ["/icons/icon.svg"]
   },
   icons: {
     icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
