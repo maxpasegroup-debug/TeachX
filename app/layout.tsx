@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 const appTitle = process.env.NEXT_PUBLIC_APP_TITLE ?? "TeachX Guru";
-const appDescription = process.env.NEXT_PUBLIC_APP_DESCRIPTION ?? "TeachX Guru is an AI powered teaching and learning ecosystem where teachers create, students learn, and knowledge grows into opportunity.";
+const appDescription = process.env.NEXT_PUBLIC_APP_DESCRIPTION ?? "TeachX Guru is the professional AI workspace for teachers to create lessons, manage resources, build their teaching profile, and grow their teaching business.";
 const baseUrl = getPublicBaseUrl();
 
 export const metadata: Metadata = {
@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     template: `%s | ${appTitle}`
   },
   description: appDescription,
+  keywords: ["AI workspace for teachers", "teacher productivity", "AI lesson planner", "teaching resources", "teacher marketplace", "professional teaching profile", "teacher business tools"],
   alternates: {
     canonical: "/"
   },

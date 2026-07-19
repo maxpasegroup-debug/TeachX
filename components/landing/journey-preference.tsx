@@ -5,6 +5,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
 
+// Future ClassTutor Frontend: retained for the former teacher/student chooser.
+// TeachX Guru V1 public entry now goes directly to the teacher platform.
 const journeyPreferenceKey = "teachx-guru-journey";
 
 type Journey = "teacher" | "student";

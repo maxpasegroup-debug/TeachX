@@ -84,7 +84,7 @@ export function FeedbackWidget() {
     <Card className="fixed bottom-5 right-5 z-50 w-[calc(100vw-2.5rem)] max-w-md p-5 shadow-soft">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <Badge>Demo-ready local capture</Badge>
+          <Badge>Beta feedback</Badge>
           <h2 className="mt-3 text-xl font-semibold">Launch Feedback</h2>
           <p className="mt-1 text-sm text-muted-foreground">Stored locally until production feedback persistence is connected.</p>
         </div>

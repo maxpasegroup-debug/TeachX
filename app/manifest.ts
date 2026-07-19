@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "TeachX Guru",
     short_name: "TeachX",
-    description: "The AI Powered Teaching & Learning Ecosystem.",
+    description: "The professional AI workspace for teachers.",
     start_url: "/",
     scope: "/",
     display: "standalone",
@@ -25,11 +25,6 @@ export default function manifest(): MetadataRoute.Manifest {
         name: "Teacher Workspace",
         short_name: "Teacher",
         url: "/teacher"
-      },
-      {
-        name: "Student Workspace",
-        short_name: "Student",
-        url: "/student"
       },
       {
         name: "Marketplace",

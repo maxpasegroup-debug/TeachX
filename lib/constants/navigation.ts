@@ -26,6 +26,8 @@ export type NavigationItem = {
 
 export type NavigationWorkspace = "teacher" | "student" | "admin";
 
+// Shared Platform: workspace navigation remains role-aware because future
+// frontends reuse the same auth, RBAC, and shell primitives.
 export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
   teacher: [
     { label: "Home", href: "/teacher", icon: LayoutDashboard },

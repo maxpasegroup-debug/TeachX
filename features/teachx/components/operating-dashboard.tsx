@@ -108,10 +108,10 @@ function ProfileCompletionCard({ completion, href }: { completion: ProfileComple
 
 export function TeacherOperatingDashboard({ name, completion, recentItems, favorites, savedSearches, notifications, plan, aiCreditsRemaining, stats }: DashboardProps & { plan: string; aiCreditsRemaining: number; stats: { resourcesCreated: number; studentsHelped: number; aiCredits: number; downloads: number } }) {
   const quickActions = [
-    { title: "Create Lesson", description: "Start a lesson outline and gather teaching resources.", href: "/teacher/resources", icon: FileText },
+    { title: "Create Lesson", description: "Start a polished lesson outline for your teaching workflow.", href: "/teacher/resources", icon: FileText },
     { title: "Create Worksheet", description: "Prepare exercises and printable practice sheets.", href: "/teacher/resources", icon: PenLine },
     { title: "Question Paper", description: "Organize questions for tests and assignments.", href: "/teacher/resources", icon: FileQuestion },
-    { title: "Homework", description: "Plan homework tasks and student follow-up.", href: "/teacher/resources", icon: NotebookPen },
+    { title: "Homework", description: "Plan assignments, follow-up tasks, and reusable teaching routines.", href: "/teacher/resources", icon: NotebookPen },
     { title: "My Resources", description: "Open your resource library and saved drafts.", href: "/teacher/resources", icon: FolderOpen }
   ];
 
@@ -122,7 +122,7 @@ export function TeacherOperatingDashboard({ name, completion, recentItems, favor
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px] lg:items-end">
           <div>
             <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Good Morning, {firstName(name)}</h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">Build one useful learning moment today. Small lessons compound into a powerful teaching business.</p>
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">Build one useful teaching asset today. Small systems compound into a stronger teaching business.</p>
           </div>
           <Card className="grid gap-4 p-5 shadow-sm sm:grid-cols-2 lg:grid-cols-1">
             <div>
@@ -150,8 +150,8 @@ export function TeacherOperatingDashboard({ name, completion, recentItems, favor
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Resources Created" value={stats.resourcesCreated.toString()} detail="Lessons, notes, files, and reusable assets" icon={<FolderOpen className="h-5 w-5" />} />
-        <StatCard label="Students Helped" value={stats.studentsHelped.toString()} detail="Learners connected through your classes" icon={<UsersRound className="h-5 w-5" />} />
-        <StatCard label="AI Credits" value={stats.aiCredits.toString()} detail="Ready for Phase 3 AI Studio" icon={<Sparkles className="h-5 w-5" />} />
+        <StatCard label="Teaching Reach" value={stats.studentsHelped.toString()} detail="Classroom and booking relationships supported" icon={<UsersRound className="h-5 w-5" />} />
+        <StatCard label="AI Credits" value={stats.aiCredits.toString()} detail="Available for AI Workspace creation" icon={<Sparkles className="h-5 w-5" />} />
         <StatCard label="Downloads" value={stats.downloads.toString()} detail="Resource download activity" icon={<Download className="h-5 w-5" />} />
       </section>
 
@@ -166,12 +166,13 @@ export function TeacherOperatingDashboard({ name, completion, recentItems, favor
 
       <section className="grid gap-6 lg:grid-cols-2">
         <ListPanel title="Platform Updates" icon={Bell} items={notifications} emptyTitle="No announcements yet" />
-        <ListPanel title="Tips & Learning Resources" icon={Lightbulb} items={[{ title: "Keep resources reusable and short", meta: "Tip" }, { title: "Use one objective per worksheet", meta: "Teaching resource" }, { title: "Complete your profile before publishing offers", meta: "Growth" }]} emptyTitle="No tips yet" />
+        <ListPanel title="Teaching Productivity Tips" icon={Lightbulb} items={[{ title: "Keep resources reusable and short", meta: "Tip" }, { title: "Use one objective per worksheet", meta: "Teaching resource" }, { title: "Complete your profile before publishing offers", meta: "Growth" }]} emptyTitle="No tips yet" />
       </section>
     </div>
   );
 }
 
+// Future ClassTutor Frontend: retained for the student platform split.
 export function StudentOperatingDashboard({ name, completion, recentItems, favorites, notifications, stats }: DashboardProps & { stats: { progressCount: number; bookmarks: number; downloads: number; savedNotes: number } }) {
   const quickActions = [
     { title: "Ask AI", description: "Ask a doubt or simplify a concept.", href: "/student/ask-ai", icon: Sparkles },

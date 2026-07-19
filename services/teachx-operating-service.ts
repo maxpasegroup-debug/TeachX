@@ -3,6 +3,8 @@ import type { RoleKey } from "@/lib/constants/roles";
 import { getUserPreferences } from "@/services/preference-service";
 import { getRecentNotifications } from "@/services/notification-service";
 
+// Shared Platform: profile completion and workspace summary helpers are reused
+// by TeachX Guru today and by future frontends without changing backend models.
 type CompletionInput = {
   avatarUrl?: string | null;
   name?: string | null;

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { resolveNavigationWorkspace } from "@/lib/constants/navigation";
 
+// Teacher Workspace: TeachX Guru V1 owns this protected frontend surface.
 export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   return <TeacherGuard>{children}</TeacherGuard>;
 }

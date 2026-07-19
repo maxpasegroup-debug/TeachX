@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { AudienceLanding, studentLanding } from "@/components/landing/audience-landing";
 import { getPublicBaseUrl } from "@/lib/env";
 
+// Future ClassTutor Frontend: this student landing is retained but no longer exposed
+// from the TeachX Guru public brand, sitemap, robots, or navigation.
 export const metadata: Metadata = {
   title: "TeachX Guru for Students | Find Your Favourite Teacher",
   description: "Discover great teachers, learn with AI, practice daily, track progress, and join a learning community inside TeachX Guru.",

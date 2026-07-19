@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db";
 import { getStudentHome } from "@/services/learning-service";
 import { getUserPreferences } from "@/services/preference-service";
 
+// Future ClassTutor: student learning orchestration remains on the shared
+// backend and should not be duplicated when the student frontend is split out.
 export const studentLearningModes = [
   "Explain",
   "Summarize",

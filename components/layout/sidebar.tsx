@@ -23,7 +23,7 @@ export function Sidebar({ institutionName, logoUrl, roles }: { institutionName: 
         {!collapsed ? (
           <div className="min-w-0">
             <p className="truncate text-base font-semibold">TeachX</p>
-            <p className="truncate text-sm text-muted-foreground">Learn • Teach • Earn</p>
+            <p className="truncate text-sm text-muted-foreground">Professional AI Workspace</p>
           </div>
         ) : null}
       </div>

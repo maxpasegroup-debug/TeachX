@@ -11,7 +11,7 @@ type BrandLogoProps = {
 
 export function BrandLogo({ href = "/", className, markClassName, textClassName }: BrandLogoProps) {
   return (
-    <Link aria-label="TeachX Guru home" className={cn("group inline-flex items-center gap-3", className)} href={href}>
+    <Link className={cn("group inline-flex items-center gap-3", className)} href={href}>
       <span className={cn("relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-brand-ink text-sm font-semibold text-white shadow-brand transition-transform duration-brand group-hover:-translate-y-0.5", markClassName)}>
         <span className="absolute inset-x-2 top-1 h-4 rounded-full bg-white/20 blur-md" />
         TX

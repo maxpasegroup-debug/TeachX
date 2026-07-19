@@ -121,11 +121,11 @@ export default async function ProfilePage() {
   return (
     <div className="space-y-8">
       <section className="rounded-[2rem] border border-border bg-gradient-to-br from-sky-50 via-white to-blue-50 p-6 shadow-soft sm:p-8">
-        <Badge>{isStudent ? "Student Profile" : "Teacher Profile"}</Badge>
+        <Badge>{isStudent ? "Student Profile" : "Professional Teaching Profile"}</Badge>
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px] lg:items-end">
           <div>
-            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Profile</h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">Turn your TeachX Guru profile into a trusted professional identity that helps people discover, understand, and connect with you.</p>
+            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">{isStudent ? "Profile" : "Professional Teaching Profile"}</h1>
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">{isStudent ? "Turn your profile into a trusted identity that helps personalize your workspace." : "Highlight your experience, qualifications, subjects, availability, marketplace presence, and teaching portfolio."}</p>
           </div>
           <Card className="p-5 shadow-sm">
             <div className="flex items-center gap-4">
@@ -204,7 +204,7 @@ export default async function ProfilePage() {
             <div className="p-5">
               <div className="-mt-12 flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white bg-sky-100 text-xl font-semibold text-sky-800 shadow-sm">{getInitials(user?.name)}</div>
               <h2 className="mt-4 text-xl font-semibold">Profile Preview</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">Preview how students will see your public teaching identity.</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Preview your marketplace presence and public teaching identity.</p>
               <Link className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-soft hover:bg-foreground focus:outline-none focus:ring-2 focus:ring-primary" href={user?.teacherProfile?.id ? `/marketplace/teachers/${user.teacherProfile.id}` : "/teacher/marketplace"}>
                 <Eye className="h-4 w-4" />
                 Preview Public Profile
@@ -216,7 +216,7 @@ export default async function ProfilePage() {
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card className="p-5 shadow-soft"><UserRound className="h-5 w-5 text-sky-700" /><p className="mt-4 font-semibold">Identity</p><p className="mt-1 text-sm text-muted-foreground">Name and photo</p></Card>
-        <Card className="p-5 shadow-soft"><GraduationCap className="h-5 w-5 text-sky-700" /><p className="mt-4 font-semibold">Learning</p><p className="mt-1 text-sm text-muted-foreground">Subjects and goals</p></Card>
+        <Card className="p-5 shadow-soft"><GraduationCap className="h-5 w-5 text-sky-700" /><p className="mt-4 font-semibold">{isStudent ? "Learning" : "Teaching Portfolio"}</p><p className="mt-1 text-sm text-muted-foreground">{isStudent ? "Subjects and goals" : "Subjects, expertise, and resources"}</p></Card>
         <Card className="p-5 shadow-soft"><Languages className="h-5 w-5 text-sky-700" /><p className="mt-4 font-semibold">Language</p><p className="mt-1 text-sm text-muted-foreground">Preferences</p></Card>
         <Card className="p-5 shadow-soft"><MapPin className="h-5 w-5 text-sky-700" /><p className="mt-4 font-semibold">Location</p><p className="mt-1 text-sm text-muted-foreground">Mode and region</p></Card>
       </section>

@@ -92,7 +92,7 @@ export function LaunchIntelligenceDashboard({ data }: { data: GrowthData }) {
           <div>
             <Badge>Launch Intelligence</Badge>
             <h2 className="mt-4 text-2xl font-semibold tracking-tight">Beta readiness overview</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">A lightweight product-operations layer for activation funnels, product health, feedback, and bug reporting. Some metrics are placeholder-ready until deeper event instrumentation is connected.</p>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">A lightweight product-operations layer for activation funnels, product health, feedback, and bug reporting. Some metrics are marked as pending until deeper event instrumentation is connected.</p>
           </div>
           <Badge>V1.0 beta</Badge>
         </div>
@@ -135,7 +135,7 @@ export function LaunchIntelligenceDashboard({ data }: { data: GrowthData }) {
         <MetricCard label="New Students" value={String(studentUsers)} note="Registered student profiles" />
         <MetricCard label="Activation Rate" value={`${activationRate}%`} note="Profile-ready users" />
         <MetricCard label="Avg Profile Completion" value={`${avgProfileCompletion}%`} note="Teacher + student average" />
-        <MetricCard label="Avg Session Duration" value="Placeholder" note="Needs session instrumentation" />
+        <MetricCard label="Avg Session Duration" value="Pending" note="Needs session instrumentation" />
         <MetricCard label="Returning Users" value={String(returnedTeachers + returnedStudents)} note="Updated after registration" />
       </div>
 
@@ -164,8 +164,8 @@ export function LaunchIntelligenceDashboard({ data }: { data: GrowthData }) {
             <p className="rounded-xl border border-border bg-background px-4 py-3"><UserPlus className="mr-2 inline h-4 w-4 text-sky-700" />Registrations are sourced from existing user/profile data.</p>
             <p className="rounded-xl border border-border bg-background px-4 py-3"><Bot className="mr-2 inline h-4 w-4 text-sky-700" />AI activation reuses AIUsage counts.</p>
             <p className="rounded-xl border border-border bg-background px-4 py-3"><Repeat2 className="mr-2 inline h-4 w-4 text-sky-700" />Return behavior is approximated from profile updates.</p>
-            <p className="rounded-xl border border-border bg-background px-4 py-3"><Clock className="mr-2 inline h-4 w-4 text-sky-700" />Session duration is placeholder-ready.</p>
-            <p className="rounded-xl border border-border bg-background px-4 py-3"><CheckCircle2 className="mr-2 inline h-4 w-4 text-sky-700" />Local widget data is demo-ready until centralized persistence is connected.</p>
+            <p className="rounded-xl border border-border bg-background px-4 py-3"><Clock className="mr-2 inline h-4 w-4 text-sky-700" />Session duration is pending deeper instrumentation.</p>
+            <p className="rounded-xl border border-border bg-background px-4 py-3"><CheckCircle2 className="mr-2 inline h-4 w-4 text-sky-700" />Local widget data remains available until centralized persistence is connected.</p>
           </div>
           <div className="mt-5">
             <LocalLaunchSignals />
