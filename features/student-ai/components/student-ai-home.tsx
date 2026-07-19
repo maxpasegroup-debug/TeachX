@@ -6,12 +6,15 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/ui/stat-card";
+import { ActivationChecklist } from "@/features/teachx/components/activation-checklist";
 import { GlobalCommandBar } from "@/features/workspace/components/global-command-bar";
 import type { getStudentAIHome } from "@/services/student-ai-learning-service";
+import type { ProfileCompletion } from "@/services/teachx-operating-service";
 
 type StudentAIHomeProps = {
   name?: string | null;
   data: Awaited<ReturnType<typeof getStudentAIHome>>;
+  profileCompletion?: ProfileCompletion;
 };
 
 const quickActions = [
@@ -27,7 +30,7 @@ const quickActions = [
   { title: "Find Teacher", description: "Teacher discovery architecture.", href: "/student/teachers", icon: UsersRound }
 ];
 
-export function StudentAIHome({ name, data }: StudentAIHomeProps) {
+export function StudentAIHome({ name, data, profileCompletion }: StudentAIHomeProps) {
   const firstName = name?.split(" ")[0] ?? "Student";
   const continueClassroom = data.home.continueLearning;
   const focus = data.home.pendingAssignments[0]?.title ?? data.home.todaysClasses[0]?.entry.subject?.name ?? "Revise one important topic";
@@ -60,6 +63,24 @@ export function StudentAIHome({ name, data }: StudentAIHomeProps) {
           </Card>
         </div>
       </section>
+
+      <ActivationChecklist name={name} profileCompletionPercentage={profileCompletion?.percentage} role="student" />
+
+      {profileCompletion && profileCompletion.percentage < 100 ? (
+        <Card className="grid gap-4 border-sky-100 bg-sky-50/70 p-5 shadow-soft md:grid-cols-[1fr_auto] md:items-center">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-xl font-semibold">Complete Your Profile</h2>
+              <Badge>{profileCompletion.percentage}% complete</Badge>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">Add your learning goals, language, grade, and interests so TeachX Guru can shape a better learning path.</p>
+            <Progress className="mt-4 max-w-xl" value={profileCompletion.percentage} />
+          </div>
+          <Link className="inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-soft hover:bg-foreground focus:outline-none focus:ring-2 focus:ring-primary" href="/profile">
+            Go to Profile
+          </Link>
+        </Card>
+      ) : null}
 
       <GlobalCommandBar />
 

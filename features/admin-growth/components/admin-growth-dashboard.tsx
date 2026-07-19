@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createSupportTicketAction, recordPlatformMetricAction, saveFeatureFlagAction, saveSystemSettingAction, updateSupportTicketAction } from "@/features/admin-growth/actions";
+import { LaunchIntelligenceDashboard } from "@/features/launch-intelligence/components/launch-intelligence-dashboard";
 import type { getAdminGrowthOS } from "@/services/admin-growth-service";
 
 type GrowthData = Awaited<ReturnType<typeof getAdminGrowthOS>>;
@@ -62,6 +63,7 @@ function AdminHome({ data }: { data: GrowthData }) {
         <Panel title="AI Usage" icon={<Bot className="h-5 w-5" />} items={[`${data.ai.generations} generations`, `${data.ai.creditsUsed} credits used`, `${money(data.ai.estimatedCost)} estimated cost`, data.ai.averageResponseTimePlaceholder]} />
         <Panel title="Pending Reviews" icon={<Flag className="h-5 w-5" />} items={data.operations.pendingReviews.map((item) => `${item.type}: ${item.title}`)} />
       </section>
+      <LaunchIntelligenceDashboard data={data} />
       <QuickActions />
       <Panel title="Recent Events" icon={<Sparkles className="h-5 w-5" />} items={[...data.operations.activityEvents.map((item) => item.title), ...data.operations.auditLogs.map((item) => item.message ?? `${item.action} ${item.entity}`)].slice(0, 12)} />
     </>

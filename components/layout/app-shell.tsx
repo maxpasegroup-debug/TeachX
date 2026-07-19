@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopHeader } from "@/components/layout/top-header";
+import { FeedbackWidget } from "@/features/launch-intelligence/components/feedback-widget";
 import type { RoleKey } from "@/lib/constants/roles";
 import { colorToHslVariable, type WhiteLabelConfig } from "@/services/white-label-service";
 
@@ -23,6 +24,7 @@ export function AppShell({ children, institutionName, roles, whiteLabel }: { chi
           <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
         </div>
       </div>
+      <FeedbackWidget />
     </div>
   );
 }

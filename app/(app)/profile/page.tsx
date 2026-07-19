@@ -1,4 +1,5 @@
-import { Camera, GraduationCap, Languages, MapPin, UserRound } from "lucide-react";
+import Link from "next/link";
+import { Award, CheckCircle2, Circle, Eye, GraduationCap, Languages, MapPin, ShieldCheck, Sparkles, Star, UserRound } from "lucide-react";
 
 import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +11,55 @@ import { getInitials } from "@/lib/utils";
 import { prisma } from "@/lib/db";
 import { getStudentProfileCompletion, getTeacherProfileCompletion } from "@/services/teachx-operating-service";
 
+type StrengthItem = {
+  label: string;
+  done: boolean;
+};
+
 function Field({ label, value, placeholder }: { label: string; value?: string | null; placeholder: string }) {
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium">{label}</label>
       <Input readOnly value={value ?? ""} placeholder={placeholder} />
+    </div>
+  );
+}
+
+function strengthPercentage(items: StrengthItem[]) {
+  return Math.round((items.filter((item) => item.done).length / items.length) * 100);
+}
+
+function ProfileStrengthPanel({ title, items }: { title: string; items: StrengthItem[] }) {
+  const percentage = strengthPercentage(items);
+
+  return (
+    <Card className="p-5 shadow-soft">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">Profile Strength</p>
+          <h2 className="mt-2 text-4xl font-semibold tracking-tight">{percentage}%</h2>
+        </div>
+        <Badge>{title}</Badge>
+      </div>
+      <Progress className="mt-5" value={percentage} />
+      <div className="mt-6 grid gap-3">
+        {items.map((item) => (
+          <div className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm" key={item.label}>
+            {item.done ? <CheckCircle2 className="h-4 w-4 text-sky-700" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
+            <span className={item.done ? "font-medium text-foreground" : "text-muted-foreground"}>{item.label}</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function ProfessionalBadge({ label, icon: Icon, active = false }: { label: string; icon: typeof Star; active?: boolean }) {
+  return (
+    <div className={`rounded-2xl border p-4 ${active ? "border-sky-200 bg-sky-50 text-sky-950" : "border-border bg-background text-muted-foreground"}`}>
+      <Icon className={`h-5 w-5 ${active ? "text-sky-700" : "text-muted-foreground"}`} />
+      <p className="mt-3 text-sm font-semibold">{label}</p>
+      <p className="mt-1 text-xs">{active ? "Visible badge" : "Visual milestone"}</p>
     </div>
   );
 }
@@ -28,6 +73,30 @@ export default async function ProfilePage() {
       })
     : null;
   const isStudent = user?.roles.some(({ role }) => role.key === "STUDENT") ?? false;
+  const teacherStrength: StrengthItem[] = [
+    { label: "Profile Photo", done: Boolean(user?.profile?.avatarUrl) },
+    { label: "Name", done: Boolean(user?.name) },
+    { label: "Cover Photo", done: Boolean(user?.teacherProfile?.coverUrl) },
+    { label: "Professional Bio", done: Boolean(user?.teacherProfile?.bio ?? user?.profile?.bio) },
+    { label: "Subjects", done: Boolean(user?.teacherProfile?.subjects.length) },
+    { label: "Qualifications", done: Boolean(user?.teacherProfile?.qualification ?? user?.profile?.title) },
+    { label: "Experience", done: Boolean(user?.teacherProfile?.experienceYears ?? user?.teacherProfile?.headline) },
+    { label: "Languages", done: Boolean(user?.teacherProfile?.languages.length) },
+    { label: "Teaching Availability", done: Boolean(user?.teacherProfile?.availability) },
+    { label: "Teaching Preferences", done: Boolean(user?.teacherProfile?.teachingMode ?? user?.teacherProfile?.teachingStyle) },
+    { label: "Profile Verification", done: false }
+  ];
+  const studentStrength: StrengthItem[] = [
+    { label: "Photo", done: Boolean(user?.profile?.avatarUrl) },
+    { label: "Bio", done: Boolean(user?.profile?.bio) },
+    { label: "Learning Interests", done: Boolean(user?.studentProfile?.interests.length) },
+    { label: "Favourite Subjects", done: Boolean((user?.studentProfile?.interests.length ?? 0) > 1) },
+    { label: "Learning Goals", done: Boolean(user?.studentProfile?.learningGoal) },
+    { label: "Preferred Language", done: Boolean((user?.studentProfile?.interests.length ?? 0) > 1) },
+    { label: "Grade", done: Boolean(user?.profile?.title) },
+    { label: "Learning Preferences", done: Boolean(user?.studentProfile?.interests.length) }
+  ];
+  const activeStrength = isStudent ? studentStrength : teacherStrength;
   const completion = isStudent
     ? getStudentProfileCompletion({
         avatarUrl: user?.profile?.avatarUrl,
@@ -56,7 +125,7 @@ export default async function ProfilePage() {
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px] lg:items-end">
           <div>
             <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Profile</h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">Complete your profile so TeachX can personalize your daily workspace and prepare for Phase 3 AI Studio.</p>
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">Turn your TeachX Guru profile into a trusted professional identity that helps people discover, understand, and connect with you.</p>
           </div>
           <Card className="p-5 shadow-sm">
             <div className="flex items-center gap-4">
@@ -73,20 +142,7 @@ export default async function ProfilePage() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
-        <Card className="p-5 shadow-soft">
-          <div className="flex h-28 w-28 items-center justify-center rounded-[2rem] bg-muted text-3xl font-semibold">
-            <Camera className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h2 className="mt-6 text-xl font-semibold">Completion Engine</h2>
-          <Progress className="mt-4" value={completion.percentage} />
-          <div className="mt-5 space-y-2">
-            {completion.missingFields.map((field) => (
-              <p className="rounded-xl bg-background px-4 py-3 text-sm text-muted-foreground" key={field}>
-                Missing: {field}
-              </p>
-            ))}
-          </div>
-        </Card>
+        <ProfileStrengthPanel items={activeStrength} title={isStudent ? "Student Trust" : "Teacher Trust"} />
 
         <Card className="p-5 shadow-soft">
           <h2 className="text-xl font-semibold">{isStudent ? "Student Details" : "Teacher Details"}</h2>
@@ -108,13 +164,13 @@ export default async function ProfilePage() {
               <>
                 <Field label="Professional Photo" value={user?.profile?.avatarUrl} placeholder="Profile photo URL" />
                 <Field label="Name" value={user?.name} placeholder="Full name" />
-                <Field label="Qualification" value={user?.profile?.title} placeholder="Qualification" />
-                <Field label="Experience" value={user?.teacherProfile?.headline} placeholder="Teaching experience" />
+                <Field label="Qualification" value={user?.teacherProfile?.qualification ?? user?.profile?.title} placeholder="Qualification" />
+                <Field label="Experience" value={user?.teacherProfile?.experienceYears ? `${user.teacherProfile.experienceYears} years` : user?.teacherProfile?.headline} placeholder="Teaching experience" />
                 <Field label="Subjects" value={user?.teacherProfile?.subjects.join(", ")} placeholder="Subjects" />
-                <Field label="Classes" value={user?.teacherProfile?.subjects.slice(0, 2).join(", ")} placeholder="Classes taught" />
-                <Field label="Languages" value="" placeholder="Languages" />
-                <Field label="Location" value={user?.profile?.phone} placeholder="Location" />
-                <Field label="Teaching Mode" value="" placeholder="Online, Offline, Hybrid" />
+                <Field label="Classes" value={user?.teacherProfile?.classes.join(", ")} placeholder="Classes taught" />
+                <Field label="Languages" value={user?.teacherProfile?.languages.join(", ")} placeholder="Languages" />
+                <Field label="Location" value={user?.teacherProfile?.location ?? user?.profile?.phone} placeholder="Location" />
+                <Field label="Teaching Mode" value={user?.teacherProfile?.teachingMode} placeholder="Online, Offline, Hybrid" />
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-medium">Bio</label>
                   <Textarea readOnly value={user?.teacherProfile?.bio ?? user?.profile?.bio ?? ""} placeholder="Professional bio" />
@@ -124,6 +180,39 @@ export default async function ProfilePage() {
           </div>
         </Card>
       </section>
+
+      {!isStudent ? (
+        <section className="grid gap-6 lg:grid-cols-[1fr_360px]">
+          <Card className="p-5 shadow-soft">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold">Professional Badges</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Visual trust signals for profile discovery. Verification and ranking logic can connect later without changing the profile layout.</p>
+              </div>
+              <Badge>Visual only</Badge>
+            </div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <ProfessionalBadge active label="New Teacher" icon={Sparkles} />
+              <ProfessionalBadge active={completion.percentage >= 90} label="Verified Teacher" icon={ShieldCheck} />
+              <ProfessionalBadge active={Boolean((user?.teacherProfile?.achievements.length ?? 0) > 2)} label="Top Educator" icon={Award} />
+              <ProfessionalBadge active={Boolean((user?.teacherProfile?.experienceYears ?? 0) >= 10)} label="Master Mentor" icon={Star} />
+            </div>
+          </Card>
+
+          <Card className="overflow-hidden shadow-soft">
+            <div className="h-24 bg-gradient-to-br from-sky-100 via-white to-blue-100" />
+            <div className="p-5">
+              <div className="-mt-12 flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white bg-sky-100 text-xl font-semibold text-sky-800 shadow-sm">{getInitials(user?.name)}</div>
+              <h2 className="mt-4 text-xl font-semibold">Profile Preview</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Preview how students will see your public teaching identity.</p>
+              <Link className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-soft hover:bg-foreground focus:outline-none focus:ring-2 focus:ring-primary" href={user?.teacherProfile?.id ? `/marketplace/teachers/${user.teacherProfile.id}` : "/teacher/marketplace"}>
+                <Eye className="h-4 w-4" />
+                Preview Public Profile
+              </Link>
+            </div>
+          </Card>
+        </section>
+      ) : null}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card className="p-5 shadow-soft"><UserRound className="h-5 w-5 text-sky-700" /><p className="mt-4 font-semibold">Identity</p><p className="mt-1 text-sm text-muted-foreground">Name and photo</p></Card>

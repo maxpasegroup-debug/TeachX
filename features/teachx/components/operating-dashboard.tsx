@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/ui/stat-card";
+import { ActivationChecklist } from "@/features/teachx/components/activation-checklist";
 import { GlobalCommandBar } from "@/features/workspace/components/global-command-bar";
 import type { ProfileCompletion } from "@/services/teachx-operating-service";
 
@@ -83,21 +84,23 @@ function ListPanel({ title, icon: Icon, items, emptyTitle }: { title: string; ic
 }
 
 function ProfileCompletionCard({ completion, href }: { completion: ProfileCompletion; href: string }) {
+  const isComplete = completion.percentage >= 100;
+
   return (
     <Card className="p-5 shadow-soft">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">Profile completion</p>
+          <p className="text-sm font-medium text-muted-foreground">{isComplete ? "Profile complete" : "Complete Your Profile"}</p>
           <h2 className="mt-2 text-3xl font-semibold">{completion.percentage}%</h2>
         </div>
         <Badge>{completion.missingFields.length ? `${completion.missingFields.length} missing` : "Complete"}</Badge>
       </div>
       <Progress className="mt-5" value={completion.percentage} />
       <div className="mt-5 space-y-2">
-        {completion.suggestions.length ? completion.suggestions.map((suggestion) => <p className="rounded-xl bg-sky-50 px-4 py-3 text-sm leading-6 text-sky-900" key={suggestion}>{suggestion}</p>) : <p className="rounded-xl bg-sky-50 px-4 py-3 text-sm leading-6 text-sky-900">Your profile is ready to make a strong first impression.</p>}
+        {completion.suggestions.length ? completion.suggestions.slice(0, 2).map((suggestion) => <p className="rounded-xl bg-sky-50 px-4 py-3 text-sm leading-6 text-sky-900" key={suggestion}>{suggestion}</p>) : <p className="rounded-xl bg-sky-50 px-4 py-3 text-sm leading-6 text-sky-900">Your profile is ready to make a strong first impression.</p>}
       </div>
       <Link className="mt-5 inline-flex text-sm font-semibold text-sky-700 hover:underline" href={href}>
-        Complete profile
+        {isComplete ? "View profile" : "Go to Profile"}
       </Link>
     </Card>
   );
@@ -133,6 +136,8 @@ export function TeacherOperatingDashboard({ name, completion, recentItems, favor
           </Card>
         </div>
       </section>
+
+      <ActivationChecklist name={name} profileCompletionPercentage={completion.percentage} role="teacher" />
 
       <GlobalCommandBar />
 
