@@ -30,7 +30,7 @@ export async function getTeacherWorkspaceData(input: {
     };
   }
 
-  const [teacher, content, planner, exams, notes, aiOutputs, activities, notifications, downloads, purchases, favorites, recent, courses, subjects] = await Promise.all([
+  const [teacher, content, planner, exams, notes, aiOutputs, activities, notifications, notificationStates, downloads, purchases, favorites, recent, courses, subjects] = await Promise.all([
     getTeacherDashboard(input.userId, input.institutionId, input.roles),
     prisma.contentItem.findMany({
       where: { institutionId: input.institutionId, createdById: input.userId },
@@ -48,7 +48,8 @@ export async function getTeacherWorkspaceData(input: {
       orderBy: { createdAt: "desc" },
       take: 100
     }),
-    prisma.notification.findMany({ where: { userId: input.userId }, orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.notification.findMany({ where: { OR: [{ userId: input.userId }, { userId: null, institutionId: input.institutionId }] }, orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.userPreference.findMany({ where: { userId: input.userId, key: { startsWith: "notification-state:" } } }),
     prisma.downloadHistory.findMany({ where: { userId: input.userId }, include: { item: { include: { course: true, subject: true } } }, orderBy: { downloadedAt: "desc" }, take: 100 }),
     prisma.commerceOrderItem.findMany({ where: { order: { buyerId: input.userId, status: "PAID" }, resourceId: { not: null } }, include: { resource: { include: { course: true, subject: true } }, order: true }, orderBy: { createdAt: "desc" }, take: 100 }),
     prisma.favoriteItem.findMany({ where: { userId: input.userId }, orderBy: { createdAt: "desc" }, take: 100 }),
@@ -116,12 +117,31 @@ export async function getTeacherWorkspaceData(input: {
       ...downloads.map((download) => ({
         id: `download-${download.id}`, title: `Downloaded ${download.item.title}`, body: download.item.course.name,
         type: "DOWNLOAD", actor: null, link: `/resources/${download.itemId}`, createdAt: download.downloadedAt.toISOString()
+      })),
+      ...aiOutputs.map((output) => ({
+        id: `ai-${output.id}`, title: `AI generated: ${output.title}`, body: String(jsonRecord(output.context).toolSlug ?? "Teaching Studio"),
+        type: "AI", actor: null, link: "/teacher/workspace/saved-ai", createdAt: output.updatedAt.toISOString()
+      })),
+      ...purchases.map((purchase) => ({
+        id: `marketplace-${purchase.id}`, title: `Marketplace order: ${purchase.title}`, body: purchase.order.status,
+        type: "MARKETPLACE", actor: null, link: "/teacher/business/orders", createdAt: purchase.createdAt.toISOString()
+      })),
+      ...recent.map((item) => ({
+        id: `recent-${item.id}`, title: `Opened ${item.title}`, body: item.type,
+        type: "WORKSPACE", actor: null, link: item.link, createdAt: item.viewedAt.toISOString()
       }))
     ].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    notifications: notifications.map((item) => ({
-      id: item.id, title: item.title, body: item.body, status: item.status, link: item.link,
-      category: String(jsonRecord(item.metadata).category ?? "PLATFORM").toUpperCase(), createdAt: item.createdAt.toISOString()
-    })),
+    notifications: notifications.filter((item) => {
+      const state=notificationStates.find((entry)=>entry.key===`notification-state:${item.id}`);
+      return !(state?.value && typeof state.value==="object" && !Array.isArray(state.value) && Boolean((state.value as Record<string,unknown>).hidden));
+    }).map((item) => {
+      const state=notificationStates.find((entry)=>entry.key===`notification-state:${item.id}`);
+      const read=state?.value && typeof state.value==="object" && !Array.isArray(state.value) && Boolean((state.value as Record<string,unknown>).read);
+      return ({
+      id: item.id, title: item.title, body: item.body, link: item.link,
+      category: String(jsonRecord(item.metadata).category ?? jsonRecord(item.metadata).type ?? "PLATFORM").toUpperCase(),
+      createdAt: item.createdAt.toISOString(), status: read ? "READ" as const : item.status
+    }); }),
     downloads: downloads.map((download) => ({
       id: download.id, itemId: download.itemId, title: download.item.title, course: download.item.course.name,
       subject: download.item.subject?.name, fileUrl: download.item.fileUrl ?? download.item.externalUrl,

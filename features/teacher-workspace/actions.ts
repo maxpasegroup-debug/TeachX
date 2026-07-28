@@ -169,13 +169,17 @@ export async function deleteTeacherPlannerEventAction(formData: FormData) {
 
 export async function markTeacherNotificationReadAction(formData: FormData) {
   const session = await teacherSession();
-  await prisma.notification.updateMany({ where: { id: value(formData, "id"), userId: session.user.id }, data: { status: "READ", readAt: new Date() } });
+  const id=value(formData,"id");
+  const result=await prisma.notification.updateMany({ where: { id, userId: session.user.id }, data: { status: "READ", readAt: new Date() } });
+  if(!result.count) await prisma.userPreference.upsert({where:{userId_key:{userId:session.user.id,key:`notification-state:${id}`}},create:{userId:session.user.id,key:`notification-state:${id}`,value:{read:true}},update:{value:{read:true}}});
   refresh();
 }
 
 export async function deleteTeacherNotificationAction(formData: FormData) {
   const session = await teacherSession();
-  await prisma.notification.deleteMany({ where: { id: value(formData, "id"), userId: session.user.id } });
+  const id=value(formData,"id");
+  const result=await prisma.notification.deleteMany({ where: { id, userId: session.user.id } });
+  if(!result.count) await prisma.userPreference.upsert({where:{userId_key:{userId:session.user.id,key:`notification-state:${id}`}},create:{userId:session.user.id,key:`notification-state:${id}`,value:{hidden:true}},update:{value:{hidden:true}}});
   refresh();
 }
 
@@ -185,22 +189,13 @@ export async function teacherWorkspaceSearchAction(_: TeacherSearchState, formDa
   const session = await teacherSession();
   const query = value(formData, "query");
   if (!query) return { results: [], error: "Enter a search term." };
-  const contains = { contains: query, mode: "insensitive" as const };
-  const [platform, ai, notes] = await Promise.all([
-    universalSearch(session.user.institutionId!, query, session.user.id),
-    prisma.aIConversation.findMany({ where: { userId: session.user.id, scope: "TEACHER", title: contains }, take: 10 }),
-    prisma.userPreference.findMany({ where: { userId: session.user.id, key: { startsWith: "teacher-note:" } }, take: 100 })
-  ]);
-  const noteResults = notes.filter((note) => JSON.stringify(note.value).toLowerCase().includes(query.toLowerCase())).slice(0, 10);
+  const platform = await universalSearch(session.user.institutionId!, query, session.user.id);
   return {
     query,
-    results: [
-      ...ai.map((item) => ({ type: "AI Output", title: item.title, subtitle: "Saved AI generation", href: "/teacher/workspace/saved-ai" })),
-      ...noteResults.map((item) => {
-        const note = item.value as { title?: string; kind?: string };
-        return { type: "Note", title: note.title ?? "Untitled note", subtitle: note.kind ?? "Personal", href: "/teacher/workspace/notes" };
-      }),
-      ...platform.filter((item) => !["Student", "Teacher", "Support Ticket", "Audit Log", "Feature Flag", "Order"].includes(item.type))
-    ]
+    results: platform
+      .filter((item) => !["Student", "Support Ticket", "Audit Log", "Feature Flag", "Order"].includes(item.type))
+      .map((item) => item.type === "Institution" && !session.user.roles.some((role) => ["ADMIN", "DIRECTOR", "ACADEMIC_HEAD"].includes(role))
+        ? { ...item, href: "/teacher/workspace/classrooms" }
+        : item)
   };
 }

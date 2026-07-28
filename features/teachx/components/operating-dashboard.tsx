@@ -106,11 +106,12 @@ function ProfileCompletionCard({ completion, href }: { completion: ProfileComple
   );
 }
 
-export function TeacherOperatingDashboard({ name, completion, recentItems, favorites, savedSearches, notifications, plan, aiCreditsRemaining, stats, daily }: DashboardProps & {
+export function TeacherOperatingDashboard({ name, completion, recentItems, favorites, savedSearches, notifications, plan, aiCreditsRemaining, stats, daily, canAccessInstitution }: DashboardProps & {
   plan: string;
   aiCreditsRemaining: number;
   stats: { resourcesCreated: number; studentsHelped: number; aiCredits: number; downloads: number };
   daily: { todaysClasses: ListItem[]; schedule: ListItem[]; pendingTasks: ListItem[]; recentAI: ListItem[]; recentResources: ListItem[]; activity: ListItem[] };
+  canAccessInstitution: boolean;
 }) {
   const quickActions = [
     { title: "My Classroom", description: "Open classes, attendance, homework, and teaching resources.", href: "/teacher/workspace/classrooms", icon: UsersRound },
@@ -167,6 +168,24 @@ export function TeacherOperatingDashboard({ name, completion, recentItems, favor
           <ListPanel title="Recently Opened" icon={History} items={favorites} emptyTitle="No recent activity yet" />
         </div>
         <ProfileCompletionCard completion={completion} href="/profile" />
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-2xl font-semibold">Connected Ecosystem Widgets</h2>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {[
+            ["AI Studio", "/teacher/ai-studio"],
+            ["Workspace", "/teacher/workspace/classrooms"],
+            ["Marketplace", "/teacher/business/marketplace"],
+            ["Community", "/teacher/community/home"],
+            ["Institution", canAccessInstitution ? "/institution/dashboard" : "/teacher/workspace/classrooms"],
+            ["Business Dashboard", "/teacher/business/earnings"],
+            ["Recent Files", "/teacher/workspace/resources"],
+            ["Calendar", "/teacher/workspace/planner"],
+            ["Planner", "/teacher/workspace/planner"],
+            ["Notifications", "/teacher/workspace/notifications"]
+          ].map(([label, href]) => <Link className="rounded-2xl border border-border bg-surface p-4 text-sm font-semibold shadow-sm hover:bg-muted" href={href} key={label}>{label}</Link>)}
+        </div>
       </section>
 
       <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">

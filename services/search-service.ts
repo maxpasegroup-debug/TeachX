@@ -9,7 +9,7 @@ export type UniversalSearchResult = {
 
 export async function universalSearch(institutionId: string, query: string, userId?: string): Promise<UniversalSearchResult[]> {
   const contains = { contains: query, mode: "insensitive" as const };
-  const [students, teachers, marketplaceTeachers, learningResources, announcements, conversations, messages, discussions, communities, promptTemplates, supportTickets, commerceOrders, featureFlags, auditLogs, courses, batches, exams, content, leads, invoices, receipts, partners, assignments, attendance] = await Promise.all([
+  const [students, teachers, marketplaceTeachers, learningResources, announcements, conversations, messages, discussions, communities, promptTemplates, supportTickets, commerceOrders, featureFlags, auditLogs, courses, batches, exams, content, leads, invoices, receipts, partners, assignments, attendance, aiOutputs, notes, institutions] = await Promise.all([
     prisma.user.findMany({ where: { institutionId, name: contains, roles: { some: { role: { key: "STUDENT" } } } }, take: 6 }),
     prisma.user.findMany({ where: { institutionId, name: contains, roles: { some: { role: { key: { in: ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"] } } } } }, take: 6 }),
     prisma.teacherProfile.findMany({ where: { isMarketplaceListed: true, OR: [{ user: { institutionId, name: contains } }, { headline: contains }, { bio: contains }, { location: contains }] }, include: { user: true }, take: 6 }),
@@ -43,6 +43,10 @@ export async function universalSearch(institutionId: string, query: string, user
     prisma.partner.findMany({ where: { institutionId, name: contains }, take: 6 }),
     prisma.assignment.findMany({ where: { title: contains, classroom: { institutionId } }, include: { classroom: true }, take: 6 }),
     prisma.attendanceSession.findMany({ where: { classroom: { institutionId, title: contains } }, include: { classroom: true, batch: true }, take: 6 })
+    ,
+    userId ? prisma.aIConversation.findMany({ where: { userId, scope: "TEACHER", title: contains }, take: 12 }) : Promise.resolve([]),
+    userId ? prisma.userPreference.findMany({ where: { userId, key: { startsWith: "teacher-note:" }, value: { path: ["title"], string_contains: query } }, take: 12 }) : Promise.resolve([]),
+    prisma.institution.findMany({ where: { id: institutionId, OR: [{ name: contains }, { address: contains }, { email: contains }] }, take: 6 })
   ]);
 
   return [
@@ -70,6 +74,17 @@ export async function universalSearch(institutionId: string, query: string, user
     ...partners.map((item) => ({ type: "Partner", title: item.name, subtitle: item.referralCode, href: "/partners" })),
     ...assignments.map((item) => ({ type: "Assignment", title: item.title, subtitle: item.classroom.title, href: `/classrooms/${item.classroomId}` })),
     ...attendance.map((item) => ({ type: "Attendance", title: item.classroom.title, subtitle: item.batch.name, href: `/classrooms/${item.classroomId}` }))
+    ,
+    ...aiOutputs.map((item) => {
+      const context = item.context && typeof item.context === "object" && !Array.isArray(item.context) ? item.context as Record<string, unknown> : {};
+      const tool = String(context.toolSlug ?? "AI Output");
+      return { type: tool.replaceAll("-", " "), title: item.title, subtitle: "Saved AI teaching material", href: "/teacher/workspace/saved-ai" };
+    }),
+    ...notes.map((item) => {
+      const note = item.value && typeof item.value === "object" && !Array.isArray(item.value) ? item.value as Record<string, unknown> : {};
+      return { type: "Note", title: String(note.title ?? "Teaching note"), subtitle: String(note.kind ?? "Teacher workspace"), href: "/teacher/workspace/notes" };
+    }),
+    ...institutions.map((item) => ({ type: "Institution", title: item.name, subtitle: item.address ?? item.email ?? undefined, href: "/institution/dashboard" }))
   ];
 }
 

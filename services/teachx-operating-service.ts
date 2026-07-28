@@ -78,7 +78,7 @@ async function getTeachXUser(userId?: string) {
 
 export async function getTeacherOperatingHome(input: { userId?: string; institutionId?: string | null; roles: RoleKey[] }) {
   const user = await getTeachXUser(input.userId);
-  const [preferences, notifications, resourcesCreated, studentsHelped, downloads, teacherDashboard, recentAI, recentResources, recentActivity] = await Promise.all([
+  const [preferences, notifications, resourcesCreated, studentsHelped, downloads, teacherDashboard, recentAI, recentResources, recentActivity, subscription, aiUsage] = await Promise.all([
     getUserPreferences(input.userId),
     getRecentNotifications(input.userId, 12),
     input.userId ? prisma.contentItem.count({ where: { createdById: input.userId } }) : 0,
@@ -87,7 +87,9 @@ export async function getTeacherOperatingHome(input: { userId?: string; institut
     getTeacherDashboard(input.userId, input.institutionId, input.roles),
     input.userId ? prisma.aIConversation.findMany({ where: { userId: input.userId, scope: "TEACHER" }, orderBy: { updatedAt: "desc" }, take: 5 }) : [],
     input.userId ? prisma.contentItem.findMany({ where: { createdById: input.userId }, orderBy: { updatedAt: "desc" }, take: 5 }) : [],
-    getRecentActivities(input.institutionId, 8)
+    getRecentActivities(input.institutionId, 8),
+    input.userId ? prisma.userSubscription.findFirst({ where: { userId: input.userId, status: { in: ["ACTIVE", "TRIALING"] } }, include: { plan: true }, orderBy: { updatedAt: "desc" } }) : null,
+    input.userId ? prisma.aIUsage.aggregate({ where: { userId: input.userId }, _sum: { totalTokens: true } }) : { _sum: { totalTokens: 0 } }
   ]);
 
   const completion = getTeacherProfileCompletion({
@@ -101,17 +103,21 @@ export async function getTeacherOperatingHome(input: { userId?: string; institut
     interests: []
   });
 
+  const allocatedCredits = subscription?.plan.aiMonthlyCredits ?? 0;
+  const usedCredits = Math.ceil((aiUsage._sum.totalTokens ?? 0) / 100);
+  const remainingCredits = Math.max(0, allocatedCredits - usedCredits);
+
   return {
     user,
     notifications,
     preferences,
     completion,
-    plan: "TeachX Starter",
-    aiCreditsRemaining: 240,
+    plan: subscription?.plan.name ?? "No active plan",
+    aiCreditsRemaining: remainingCredits,
     stats: {
       resourcesCreated,
       studentsHelped,
-      aiCredits: 240,
+      aiCredits: remainingCredits,
       downloads
     },
     daily: {

@@ -59,7 +59,7 @@ function ProfessionalBadge({ label, icon: Icon, active = false }: { label: strin
     <div className={`rounded-2xl border p-4 ${active ? "border-sky-200 bg-sky-50 text-sky-950" : "border-border bg-background text-muted-foreground"}`}>
       <Icon className={`h-5 w-5 ${active ? "text-sky-700" : "text-muted-foreground"}`} />
       <p className="mt-3 text-sm font-semibold">{label}</p>
-      <p className="mt-1 text-xs">{active ? "Visible badge" : "Visual milestone"}</p>
+      <p className="mt-1 text-xs">{active ? "Earned and visible" : "Complete the profile criteria to earn"}</p>
     </div>
   );
 }
@@ -73,6 +73,7 @@ export default async function ProfilePage() {
       })
     : null;
   const isStudent = user?.roles.some(({ role }) => role.key === "STUDENT") ?? false;
+  const canAccessInstitution = user?.roles.some(({ role }) => ["ADMIN", "DIRECTOR", "ACADEMIC_HEAD"].includes(role.key)) ?? false;
   const teacherStrength: StrengthItem[] = [
     { label: "Profile Photo", done: Boolean(user?.profile?.avatarUrl) },
     { label: "Name", done: Boolean(user?.name) },
@@ -84,7 +85,7 @@ export default async function ProfilePage() {
     { label: "Languages", done: Boolean(user?.teacherProfile?.languages.length) },
     { label: "Teaching Availability", done: Boolean(user?.teacherProfile?.availability) },
     { label: "Teaching Preferences", done: Boolean(user?.teacherProfile?.teachingMode ?? user?.teacherProfile?.teachingStyle) },
-    { label: "Profile Verification", done: false }
+    { label: "Profile Verification", done: Boolean(user?.emailVerifiedAt) }
   ];
   const studentStrength: StrengthItem[] = [
     { label: "Photo", done: Boolean(user?.profile?.avatarUrl) },
@@ -187,9 +188,9 @@ export default async function ProfilePage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-semibold">Professional Badges</h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">Visual trust signals for profile discovery. Verification and ranking logic can connect later without changing the profile layout.</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Trust signals use your verified account, profile completion, achievements, and professional experience.</p>
               </div>
-              <Badge>Visual only</Badge>
+              <Badge>Connected Profile</Badge>
             </div>
             <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <ProfessionalBadge active label="New Teacher" icon={Sparkles} />
@@ -209,6 +210,23 @@ export default async function ProfilePage() {
                 <Eye className="h-4 w-4" />
                 Preview Public Profile
               </Link>
+            </div>
+          </Card>
+
+          <Card className="p-5 shadow-soft lg:col-span-2">
+            <h2 className="text-xl font-semibold">Connected Professional Experience</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Your profile is shared across your portfolio, marketplace presence, community identity, institution context, achievements, certificates, and teaching statistics.</p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                ["Portfolio & achievements", "/teacher/business/portfolio"],
+                ["Marketplace profile", user?.teacherProfile?.id ? `/marketplace/teachers/${user.teacherProfile.id}` : "/teacher/business/profile"],
+                ["Community identity", "/teacher/community/home"],
+                ["Certificates & AI outputs", "/teacher/workspace/saved-ai"],
+                ["Teaching analytics", "/teacher/business/analytics"],
+                ["Institution & classroom", canAccessInstitution ? "/institution/dashboard" : "/teacher/workspace/classrooms"],
+                ["Professional information", "/teacher/business/profile"],
+                ["Profile settings", "/teacher/settings"]
+              ].map(([label, href]) => <Link className="rounded-xl border border-border p-4 text-sm font-semibold hover:bg-muted" href={href} key={label}>{label}</Link>)}
             </div>
           </Card>
         </section>
