@@ -10,16 +10,18 @@ import { ActivationChecklist } from "@/features/teachx/components/activation-che
 import { GlobalCommandBar } from "@/features/workspace/components/global-command-bar";
 import type { getStudentAIHome } from "@/services/student-ai-learning-service";
 import type { ProfileCompletion } from "@/services/teachx-operating-service";
+import type { getStudentFoundation } from "@/services/student-foundation-service";
 
 type StudentAIHomeProps = {
   name?: string | null;
   data: Awaited<ReturnType<typeof getStudentAIHome>>;
   profileCompletion?: ProfileCompletion;
+  foundation?: Awaited<ReturnType<typeof getStudentFoundation>>;
 };
 
 const quickActions = [
   { title: "Ask AI", description: "Ask a doubt and learn step by step.", href: "/student/ask-ai", icon: Sparkles },
-  { title: "Homework Help", description: "Upload question/photo/PDF placeholders.", href: "/student/homework", icon: NotebookPen },
+  { title: "Homework Help", description: "Work through assigned questions step by step.", href: "/student/homework", icon: NotebookPen },
   { title: "Explain Topic", description: "Make any concept easier.", href: "/student/ask-ai?mode=Explain", icon: Lightbulb },
   { title: "Practice Quiz", description: "MCQ, true/false, descriptive, match.", href: "/student/practice", icon: FileQuestion },
   { title: "Flashcards", description: "Create, study, shuffle, favorite.", href: "/student/flashcards", icon: Brain },
@@ -27,18 +29,31 @@ const quickActions = [
   { title: "Mind Map", description: "Turn topics into visual structure.", href: "/student/ask-ai?mode=Mind%20Map", icon: Map },
   { title: "Summarize Chapter", description: "Make chapters crisp and memorable.", href: "/student/ask-ai?mode=Summarize", icon: NotebookPen },
   { title: "Prepare for Exam", description: "Countdown, goals, weak areas.", href: "/student/planner", icon: Target },
-  { title: "Find Teacher", description: "Teacher discovery architecture.", href: "/student/teachers", icon: UsersRound }
+  { title: "Find Teacher", description: "Discover teachers matched to your subjects.", href: "/student/teachers", icon: UsersRound }
 ];
 
-export function StudentAIHome({ name, data, profileCompletion }: StudentAIHomeProps) {
+export function StudentAIHome({ name, data, profileCompletion, foundation }: StudentAIHomeProps) {
   const firstName = name?.split(" ")[0] ?? "Student";
   const continueClassroom = data.home.continueLearning;
   const focus = data.home.pendingAssignments[0]?.title ?? data.home.todaysClasses[0]?.entry.subject?.name ?? "Revise one important topic";
 
+  if (!foundation?.onboardingComplete) {
+    return <div className="space-y-6">
+      <section className="overflow-hidden rounded-[2rem] border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-7 shadow-soft sm:p-10">
+        <Badge className="border-indigo-100 bg-white text-indigo-700">Welcome to LearnX Guru</Badge>
+        <div className="mt-7 grid gap-8 lg:grid-cols-[1fr_360px] lg:items-center">
+          <div><h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Your learning journey starts with you, {firstName}.</h1><p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">Build a personal learning constellation so your AI companion understands your subjects, ambitions, pace, and preferred study rhythm.</p><Link className="mt-7 inline-flex h-12 items-center justify-center rounded-xl bg-indigo-600 px-6 font-medium text-white shadow-soft hover:bg-indigo-700" href="/student/onboarding">Build my learning map</Link></div>
+          <Card className="border-indigo-100 bg-white/85 p-6 shadow-soft"><p className="text-xs font-semibold uppercase tracking-widest text-indigo-700">Your path</p><div className="mt-5 space-y-4">{["You","Academics","Ambition","Learning rhythm"].map((step,index)=><div className="flex items-center gap-3" key={step}><span className={`grid h-8 w-8 place-items-center rounded-full ${index===0?"bg-indigo-600 text-white":"border border-indigo-200 text-indigo-400"}`}>{index+1}</span><span className="font-medium">{step}</span></div>)}</div></Card>
+        </div>
+      </section>
+      <section className="grid gap-4 md:grid-cols-3"><Card className="border-indigo-100 bg-indigo-50/50 p-5"><p className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Learning goal</p><p className="mt-2 font-semibold">Choose the ambition that matters to you</p></Card><Card className="border-cyan-100 bg-cyan-50/50 p-5"><p className="text-xs font-semibold uppercase tracking-wider text-cyan-700">Today&apos;s mission</p><p className="mt-2 font-semibold">Assembled after your learning map</p></Card><Card className="border-emerald-100 bg-emerald-50/50 p-5"><p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">AI companion</p><p className="mt-2 font-semibold">Ready to personalize your support</p></Card></section>
+    </div>;
+  }
+
   return (
     <div className="space-y-8">
       <section className="rounded-[2rem] border border-border bg-gradient-to-br from-sky-50 via-white to-blue-50 p-6 shadow-soft sm:p-8">
-        <Badge>Student AI Learning Companion</Badge>
+        <Badge className="border-indigo-100 bg-indigo-50 text-indigo-700">LearnX Guru · AI Learning Operating System</Badge>
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-end">
           <div>
             <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Welcome, {firstName}</h1>
@@ -64,6 +79,12 @@ export function StudentAIHome({ name, data, profileCompletion }: StudentAIHomePr
         </div>
       </section>
 
+      <section className="grid gap-4 md:grid-cols-3">
+        <Card className="border-indigo-100 bg-indigo-50/60 p-5"><p className="text-xs font-semibold uppercase tracking-wider text-indigo-700">Learning goal</p><p className="mt-2 font-semibold">{foundation.studentProfile?.learningGoal || "Keep building momentum"}</p></Card>
+        <Card className="border-cyan-100 bg-cyan-50/60 p-5"><p className="text-xs font-semibold uppercase tracking-wider text-cyan-700">Today&apos;s mission</p><p className="mt-2 font-semibold">{focus}</p></Card>
+        <Card className="border-emerald-100 bg-emerald-50/60 p-5"><p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">AI companion</p><p className="mt-2 font-semibold">Personalized and ready</p></Card>
+      </section>
+
       <ActivationChecklist name={name} profileCompletionPercentage={profileCompletion?.percentage} role="student" />
 
       {profileCompletion && profileCompletion.percentage < 100 ? (
@@ -73,10 +94,10 @@ export function StudentAIHome({ name, data, profileCompletion }: StudentAIHomePr
               <h2 className="text-xl font-semibold">Complete Your Profile</h2>
               <Badge>{profileCompletion.percentage}% complete</Badge>
             </div>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">Add your learning goals, language, grade, and interests so TeachX Guru can shape a better learning path.</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">Add your learning goals, language, grade, and interests so LearnX Guru can shape a better learning path.</p>
             <Progress className="mt-4 max-w-xl" value={profileCompletion.percentage} />
           </div>
-          <Link className="inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-soft hover:bg-foreground focus:outline-none focus:ring-2 focus:ring-primary" href="/profile">
+          <Link className="inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-soft hover:bg-foreground focus:outline-none focus:ring-2 focus:ring-primary" href="/student/profile">
             Go to Profile
           </Link>
         </Card>
@@ -116,7 +137,7 @@ export function StudentAIHome({ name, data, profileCompletion }: StudentAIHomePr
         <Card className="p-5 shadow-soft">
           <h2 className="text-xl font-semibold">Multilingual Learning</h2>
           <div className="mt-5 grid gap-3">
-            {["English", "Malayalam", "Hindi", "Tamil", "Arabic placeholder"].map((language) => (
+            {["English", "Malayalam", "Hindi", "Tamil", "Arabic"].map((language) => (
               <div className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm" key={language}>
                 <Languages className="h-4 w-4 text-sky-700" />
                 {language}
@@ -153,7 +174,7 @@ function Panel({ title, icon: Icon, items, empty }: { title: string; icon: typeo
         <Icon className="h-5 w-5 text-sky-700" />
       </div>
       <div className="mt-5 space-y-3">
-        {items.length ? items.slice(0, 5).map((item) => <p className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground" key={item}>{item}</p>) : <EmptyState icon={<Icon className="h-5 w-5" />} title={empty} description="Start learning with TeachX and this space will fill automatically." />}
+        {items.length ? items.slice(0, 5).map((item) => <p className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground" key={item}>{item}</p>) : <EmptyState icon={<Icon className="h-5 w-5" />} title={empty} description="Continue learning with LearnX and this space will update automatically." />}
       </div>
     </Card>
   );

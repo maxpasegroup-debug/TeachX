@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { BadgeCheck, BookOpen, LockKeyhole, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand/brand-logo";
@@ -56,7 +57,7 @@ export function AuthFormShell({ title, subtitle, children, journey = "login" }: 
       <div className="pointer-events-none absolute right-0 bottom-24 -z-10 h-80 w-80 rounded-full bg-brand-gold/10 blur-3xl motion-soft-glow" />
 
       <header className="mx-auto flex w-full max-w-7xl items-center justify-between">
-        <BrandLogo />
+        {journey === "student" ? <Link className="flex items-center gap-3" href="/student"><span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-cyan-500 to-emerald-400 font-semibold text-white">LX</span><span><span className="block font-semibold">LearnX Guru</span><span className="block text-xs text-muted-foreground">AI Learning Operating System</span></span></Link> : <BrandLogo />}
         <a className="nav-link rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition duration-brand ease-brand hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" href="/">
           Back Home
         </a>

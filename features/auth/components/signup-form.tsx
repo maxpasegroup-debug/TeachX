@@ -20,7 +20,7 @@ export function SignupForm({ userType }: SignupFormProps) {
   return (
     <form action={action} className="space-y-5">
       <input type="hidden" name="userType" value={userType} />
-      <div className="grid gap-3 sm:grid-cols-3">
+      {isTeacher ? <><div className="grid gap-3 sm:grid-cols-3">
         <button className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-border bg-white/80 text-sm font-semibold text-foreground opacity-70 shadow-sm" disabled type="button">
           <Mail className="h-4 w-4" />
           Email OTP
@@ -34,14 +34,14 @@ export function SignupForm({ userType }: SignupFormProps) {
           Google
         </button>
       </div>
-      <p className="rounded-2xl bg-brand-blue-soft px-4 py-3 text-xs leading-5 text-brand-blue">OTP and Google provider hooks are prepared as authentication architecture placeholders. Password signup is active.</p>
+      <p className="rounded-2xl bg-brand-blue-soft px-4 py-3 text-xs leading-5 text-brand-blue">Password signup is active. Additional provider connections will appear only when available.</p></> : null}
       <div className="space-y-2">
         <Label htmlFor="name">Full name</Label>
         <Input className="rounded-2xl bg-white/85 transition duration-brand ease-brand focus:border-brand-blue focus:shadow-brand-soft" id="name" name="name" autoComplete="name" placeholder={isTeacher ? "Anika Rao" : "Rohan Mehta"} required />
       </div>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input className="rounded-2xl bg-white/85 transition duration-brand ease-brand focus:border-brand-blue focus:shadow-brand-soft" id="email" name="email" type="email" autoComplete="email" placeholder={isTeacher ? "teacher@teachx.guru" : "student@teachx.guru"} required />
+        <Input className="rounded-2xl bg-white/85 transition duration-brand ease-brand focus:border-brand-blue focus:shadow-brand-soft" id="email" name="email" type="email" autoComplete="email" placeholder={isTeacher ? "teacher@teachx.guru" : "student@learnx.guru"} required />
       </div>
       <div className="space-y-2">
         <Label htmlFor="phone">Phone</Label>
@@ -61,7 +61,7 @@ export function SignupForm({ userType }: SignupFormProps) {
       </div>
       <label className="flex items-start gap-3 rounded-2xl border border-white/80 bg-white/60 px-4 py-3 text-sm leading-6 text-muted-foreground">
         <input className="mt-1 h-4 w-4 rounded border-border text-brand-blue focus:ring-brand-blue" name="agreement" required type="checkbox" />
-        I agree to use TeachX Guru responsibly and understand that provider integrations may be enabled later by the platform team.
+        I agree to use {isTeacher ? "TeachX Guru" : "LearnX Guru"} responsibly and accept the platform privacy and account terms.
       </label>
       {error ? <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
       <Button className="premium-button h-13 w-full rounded-2xl shadow-brand transition duration-brand ease-brand" disabled={pending} type="submit">
@@ -69,7 +69,7 @@ export function SignupForm({ userType }: SignupFormProps) {
       </Button>
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link className="font-semibold text-foreground transition hover:text-brand-blue" href="/login">
+        <Link className="font-semibold text-foreground transition hover:text-brand-blue" href={isTeacher ? "/login" : "/login/student"}>
           Login
         </Link>
       </p>

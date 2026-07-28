@@ -68,6 +68,11 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
   ],
   student: [
     { label: "Home", href: "/student", icon: LayoutDashboard },
+    { label: "My Learning Map", href: "/student/onboarding", icon: Sparkles },
+    { label: "Profile", href: "/student/profile", icon: GraduationCap },
+    { label: "Goals", href: "/student/goals", icon: Gauge },
+    { label: "Connections", href: "/student/connections", icon: UsersRound },
+    { label: "AI Preferences", href: "/student/personalization", icon: Bot },
     { label: "AI Tutor", href: "/student/ask-ai", icon: Bot },
     { label: "Practice", href: "/student/practice", icon: GraduationCap },
     { label: "Flashcards", href: "/student/flashcards", icon: BookOpen },

@@ -15,15 +15,16 @@ export function Sidebar({ institutionName, logoUrl, roles }: { institutionName: 
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const navigation = getNavigationForRoles(roles);
+  const isStudent = navigation.workspace === "student";
 
   return (
     <aside className={cn("hidden min-h-screen border-r border-border bg-surface/95 shadow-soft transition-all duration-200 md:flex md:flex-col", collapsed ? "w-20" : "w-72")}>
       <div className="flex h-20 items-center gap-3 px-5">
-        {logoUrl ? <Image alt={`${institutionName} logo`} className="h-11 w-11 shrink-0 rounded-2xl object-cover" height={44} src={logoUrl} unoptimized width={44} /> : <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-blue-700 text-base font-semibold text-white">TX</div>}
+        {!isStudent && logoUrl ? <Image alt={`${institutionName} logo`} className="h-11 w-11 shrink-0 rounded-2xl object-cover" height={44} src={logoUrl} unoptimized width={44} /> : <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-base font-semibold text-white ${isStudent ? "from-indigo-500 via-cyan-500 to-emerald-400" : "from-sky-500 to-blue-700"}`}>{isStudent ? "LX" : "TX"}</div>}
         {!collapsed ? (
           <div className="min-w-0">
-            <p className="truncate text-base font-semibold">TeachX</p>
-            <p className="truncate text-sm text-muted-foreground">Professional AI Workspace</p>
+            <p className="truncate text-base font-semibold">{isStudent ? "LearnX Guru" : "TeachX"}</p>
+            <p className="truncate text-sm text-muted-foreground">{isStudent ? "My Learning OS" : "Professional AI Workspace"}</p>
           </div>
         ) : null}
       </div>
@@ -49,7 +50,7 @@ export function Sidebar({ institutionName, logoUrl, roles }: { institutionName: 
         })}
       </nav>
       <div className="border-t border-border p-3">
-        {!collapsed ? <p className="mb-3 truncate px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">{institutionName}</p> : null}
+        {!collapsed ? <p className="mb-3 truncate px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">{isStudent ? "Student workspace" : institutionName}</p> : null}
         <Button className="w-full justify-center px-3" onClick={() => setCollapsed((value) => !value)} type="button" variant="ghost">
           {collapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
           {!collapsed ? <span className="ml-2">Collapse</span> : null}
