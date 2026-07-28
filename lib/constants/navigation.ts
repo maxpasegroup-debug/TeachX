@@ -54,7 +54,12 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "Earnings", href: "/teacher/business/earnings", icon: WalletCards },
     { label: "Orders", href: "/teacher/business/orders", icon: LibraryBig },
     { label: "Analytics", href: "/teacher/business/analytics", icon: Search },
-    { label: "Community", href: "/communication", icon: MessageCircle },
+    { label: "Community", href: "/teacher/community/home", icon: MessageCircle },
+    { label: "Discussions", href: "/teacher/community/discussions", icon: MessageCircle },
+    { label: "Teacher Groups", href: "/teacher/community/groups", icon: UsersRound },
+    { label: "Network", href: "/teacher/community/network", icon: UsersRound },
+    { label: "Messages", href: "/teacher/community/messages", icon: MessageCircle },
+    { label: "Collaboration", href: "/teacher/community/collaboration", icon: LibraryBig },
     { label: "Wallet", href: "/teacher/business/wallet", icon: WalletCards },
     { label: "Subscription", href: "/teacher/business/subscription", icon: WalletCards },
     { label: "Settings", href: "/teacher/settings", icon: Settings }
