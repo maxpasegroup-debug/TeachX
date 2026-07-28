@@ -1,6 +1,7 @@
 import {
   BookOpen,
   Bot,
+  Building2,
   Compass,
   GraduationCap,
   LayoutDashboard,
@@ -79,6 +80,7 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
   ],
   admin: [
     { label: "Overview", href: "/admin", icon: PanelTop },
+    { label: "Institution", href: "/institution/dashboard", icon: Building2 },
     { label: "Teachers", href: "/admin/teachers", icon: UsersRound },
     { label: "Students", href: "/admin/students", icon: GraduationCap },
     { label: "Growth", href: "/admin/platform-analytics", icon: PanelTop },
