@@ -4,6 +4,7 @@ import {
   Building2,
   Compass,
   GraduationCap,
+  Gauge,
   LayoutDashboard,
   LibraryBig,
   CalendarDays,
@@ -80,6 +81,7 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
   ],
   admin: [
     { label: "Overview", href: "/admin", icon: PanelTop },
+    { label: "Control Center", href: "/admin/control/dashboard", icon: Gauge },
     { label: "Institution", href: "/institution/dashboard", icon: Building2 },
     { label: "Teachers", href: "/admin/teachers", icon: UsersRound },
     { label: "Students", href: "/admin/students", icon: GraduationCap },
