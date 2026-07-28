@@ -1,5 +1,2 @@
-import { StudentAITutor } from "@/features/student-ai/components/student-ai-tutor";
-
-export default function StudentRevisionPage() {
-  return <StudentAITutor defaultMode="Revision Mode" />;
-}
+import { redirect } from "next/navigation";
+export default function Page(){redirect("/student/ai?module=revision");}

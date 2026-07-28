@@ -1,6 +1,2 @@
-import { StudentAITutor } from "@/features/student-ai/components/student-ai-tutor";
-
-export default async function StudentAskAIPage({ searchParams }: { searchParams: Promise<{ mode?: string }> }) {
-  const params = await searchParams;
-  return <StudentAITutor defaultMode={params.mode ?? "Explain"} />;
-}
+import { redirect } from "next/navigation";
+export default async function Page({ searchParams }: { searchParams: Promise<{ mode?: string }> }) { const p=await searchParams; redirect(`/student/ai?module=${p.mode === "Explain" ? "explainer" : "tutor"}`); }

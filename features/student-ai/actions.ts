@@ -1,62 +1,27 @@
 "use server";
-
 import { revalidatePath } from "next/cache";
-
+import type { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { runAI } from "@/services/ai-service";
+export type StudentAIState = { text?: string; conversationId?: string; error?: string };
+const field = (d: FormData, k: string) => String(d.get(k) ?? "").trim();
+async function student() { const s = await auth(); if (!s?.user.id || !s.user.roles?.includes("STUDENT")) throw new Error("Student access required."); return s.user; }
+const contracts: Record<string,string> = { tutor: "Give numbered steps, an alternative explanation, and 3 follow-up questions.", explainer: "Include a simple explanation, real-life example, visual suggestion, takeaways, and common mistakes.", homework: "Use hint, guided, or full mode as requested. Include reasoning and 2 similar questions.", revision: "Include quick notes, formulas, definitions, summary cards, and a last-minute recap.", flashcards: "Create 8 concise cards formatted Q: then A:.", writing: "Include feedback, an improved version, structure, grammar fixes, and vocabulary." };
+export async function askStudentTutorAction(_: StudentAIState, d: FormData): Promise<StudentAIState> { try { const u = await student(); if (!process.env.OPENAI_API_KEY) return { error: "AI generation is not configured. Ask your administrator to add an OpenAI API key." }; const prompt = field(d,"prompt").slice(0,12000); if (!prompt) return { error: "Enter a question or learning task." }; const module = field(d,"module") || "tutor"; const prefRow = await prisma.userPreference.findUnique({ where: { userId_key: { userId:u.id,key:"learnx.ai.personalization" } } }); const pref = prefRow?.value && typeof prefRow.value === "object" && !Array.isArray(prefRow.value) ? prefRow.value as Record<string,unknown> : {}; const previousId=field(d,"conversationId"); const previous=pref.memoryEnabled!==false&&previousId?await prisma.aIConversation.findFirst({where:{id:previousId,userId:u.id,scope:"STUDENT"}}):null; const result=await runAI({institutionId:u.institutionId,userId:u.id,scope:"STUDENT",feature:`student_${module}`,prompt:[`Module: ${module}`,`Subject: ${field(d,"subject")||"General"}`,`Topic: ${field(d,"topic")||"Not specified"}`,`Style: ${field(d,"style")||"Step by step"}`,`Solution mode: ${field(d,"solutionMode")||"Not applicable"}`,`Revision format: ${field(d,"revisionFormat")||"Not applicable"}`,`Writing task: ${field(d,"writingTask")||"Not applicable"}`,contracts[module]??contracts.tutor,`Student request: ${prompt}`].join("\n"),context:{product:"LearnX Guru",subject:field(d,"subject"),topic:field(d,"topic"),preferences:pref,previousMessages:Array.isArray(previous?.messages)?previous.messages.slice(-6):[]} as Prisma.InputJsonValue}); revalidatePath("/student/ai"); return {text:result.text,conversationId:result.conversationId}; } catch(e) { return {error:e instanceof Error?e.message:"AI is unavailable. Check the provider configuration."}; } }
+export async function saveStudentAIAction(d:FormData){const u=await student();const id=field(d,"entityId");const owned=await prisma.aIConversation.findFirst({where:{id,userId:u.id,scope:"STUDENT"}});if(!owned)return;await prisma.favoriteItem.upsert({where:{userId_type_entityId:{userId:u.id,type:"student-ai-saved",entityId:id}},update:{title:field(d,"title")||owned.title,link:"/student/ai?module=history"},create:{userId:u.id,type:"student-ai-saved",entityId:id,title:field(d,"title")||owned.title,link:"/student/ai?module=history"}});revalidatePath("/student/ai");}
+export async function deleteStudentAIAction(d:FormData){const u=await student();const id=field(d,"id");await prisma.aIConversation.deleteMany({where:{id,userId:u.id,scope:"STUDENT"}});await prisma.favoriteItem.deleteMany({where:{userId:u.id,entityId:id,type:{startsWith:"student-ai"}}});revalidatePath("/student/ai");}
+export async function renameStudentAIAction(d:FormData){const u=await student();await prisma.aIConversation.updateMany({where:{id:field(d,"id"),userId:u.id,scope:"STUDENT"},data:{title:field(d,"title").slice(0,100)||"Learning session"}});revalidatePath("/student/ai");}
+export async function saveStudentAIPreferencesAction(d:FormData){const u=await student();const value={learningStyle:field(d,"learningStyle"),explanationStyle:field(d,"explanationStyle"),difficulty:field(d,"difficulty"),memoryEnabled:d.get("memoryEnabled")==="on",subjects:field(d,"subjects").split(",").map(x=>x.trim()).filter(Boolean).slice(0,12)};await prisma.userPreference.upsert({where:{userId_key:{userId:u.id,key:"learnx.ai.personalization"}},update:{value},create:{userId:u.id,key:"learnx.ai.personalization",value}});revalidatePath("/student/ai");}
+export const favoriteStudentAIAction=saveStudentAIAction;
 
-export type StudentAIState = {
-  text?: string;
-  conversationId?: string;
-  error?: string;
-};
-
-function value(formData: FormData, key: string) {
-  return String(formData.get(key) ?? "").trim();
+export async function toggleStudentAIBookmarkAction(d: FormData) {
+  const u=await student(); const id=field(d,"entityId"); const owned=await prisma.aIConversation.findFirst({where:{id,userId:u.id,scope:"STUDENT"}}); if(!owned)return;
+  const key={userId_type_entityId:{userId:u.id,type:"student-ai-bookmark",entityId:id}}; const existing=await prisma.favoriteItem.findUnique({where:key});
+  if(existing) await prisma.favoriteItem.delete({where:{id:existing.id}}); else await prisma.favoriteItem.create({data:{userId:u.id,type:"student-ai-bookmark",entityId:id,title:owned.title,link:"/student/ai?module=history"}}); revalidatePath("/student/ai");
 }
-
-export async function askStudentTutorAction(_: StudentAIState, formData: FormData): Promise<StudentAIState> {
-  const session = await auth();
-  if (!session?.user) return { error: "Please sign in." };
-
-  const prompt = value(formData, "prompt");
-  if (!prompt) return { error: "Ask a learning question." };
-
-  const mode = value(formData, "mode") || "Explain";
-  const language = value(formData, "language") || "English";
-  const level = value(formData, "level") || "Simple";
-
-  const result = await runAI({
-    institutionId: session.user.institutionId,
-    userId: session.user.id,
-    scope: "STUDENT",
-    feature: `student_${mode.toLowerCase().replaceAll(" ", "_")}`,
-    prompt: [
-      `Learning mode: ${mode}`,
-      `Preferred language: ${language}`,
-      `Difficulty/level: ${level}`,
-      `Student question: ${prompt}`,
-      "Respond like a supportive learning coach. Do not solve harmful or unrelated requests. Use examples and steps where useful."
-    ].join("\n"),
-    context: { mode, language, level, product: "TeachX Student AI Tutor" }
-  });
-
-  revalidatePath("/student");
-  revalidatePath("/student/ask-ai");
-  return { text: result.text, conversationId: result.conversationId };
-}
-
-export async function favoriteStudentAIAction(formData: FormData) {
-  const session = await auth();
-  const entityId = value(formData, "entityId");
-  const title = value(formData, "title") || "Saved AI answer";
-  if (!session?.user.id || !entityId) return;
-
-  await prisma.favoriteItem.upsert({
-    where: { userId_type_entityId: { userId: session.user.id, type: "student-ai-bookmark", entityId } },
-    update: { title, link: "/student/bookmarks" },
-    create: { userId: session.user.id, type: "student-ai-bookmark", entityId, title, link: "/student/bookmarks" }
-  });
-  revalidatePath("/student/bookmarks");
-}
+type Deck={id:string;title:string;subject:string;cards:{id:string;question:string;answer:string}[]};
+async function decks(userId:string){const row=await prisma.userPreference.findUnique({where:{userId_key:{userId,key:"learnx.ai.flashcards"}}});return Array.isArray(row?.value)?row.value.filter((x):x is Deck=>!!x&&typeof x==="object"&&!Array.isArray(x)&&typeof (x as {id?:unknown}).id==="string").slice(0,30):[];}
+async function writeDecks(userId:string,value:Deck[]){await prisma.userPreference.upsert({where:{userId_key:{userId,key:"learnx.ai.flashcards"}},update:{value},create:{userId,key:"learnx.ai.flashcards",value}});revalidatePath("/student/ai");}
+export async function saveFlashcardDeckAction(d:FormData){const u=await student();const current=await decks(u.id);const id=field(d,"deckId")||crypto.randomUUID();const cardId=field(d,"cardId")||crypto.randomUUID();const existing=current.find(x=>x.id===id);const card={id:cardId,question:field(d,"question").slice(0,500),answer:field(d,"answer").slice(0,1500)};if(!card.question||!card.answer)return;const next=existing?current.map(x=>x.id===id?{...x,title:field(d,"title")||x.title,subject:field(d,"subject")||x.subject,cards:x.cards.some(y=>y.id===cardId)?x.cards.map(y=>y.id===cardId?card:y):[...x.cards,card]}:x):[{id,title:field(d,"title")||"My flashcards",subject:field(d,"subject")||"General",cards:[card]},...current];await writeDecks(u.id,next);}
+export async function deleteFlashcardItemAction(d:FormData){const u=await student();const current=await decks(u.id);const deckId=field(d,"deckId"),cardId=field(d,"cardId");const next=cardId?current.map(x=>x.id===deckId?{...x,cards:x.cards.filter(y=>y.id!==cardId)}:x):current.filter(x=>x.id!==deckId);await writeDecks(u.id,next);}

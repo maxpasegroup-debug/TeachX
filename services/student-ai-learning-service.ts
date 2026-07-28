@@ -70,3 +70,20 @@ export async function getStudentAIHome(input: { userId?: string; institutionId?:
     }
   };
 }
+
+export type StudentAIPreferences = { learningStyle: string; explanationStyle: string; difficulty: string; memoryEnabled: boolean; subjects: string[] };
+const defaultAIPreferences: StudentAIPreferences = { learningStyle: "Examples first", explanationStyle: "Step by step", difficulty: "Adaptive", memoryEnabled: true, subjects: [] };
+function objectValue(value: unknown): Record<string, unknown> { return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {}; }
+export async function getStudentAIWorkspace(userId?: string) {
+  if (!userId) return { conversations: [], favorites: [], preferences: defaultAIPreferences, recommendations: [], flashcardDecks: [] };
+  const [conversations, favorites, preference, flashcardPreference, home] = await Promise.all([
+    prisma.aIConversation.findMany({ where: { userId, scope: "STUDENT" }, orderBy: { updatedAt: "desc" }, take: 40 }),
+    prisma.favoriteItem.findMany({ where: { userId, type: { startsWith: "student-ai" } }, orderBy: { createdAt: "desc" }, take: 40 }),
+    prisma.userPreference.findUnique({ where: { userId_key: { userId, key: "learnx.ai.personalization" } } }),
+    prisma.userPreference.findUnique({ where: { userId_key: { userId, key: "learnx.ai.flashcards" } } }), getStudentHome(userId)
+  ]);
+  const raw = objectValue(preference?.value);
+  const preferences: StudentAIPreferences = { learningStyle: typeof raw.learningStyle === "string" ? raw.learningStyle : defaultAIPreferences.learningStyle, explanationStyle: typeof raw.explanationStyle === "string" ? raw.explanationStyle : defaultAIPreferences.explanationStyle, difficulty: typeof raw.difficulty === "string" ? raw.difficulty : defaultAIPreferences.difficulty, memoryEnabled: typeof raw.memoryEnabled === "boolean" ? raw.memoryEnabled : true, subjects: Array.isArray(raw.subjects) ? raw.subjects.filter((x): x is string => typeof x === "string").slice(0, 12) : [] };
+  const recommendations = [...home.pendingAssignments.slice(0, 3).map((x) => ({ title: x.title, reason: "Upcoming assignment", mode: "homework" })), ...home.progress.filter((x) => x.completion < 60).slice(0, 3).map((x) => ({ title: `Strengthen a ${x.completion}% mastery topic`, reason: "Your progress shows room to improve", mode: "revision" }))];
+  return { conversations, favorites, preferences, recommendations, flashcardDecks: Array.isArray(flashcardPreference?.value) ? flashcardPreference.value : [] };
+}
