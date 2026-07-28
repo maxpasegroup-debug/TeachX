@@ -21,6 +21,7 @@ export default async function TeacherHomePage() {
       favorites={home.preferences.favoriteItems.map((item) => ({ title: item.title, meta: item.type, href: item.link }))}
       savedSearches={home.preferences.savedSearches.map((item) => ({ title: item.name, meta: item.query, href: "/teacher/resources" }))}
       notifications={home.notifications.map((item) => ({ title: item.title, meta: item.body, href: item.link }))}
+      daily={home.daily}
     />
   );
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ArrowRight, Bell, BookOpen, Bookmark, Download, FileQuestion, FileText, FolderOpen, GraduationCap, History, Lightbulb, NotebookPen, PenLine, Pin, Sparkles, Target, UsersRound } from "lucide-react";
+import { ArrowRight, Bell, BookOpen, Bookmark, CalendarDays, Download, FileText, FolderOpen, GraduationCap, History, Lightbulb, NotebookPen, Pin, Sparkles, Target, UsersRound } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -106,13 +106,18 @@ function ProfileCompletionCard({ completion, href }: { completion: ProfileComple
   );
 }
 
-export function TeacherOperatingDashboard({ name, completion, recentItems, favorites, savedSearches, notifications, plan, aiCreditsRemaining, stats }: DashboardProps & { plan: string; aiCreditsRemaining: number; stats: { resourcesCreated: number; studentsHelped: number; aiCredits: number; downloads: number } }) {
+export function TeacherOperatingDashboard({ name, completion, recentItems, favorites, savedSearches, notifications, plan, aiCreditsRemaining, stats, daily }: DashboardProps & {
+  plan: string;
+  aiCreditsRemaining: number;
+  stats: { resourcesCreated: number; studentsHelped: number; aiCredits: number; downloads: number };
+  daily: { todaysClasses: ListItem[]; schedule: ListItem[]; pendingTasks: ListItem[]; recentAI: ListItem[]; recentResources: ListItem[]; activity: ListItem[] };
+}) {
   const quickActions = [
-    { title: "Create Lesson", description: "Start a polished lesson outline for your teaching workflow.", href: "/teacher/resources", icon: FileText },
-    { title: "Create Worksheet", description: "Prepare exercises and printable practice sheets.", href: "/teacher/resources", icon: PenLine },
-    { title: "Question Paper", description: "Organize questions for tests and assignments.", href: "/teacher/resources", icon: FileQuestion },
-    { title: "Homework", description: "Plan assignments, follow-up tasks, and reusable teaching routines.", href: "/teacher/resources", icon: NotebookPen },
-    { title: "My Resources", description: "Open your resource library and saved drafts.", href: "/teacher/resources", icon: FolderOpen }
+    { title: "My Classroom", description: "Open classes, attendance, homework, and teaching resources.", href: "/teacher/workspace/classrooms", icon: UsersRound },
+    { title: "Lesson Library", description: "Create or continue a saved lesson.", href: "/teacher/workspace/lessons", icon: FileText },
+    { title: "Planner", description: "Review schedules, exams, reminders, and deadlines.", href: "/teacher/workspace/planner", icon: CalendarDays },
+    { title: "Notes", description: "Capture personal, teaching, and AI notes.", href: "/teacher/workspace/notes", icon: NotebookPen },
+    { title: "My Resources", description: "Open uploads, purchases, and downloads.", href: "/teacher/workspace/resources", icon: FolderOpen }
   ];
 
   return (
@@ -164,9 +169,16 @@ export function TeacherOperatingDashboard({ name, completion, recentItems, favor
         <ProfileCompletionCard completion={completion} href="/profile" />
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2">
-        <ListPanel title="Platform Updates" icon={Bell} items={notifications} emptyTitle="No announcements yet" />
-        <ListPanel title="Teaching Productivity Tips" icon={Lightbulb} items={[{ title: "Keep resources reusable and short", meta: "Tip" }, { title: "Use one objective per worksheet", meta: "Teaching resource" }, { title: "Complete your profile before publishing offers", meta: "Growth" }]} emptyTitle="No tips yet" />
+      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <ListPanel title="Today's Schedule" icon={CalendarDays} items={daily.schedule} emptyTitle="No schedule today" />
+        <ListPanel title="Today's Classes" icon={UsersRound} items={daily.todaysClasses} emptyTitle="No classes today" />
+        <ListPanel title="Pending Tasks" icon={Pin} items={daily.pendingTasks} emptyTitle="You're all caught up" />
+        <ListPanel title="Recent AI Activities" icon={Sparkles} items={daily.recentAI} emptyTitle="No recent AI activity" />
+        <ListPanel title="Recent Resources" icon={FolderOpen} items={daily.recentResources} emptyTitle="No recent resources" />
+        <ListPanel title="Notifications" icon={Bell} items={notifications} emptyTitle="No notifications" />
+        <ListPanel title="Continue Working" icon={ArrowRight} items={recentItems} emptyTitle="Nothing in progress" />
+        <ListPanel title="Recently Opened" icon={History} items={recentItems} emptyTitle="No recently opened items" />
+        <ListPanel title="Recent Activity" icon={Lightbulb} items={daily.activity} emptyTitle="No recent workspace activity" />
       </section>
     </div>
   );

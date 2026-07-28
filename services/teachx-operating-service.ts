@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db";
 import type { RoleKey } from "@/lib/constants/roles";
 import { getUserPreferences } from "@/services/preference-service";
 import { getRecentNotifications } from "@/services/notification-service";
+import { getTeacherDashboard } from "@/services/classroom-service";
+import { getRecentActivities } from "@/services/activity-service";
 
 // Shared Platform: profile completion and workspace summary helpers are reused
 // by TeachX Guru today and by future frontends without changing backend models.
@@ -76,12 +78,16 @@ async function getTeachXUser(userId?: string) {
 
 export async function getTeacherOperatingHome(input: { userId?: string; institutionId?: string | null; roles: RoleKey[] }) {
   const user = await getTeachXUser(input.userId);
-  const [preferences, notifications, resourcesCreated, studentsHelped, downloads] = await Promise.all([
+  const [preferences, notifications, resourcesCreated, studentsHelped, downloads, teacherDashboard, recentAI, recentResources, recentActivity] = await Promise.all([
     getUserPreferences(input.userId),
     getRecentNotifications(input.userId, 12),
     input.userId ? prisma.contentItem.count({ where: { createdById: input.userId } }) : 0,
     input.userId ? prisma.batchStudent.count({ where: { batch: { faculty: { some: { facultyId: input.userId } } } } }) : 0,
-    input.userId ? prisma.downloadHistory.count({ where: { item: { createdById: input.userId } } }) : 0
+    input.userId ? prisma.downloadHistory.count({ where: { item: { createdById: input.userId } } }) : 0,
+    getTeacherDashboard(input.userId, input.institutionId, input.roles),
+    input.userId ? prisma.aIConversation.findMany({ where: { userId: input.userId, scope: "TEACHER" }, orderBy: { updatedAt: "desc" }, take: 5 }) : [],
+    input.userId ? prisma.contentItem.findMany({ where: { createdById: input.userId }, orderBy: { updatedAt: "desc" }, take: 5 }) : [],
+    getRecentActivities(input.institutionId, 8)
   ]);
 
   const completion = getTeacherProfileCompletion({
@@ -107,6 +113,25 @@ export async function getTeacherOperatingHome(input: { userId?: string; institut
       studentsHelped,
       aiCredits: 240,
       downloads
+    },
+    daily: {
+      todaysClasses: teacherDashboard.todaysClasses.map(({ classroom, entry }) => ({
+        title: `${entry.subject?.name ?? "Class"} · ${classroom.batch.name}`,
+        meta: `${entry.timeSlot.startsAt}–${entry.timeSlot.endsAt}`,
+        href: `/classrooms/${classroom.id}`
+      })),
+      schedule: teacherDashboard.upcomingClasses.map(({ classroom, entry }) => ({
+        title: `${entry.day} · ${entry.subject?.name ?? "Class"}`,
+        meta: `${entry.timeSlot.startsAt}–${entry.timeSlot.endsAt} · ${classroom.batch.name}`,
+        href: `/classrooms/${classroom.id}`
+      })),
+      pendingTasks: [
+        ...teacherDashboard.pendingAttendance.map((classroom) => ({ title: `Take attendance · ${classroom.batch.name}`, meta: "Attendance", href: `/classrooms/${classroom.id}` })),
+        ...(teacherDashboard.assignmentsAwaitingReview ? [{ title: `${teacherDashboard.assignmentsAwaitingReview} homework submissions to review`, meta: "Homework", href: "/teacher/workspace/classrooms" }] : [])
+      ],
+      recentAI: recentAI.map((item) => ({ title: item.title, meta: item.updatedAt.toLocaleString(), href: "/teacher/workspace/saved-ai" })),
+      recentResources: recentResources.map((item) => ({ title: item.title, meta: item.type.replaceAll("_", " "), href: "/teacher/workspace/resources" })),
+      activity: recentActivity.map((item) => ({ title: item.title, meta: item.body, href: item.link }))
     }
   };
 }
