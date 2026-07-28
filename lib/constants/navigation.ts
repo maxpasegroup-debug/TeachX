@@ -47,9 +47,16 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "AI Studio", href: "/teacher/ai-studio", icon: Sparkles },
     { label: "AI Chat", href: "/teacher/ai-studio/chat", icon: Bot },
     { label: "AI History", href: "/teacher/ai-studio/history", icon: Search },
-    { label: "Marketplace", href: "/teacher/marketplace", icon: Store },
+    { label: "Business Profile", href: "/teacher/business/profile", icon: Store },
+    { label: "Portfolio", href: "/teacher/business/portfolio", icon: BookOpen },
+    { label: "Publishing", href: "/teacher/business/publishing", icon: LibraryBig },
+    { label: "Marketplace", href: "/teacher/business/marketplace", icon: Store },
+    { label: "Earnings", href: "/teacher/business/earnings", icon: WalletCards },
+    { label: "Orders", href: "/teacher/business/orders", icon: LibraryBig },
+    { label: "Analytics", href: "/teacher/business/analytics", icon: Search },
     { label: "Community", href: "/communication", icon: MessageCircle },
-    { label: "Wallet", href: "/teacher/wallet", icon: WalletCards },
+    { label: "Wallet", href: "/teacher/business/wallet", icon: WalletCards },
+    { label: "Subscription", href: "/teacher/business/subscription", icon: WalletCards },
     { label: "Settings", href: "/teacher/settings", icon: Settings }
   ],
   student: [
