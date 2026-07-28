@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { ArrowRight, Bookmark, Clock, FileText, MessageSquare, Mic, Paperclip, Search, Sparkles, Star, WalletCards } from "lucide-react";
+import { ArrowRight, Bookmark, Clock, FileText, MessageSquare, Search, Sparkles, Star, WalletCards } from "lucide-react";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -25,6 +28,11 @@ function groupedTools() {
 
 export function AIStudioHome({ name, credits, usage, recent, favoriteCount }: AIStudioHomeProps) {
   const groups = groupedTools();
+  const [search, setSearch] = useState("");
+  const visibleGroups = Object.fromEntries(Object.entries(groups).map(([category, tools]) => [
+    category,
+    tools.filter((tool) => `${tool.title} ${tool.description} ${tool.category}`.toLowerCase().includes(search.toLowerCase()))
+  ]).filter(([, tools]) => (tools as AIStudioTool[]).length)) as Record<string, AIStudioTool[]>;
 
   return (
     <div className="space-y-8">
@@ -51,6 +59,11 @@ export function AIStudioHome({ name, credits, usage, recent, favoriteCount }: AI
 
       <GlobalCommandBar />
 
+      <div className="flex h-14 items-center gap-3 rounded-2xl border border-border bg-surface px-5 shadow-sm">
+        <Search className="h-5 w-5 text-muted-foreground" />
+        <input aria-label="Search AI Teaching Studio tools" className="min-w-0 flex-1 bg-transparent outline-none" onChange={(event) => setSearch(event.target.value)} placeholder="Search lesson, worksheet, assessment, communication…" type="search" value={search} />
+      </div>
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card className="p-5 shadow-soft"><Clock className="h-5 w-5 text-sky-700" /><p className="mt-4 text-2xl font-semibold">{usage.generationCount}</p><p className="text-sm text-muted-foreground">Generations today</p></Card>
         <Card className="p-5 shadow-soft"><Sparkles className="h-5 w-5 text-sky-700" /><p className="mt-4 text-2xl font-semibold">{usage.totalTokens}</p><p className="text-sm text-muted-foreground">Tokens used</p></Card>
@@ -62,11 +75,11 @@ export function AIStudioHome({ name, credits, usage, recent, favoriteCount }: AI
         <Link className="rounded-2xl border border-border bg-surface p-5 shadow-soft hover:border-sky-200 hover:bg-sky-50" href="/teacher/ai-studio/chat"><MessageSquare className="h-5 w-5 text-sky-700" /><p className="mt-4 font-semibold">AI Chat</p><p className="mt-1 text-sm text-muted-foreground">Ask, prepare, revise, and continue chats.</p></Link>
         <Link className="rounded-2xl border border-border bg-surface p-5 shadow-soft hover:border-sky-200 hover:bg-sky-50" href="/teacher/ai-studio/prompts"><Bookmark className="h-5 w-5 text-sky-700" /><p className="mt-4 font-semibold">Prompt Library</p><p className="mt-1 text-sm text-muted-foreground">Categories, templates, favorites.</p></Link>
         <Link className="rounded-2xl border border-border bg-surface p-5 shadow-soft hover:border-sky-200 hover:bg-sky-50" href="/teacher/ai-studio/history"><Clock className="h-5 w-5 text-sky-700" /><p className="mt-4 font-semibold">AI History</p><p className="mt-1 text-sm text-muted-foreground">Open, duplicate, edit, export.</p></Link>
-        <Card className="p-5 shadow-soft"><div className="flex gap-3"><Mic className="h-5 w-5 text-sky-700" /><Paperclip className="h-5 w-5 text-sky-700" /></div><p className="mt-4 font-semibold">Voice & Upload</p><p className="mt-1 text-sm text-muted-foreground">Architecture ready for voice, PDF, DOCX, image, PPT, and OCR.</p></Card>
+        <Link className="rounded-2xl border border-border bg-surface p-5 shadow-soft hover:border-sky-200 hover:bg-sky-50" href="/teacher/ai-studio/bookmarks"><Star className="h-5 w-5 text-sky-700" /><p className="mt-4 font-semibold">Favorites</p><p className="mt-1 text-sm text-muted-foreground">Return to saved teaching materials.</p></Link>
       </section>
 
       <section className="space-y-8">
-        {Object.entries(groups).map(([category, tools]) => (
+        {Object.entries(visibleGroups).map(([category, tools]) => (
           <div key={category}>
             <div className="mb-4 flex items-center justify-between gap-4">
               <h2 className="text-2xl font-semibold">{category}</h2>
@@ -88,6 +101,7 @@ export function AIStudioHome({ name, credits, usage, recent, favoriteCount }: AI
           </div>
         ))}
       </section>
+      {!Object.keys(visibleGroups).length ? <EmptyState icon={<Search className="h-5 w-5" />} title="No matching tools" description="Try a different tool name or teaching task." /> : null}
 
       <section>
         <h2 className="mb-4 text-2xl font-semibold">Recent Generations</h2>
