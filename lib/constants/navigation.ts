@@ -10,6 +10,7 @@ import {
   CalendarDays,
   Bell,
   History,
+  Map,
   NotebookPen,
   LucideIcon,
   MessageCircle,
@@ -68,6 +69,7 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
   ],
   student: [
     { label: "Home", href: "/student", icon: LayoutDashboard },
+    { label: "My Journey", href: "/student/journey", icon: Map },
     { label: "My Learning Map", href: "/student/onboarding", icon: Sparkles },
     { label: "Profile", href: "/student/profile", icon: GraduationCap },
     { label: "Goals", href: "/student/goals", icon: Gauge },

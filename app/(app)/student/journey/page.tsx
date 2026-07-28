@@ -1,0 +1,1 @@
+import{auth}from"@/auth";import{StudentJourneyWorkspace}from"@/features/student-journey/components/student-journey-workspace";import{getStudentJourney}from"@/services/student-journey-service";export default async function Page(){const s=await auth();return <StudentJourneyWorkspace data={await getStudentJourney({userId:s?.user.id,institutionId:s?.user.institutionId})}/>}

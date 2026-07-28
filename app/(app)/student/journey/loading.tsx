@@ -1,0 +1,1 @@
+import{Skeleton}from"@/components/ui/skeleton";export default function Loading(){return <div className="space-y-5"><Skeleton className="h-52 rounded-3xl"/><Skeleton className="h-96 rounded-2xl"/></div>}
