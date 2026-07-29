@@ -1,5 +1,4 @@
-import { PracticeExperience } from "@/features/student-ai/components/student-learning-pages";
-
-export default function StudentPracticePage() {
-  return <PracticeExperience />;
-}
+import { auth } from "@/auth";
+import { PracticeWorkspace } from "@/features/student-practice/components/practice-workspace";
+import { getStudentPractice } from "@/services/student-practice-service";
+export default async function Page(){const s=await auth();return <PracticeWorkspace data={await getStudentPractice(s?.user.id)}/>}
