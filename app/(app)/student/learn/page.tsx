@@ -1,7 +1,1 @@
-import { BookOpen } from "lucide-react";
-
-import { SectionPage } from "@/features/teachx/components/section-page";
-
-export default function StudentLearnPage() {
-  return <SectionPage eyebrow="Student" title="Learn" description="Continue lessons, resources, and guided learning journeys." icon={BookOpen} />;
-}
+import{auth}from"@/auth";import{LearningLibraryWorkspace}from"@/features/student-learning-library/components/learning-library-workspace";import{getStudentLibrary}from"@/services/student-learning-library-service";export default async function Page(){const s=await auth();return <LearningLibraryWorkspace data={await getStudentLibrary(s?.user.id)}/>}
