@@ -832,6 +832,13 @@ model User {
   reviewedAssignmentRevisions AssignmentSubmissionRevision[] @relation("RevisionReviewer")
   assignmentDoubts AssignmentDoubt[] @relation("AssignmentDoubtStudent")
   assignmentDoubtMessages AssignmentDoubtMessage[] @relation("AssignmentDoubtMessageAuthor")
+  marketplaceEntitlements MarketplaceEntitlement[]
+  marketplaceCart MarketplaceCart?
+  marketplaceReviews MarketplaceBuyerReview[] @relation("MarketplaceReviewBuyer")
+  marketplaceReviewVotes MarketplaceReviewHelpfulVote[]
+  marketplaceReviewReports MarketplaceReviewReport[]
+  marketplaceWishlistCollections MarketplaceWishlistCollection[]
+  marketplaceWishlistItems MarketplaceWishlistItem[]
   attendanceRecords AttendanceRecord[] @relation("AttendanceStudent")
   recordings      Recording[] @relation("RecordingUploader")
   liveSessions    LiveSession[] @relation("LiveSessionFaculty")
@@ -1310,6 +1317,133 @@ model AssignmentDoubtMessage {
   createdAt DateTime @default(now())
 
   @@index([doubtId, createdAt])
+}
+model MarketplaceListing {
+  id              String   @id @default(cuid())
+  contentItemId   String   @unique
+  contentItem     ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  status          String   @default("ACTIVE")
+  price           Decimal  @default(0)
+  previousPrice   Decimal?
+  currency        String   @default("INR")
+  license         String   @default("INSTITUTION_PERSONAL")
+  purchaseEnabled Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  entitlements MarketplaceEntitlement[]
+  cartItems MarketplaceCartItem[]
+  reviews MarketplaceBuyerReview[]
+  wishlistItems MarketplaceWishlistItem[]
+  @@index([status, price, updatedAt])
+}
+
+model MarketplaceEntitlement {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentItemId String
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  listingId String
+  listing MarketplaceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  orderId   String?
+  order     CommerceOrder? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  status    String @default("ACTIVE")
+  license   String
+  acquiredAt DateTime @default(now())
+  revokedAt DateTime?
+  @@unique([userId, contentItemId])
+  @@index([userId, status, acquiredAt])
+}
+
+model MarketplaceCart {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items MarketplaceCartItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MarketplaceCartItem {
+  id String @id @default(cuid())
+  cartId String
+  cart MarketplaceCart @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  listingId String
+  listing MarketplaceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([cartId, listingId])
+}
+
+model MarketplaceBuyerReview {
+  id String @id @default(cuid())
+  listingId String
+  listing MarketplaceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  contentItemId String
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  buyerId String
+  buyer User @relation("MarketplaceReviewBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  rating Int
+  title String?
+  body String?
+  status String @default("APPROVED")
+  verifiedPurchase Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  helpfulVotes MarketplaceReviewHelpfulVote[]
+  reports MarketplaceReviewReport[]
+  @@unique([listingId, buyerId])
+  @@index([listingId, status, createdAt])
+}
+
+model MarketplaceReviewHelpfulVote {
+  id String @id @default(cuid())
+  reviewId String
+  review MarketplaceBuyerReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([reviewId, userId])
+}
+
+model MarketplaceReviewReport {
+  id String @id @default(cuid())
+  reviewId String
+  review MarketplaceBuyerReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason String
+  createdAt DateTime @default(now())
+  @@unique([reviewId, userId])
+}
+
+model MarketplaceWishlistCollection {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name String
+  items MarketplaceWishlistItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([userId, name])
+}
+
+model MarketplaceWishlistItem {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collectionId String
+  collection MarketplaceWishlistCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  listingId String
+  listing MarketplaceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  contentItemId String
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  availabilityAlert Boolean @default(false)
+  priceAlert Boolean @default(false)
+  priceAtSave Decimal?
+  createdAt DateTime @default(now())
+  @@unique([userId, listingId])
+  @@index([collectionId, createdAt])
 }
 model LearningProgress {
   id             String    @id @default(cuid())
@@ -2137,6 +2271,7 @@ model CommerceOrder {
   items         CommerceOrderItem[]
   walletTransactions WalletTransaction[]
   invoices      CommerceInvoice[]
+  marketplaceEntitlements MarketplaceEntitlement[]
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
@@ -2484,6 +2619,10 @@ model ContentItem {
   analytics       ContentAnalytics?
   downloads       DownloadHistory[]
   commerceOrderItems CommerceOrderItem[]
+  marketplaceListing MarketplaceListing?
+  marketplaceEntitlements MarketplaceEntitlement[]
+  marketplaceReviews MarketplaceBuyerReview[]
+  marketplaceWishlistItems MarketplaceWishlistItem[]
   watches         WatchHistory[]
   transcript      Transcript?
   externalContent ExternalContent?
