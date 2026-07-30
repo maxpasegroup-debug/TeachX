@@ -11,6 +11,7 @@ import { canManageAllClassrooms } from "@/services/classroom-service";
 import { recordActivity } from "@/services/activity-service";
 import { createModuleNotification } from "@/services/notification-aggregation-service";
 import { createContentUpload } from "@/services/upload-service";
+import { reviewAssignmentSubmission, transitionAssignmentStatus, getTeacherReviewPayload, replyAssignmentDoubt } from "@/services/assignment-workflow-service";
 
 function optionalText(value: FormDataEntryValue | null) {
   const text = value?.toString().trim();
@@ -147,9 +148,11 @@ const assignmentSchema = z.object({
   title: z.string().min(2),
   instructions: z.string().min(2),
   dueDate: z.coerce.date().optional(),
-  attachmentUrl: z.string().url().optional(),
-  status: z.enum(["DRAFT", "PUBLISHED", "CLOSED"]),
-  aiPrompt: z.string().optional()
+  attachmentUrl: z.string().url().max(2048).refine(v=>v.startsWith("https://"),"HTTPS required").optional(),
+  status: z.enum(["DRAFT", "PUBLISHED"]),
+  aiPrompt: z.string().optional(),
+  maxMarks: z.coerce.number().positive().max(100000).optional(),
+  allowResubmission: z.boolean()
 });
 
 export async function createAssignmentAction(_: string | undefined, formData: FormData) {
@@ -161,33 +164,16 @@ export async function createAssignmentAction(_: string | undefined, formData: Fo
     dueDate: optionalText(formData.get("dueDate")),
     attachmentUrl: optionalText(formData.get("attachmentUrl")),
     status: optionalText(formData.get("status")) ?? "DRAFT",
-    aiPrompt: optionalText(formData.get("aiPrompt"))
+    aiPrompt: optionalText(formData.get("aiPrompt")),
+    maxMarks: optionalText(formData.get("maxMarks")),
+    allowResubmission: formData.get("allowResubmission")==="on"
   });
   if (!parsed.success) return "Please enter assignment details.";
 
   const { session, institutionId, classroom } = await getClassroomAccess(parsed.data.classroomId);
-  const assignment = await prisma.assignment.create({
-    data: {
-      ...parsed.data,
-      createdById: session.user.id
-    }
-  });
+  const assignment = await prisma.$transaction(async tx=>{const created=await tx.assignment.create({data:{...parsed.data,createdById:session.user.id}});if(parsed.data.status==="PUBLISHED"){for(const item of classroom.batch.students){await tx.assignmentSubmission.upsert({where:{assignmentId_studentId:{assignmentId:created.id,studentId:item.studentId}},update:{},create:{assignmentId:created.id,studentId:item.studentId}});await tx.notification.upsert({where:{id:`assignment-published-${created.id}-${item.studentId}`},create:{id:`assignment-published-${created.id}-${item.studentId}`,institutionId,userId:item.studentId,title:"New assignment",body:created.title,link:`/student/assignments?assignmentId=${created.id}`,metadata:{assignmentId:created.id,classroomId:classroom.id}},update:{}})}}return created});
 
-  if (parsed.data.status === "PUBLISHED") {
-    await Promise.all(
-      classroom.batch.students.map((item) =>
-        prisma.assignmentSubmission.upsert({
-          where: { assignmentId_studentId: { assignmentId: assignment.id, studentId: item.studentId } },
-          update: {},
-          create: { assignmentId: assignment.id, studentId: item.studentId }
-        })
-      )
-    );
-  }
-
-  await writeAuditLog({ institutionId, actorId: session.user.id, action: "CREATE", entity: "Assignment", entityId: assignment.id, message: `Created assignment in ${classroom.title}` });
-  await recordActivity({ institutionId, actorId: session.user.id, type: "ASSIGNMENT", title: `Assignment created: ${assignment.title}`, entity: "Assignment", entityId: assignment.id, link: `/classrooms/${classroom.id}` });
-  await createModuleNotification({ institutionId, type: "ASSIGNMENT", title: "New assignment", body: assignment.title, link: `/classrooms/${classroom.id}` });
+  await Promise.allSettled([writeAuditLog({ institutionId, actorId: session.user.id, action: "CREATE", entity: "Assignment", entityId: assignment.id, message: `Created assignment in ${classroom.title}` }),recordActivity({ institutionId, actorId: session.user.id, type: "ASSIGNMENT", title: `Assignment created: ${assignment.title}`, entity: "Assignment", entityId: assignment.id, link: `/classrooms/${classroom.id}` })]);
   revalidatePath(`/classrooms/${classroom.id}`);
   revalidatePath("/dashboard");
   return "Assignment saved.";
@@ -303,3 +289,7 @@ export async function saveAttendanceAction(_: string | undefined, formData: Form
   revalidatePath("/dashboard");
   return "Attendance saved.";
 }
+
+export async function reviewAssignmentSubmissionAction(_:string|undefined,formData:FormData){try{const session=await auth();if(!session?.user.id||!session.user.institutionId)throw new Error("Teacher access required.");const raw=optionalText(formData.get("marks")),marks=raw===undefined?null:Number(raw),criteria=formData.getAll("criterion").map(String),scores=formData.getAll("criterionScore").map(Number),maximums=formData.getAll("criterionMaximum").map(Number),rubric=criteria.flatMap((criterion,i)=>criterion.trim()?[{criterion:criterion.trim(),score:scores[i],maximum:maximums[i]}]:[]);const result=await reviewAssignmentSubmission({userId:session.user.id,institutionId:session.user.institutionId,roles:session.user.roles,submissionId:String(formData.get("submissionId")??""),feedback:String(formData.get("feedback")??""),marks:Number.isFinite(marks)?marks:null,rubric,decision:formData.get("decision")==="RETURN"?"RETURN":"COMPLETE"});revalidatePath(`/classrooms/${String(formData.get("classroomId")??"")}`);return`Review saved: ${result.status}.`}catch(e){return e instanceof Error?e.message:"Review could not be saved."}}
+export async function transitionAssignmentStatusAction(_:string|undefined,formData:FormData){try{const session=await auth();if(!session?.user.id||!session.user.institutionId)throw new Error("Teacher access required.");const result=await transitionAssignmentStatus({userId:session.user.id,institutionId:session.user.institutionId,roles:session.user.roles,assignmentId:String(formData.get("assignmentId")??""),target:formData.get("target")==="CLOSED"?"CLOSED":"PUBLISHED"});revalidatePath(`/classrooms/${result.classroomId}`);return`Assignment ${result.status.toLowerCase()}.`}catch(e){return e instanceof Error?e.message:"Assignment transition failed."}}export async function getAssignmentReviewPayloadAction(submissionId:string){const session=await auth();if(!session?.user.id||!session.user.institutionId)throw new Error("Teacher access required.");return getTeacherReviewPayload({userId:session.user.id,institutionId:session.user.institutionId,roles:session.user.roles,submissionId})}
+export async function replyAssignmentDoubtAction(_:string|undefined,formData:FormData){try{const session=await auth();if(!session?.user.id||!session.user.institutionId)throw new Error("Teacher access required.");const result=await replyAssignmentDoubt({userId:session.user.id,institutionId:session.user.institutionId,roles:session.user.roles,doubtId:String(formData.get("doubtId")??""),body:String(formData.get("body")??"")});revalidatePath(`/classrooms/${String(formData.get("classroomId")??"")}`);return result.status}catch(e){return e instanceof Error?e.message:"Reply failed."}}export async function getClassroomAssignmentDoubtsAction(classroomId:string){const{classroom}=await getClassroomAccess(classroomId);return prisma.assignmentDoubt.findMany({where:{assignment:{classroomId:classroom.id}},select:{id:true,status:true,student:{select:{name:true}},assignment:{select:{title:true}},messages:{select:{id:true,body:true,createdAt:true,author:{select:{name:true}}},orderBy:{createdAt:"asc"}}},orderBy:{updatedAt:"desc"},take:50})}

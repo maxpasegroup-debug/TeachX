@@ -828,6 +828,10 @@ model User {
   materials       StudyMaterial[] @relation("MaterialUploader")
   assignments     Assignment[] @relation("AssignmentCreator")
   assignmentSubmissions AssignmentSubmission[] @relation("SubmissionStudent")
+  reviewedAssignmentSubmissions AssignmentSubmission[] @relation("SubmissionReviewer")
+  reviewedAssignmentRevisions AssignmentSubmissionRevision[] @relation("RevisionReviewer")
+  assignmentDoubts AssignmentDoubt[] @relation("AssignmentDoubtStudent")
+  assignmentDoubtMessages AssignmentDoubtMessage[] @relation("AssignmentDoubtMessageAuthor")
   attendanceRecords AttendanceRecord[] @relation("AttendanceStudent")
   recordings      Recording[] @relation("RecordingUploader")
   liveSessions    LiveSession[] @relation("LiveSessionFaculty")
@@ -1222,7 +1226,10 @@ model Assignment {
   attachmentUrl String?
   status        AssignmentStatus @default(DRAFT)
   aiPrompt      String?
+  maxMarks      Float?
+  allowResubmission Boolean @default(true)
   submissions   AssignmentSubmission[]
+  doubts        AssignmentDoubt[]
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
@@ -1241,12 +1248,69 @@ model AssignmentSubmission {
   attachmentUrl String?
   remarks       String?
   feedback      String?
+  draftText     String?
+  marks         Float?
+  maxMarks      Float?
+  rubric        Json?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewer      User? @relation("SubmissionReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  aiFeedback    Json?
+  revisions     AssignmentSubmissionRevision[]
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
   @@unique([assignmentId, studentId])
+  @@index([reviewedById])
 }
 
+model AssignmentSubmissionRevision {
+  id            String               @id @default(cuid())
+  submissionId  String
+  submission    AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  version       Int
+  status        SubmissionStatus
+  text          String?
+  attachments   Json?
+  submittedAt   DateTime?
+  feedback      String?
+  marks         Float?
+  maxMarks      Float?
+  rubric        Json?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewer      User? @relation("RevisionReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime             @default(now())
+
+  @@unique([submissionId, version])
+  @@index([submissionId, createdAt])
+}
+model AssignmentDoubt {
+  id           String   @id @default(cuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      User @relation("AssignmentDoubtStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  status       String @default("OPEN")
+  messages     AssignmentDoubtMessage[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId, updatedAt])
+}
+
+model AssignmentDoubtMessage {
+  id        String @id @default(cuid())
+  doubtId   String
+  doubt     AssignmentDoubt @relation(fields: [doubtId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User? @relation("AssignmentDoubtMessageAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([doubtId, createdAt])
+}
 model LearningProgress {
   id             String    @id @default(cuid())
   studentId      String
