@@ -1,16 +1,2 @@
-import { auth } from "@/auth";
-import { PageHeader } from "@/components/page-header";
-import { ParentPortal } from "@/features/parent/components/parent-portal";
-import { getParentPortal } from "@/services/parent-portal-service";
-
-export default async function ParentPage() {
-  const session = await auth();
-  const portal = await getParentPortal(session?.user.id, session?.user.institutionId);
-
-  return (
-    <>
-      <PageHeader description="Read-only child overview, attendance, assignments, fees, exams, announcements and communication." eyebrow="Parent workspace" title="Parent Portal" />
-      <ParentPortal portal={portal} />
-    </>
-  );
-}
+import{redirect}from"next/navigation";import{auth}from"@/auth";import{ParentWorkspace}from"@/features/parent-workspace/components/parent-workspace";import{getParentWorkspace}from"@/services/parent-workspace-service";
+export default async function Page({searchParams}:{searchParams:Promise<{childId?:string}>}){const s=await auth();if(!s?.user.id||!s.user.roles.includes("PARENT")||!s.user.institutionId)redirect("/entry");const{childId}=await searchParams;return <ParentWorkspace data={await getParentWorkspace(s.user.id,s.user.institutionId,childId)}/>}
