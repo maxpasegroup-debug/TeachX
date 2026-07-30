@@ -432,6 +432,8 @@ enum DirectConversationType {
   TEACHER_STUDENT
   TEACHER_TEACHER
   STUDENT_STUDENT_DISABLED
+  STUDENT_PEER
+  STUDY_GROUP
   SUPPORT
 }
 
@@ -3577,4 +3579,209 @@ model PasswordResetToken {
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
+}
+
+enum StudentCommunityRequestKind {
+  GROUP_JOIN
+  GROUP_INVITE
+  PEER_COLLABORATION
+}
+
+enum StudentCommunityRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+  EXPIRED
+}
+
+enum StudentCommunityVoteTarget {
+  DISCUSSION
+  REPLY
+}
+
+enum StudentCommunityReportTarget {
+  DISCUSSION
+  REPLY
+  MESSAGE
+  GROUP
+  RESOURCE
+}
+
+enum StudentCommunityReportStatus {
+  REPORTED
+  REVIEWING
+  RESOLVED
+  DISMISSED
+}
+
+model StudentCommunityRequest {
+  id            String                        @id @default(cuid())
+  institutionId String
+  kind          StudentCommunityRequestKind
+  requesterId   String
+  recipientId   String?
+  communityId   String?
+  subjectId     String
+  status        StudentCommunityRequestStatus @default(PENDING)
+  expiresAt     DateTime?
+  respondedAt   DateTime?
+  createdAt     DateTime                      @default(now())
+  updatedAt     DateTime                      @updatedAt
+
+  @@unique([kind, requesterId, recipientId, communityId, subjectId])
+  @@index([institutionId, recipientId, status, createdAt])
+}
+
+model StudentCommunityVote {
+  id            String                     @id @default(cuid())
+  institutionId String
+  userId        String
+  targetType    StudentCommunityVoteTarget
+  targetId      String
+  value         Int                        @default(1)
+  createdAt     DateTime                   @default(now())
+
+  @@unique([userId, targetType, targetId])
+  @@index([institutionId, targetType, targetId])
+}
+
+model StudentAcceptedAnswer {
+  id            String   @id @default(cuid())
+  institutionId String
+  discussionId  String   @unique
+  replyId       String   @unique
+  acceptedById  String
+  acceptedAt    DateTime @default(now())
+}
+
+model StudentCommunityReport {
+  id            String                       @id @default(cuid())
+  institutionId String
+  reporterId    String
+  targetType    StudentCommunityReportTarget
+  targetId      String
+  reason        String
+  status        StudentCommunityReportStatus @default(REPORTED)
+  moderatorId   String?
+  resolution    String?
+  resolvedAt    DateTime?
+  createdAt     DateTime                     @default(now())
+  updatedAt     DateTime                     @updatedAt
+
+  @@unique([reporterId, targetType, targetId])
+  @@index([institutionId, status, createdAt])
+}
+
+model StudentCommunityBlock {
+  id            String   @id @default(cuid())
+  institutionId String
+  blockerId     String
+  blockedId     String
+  createdAt     DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([institutionId, blockedId])
+}
+
+model StudentCommunityResourceShare {
+  id            String   @id @default(cuid())
+  institutionId String
+  ownerId       String
+  communityId   String?
+  conversationId String?
+  contentItemId String?
+  snapshotType  String
+  title         String
+  snapshot      Json
+  supersedesId  String?
+  version       Int      @default(1)
+  status        String   @default("PUBLISHED")
+  createdAt     DateTime @default(now())
+
+  @@index([institutionId, communityId, createdAt])
+  @@index([conversationId, createdAt])
+}
+
+model StudentGroupEvent {
+  id            String   @id @default(cuid())
+  institutionId String
+  communityId   String
+  subjectId     String
+  createdById   String
+  kind          String
+  title         String
+  description   String?
+  startsAt      DateTime
+  endsAt        DateTime
+  status        String   @default("ACTIVE")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([institutionId, communityId, startsAt])
+}
+
+model StudentGroupEventRsvp {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  status    String   @default("GOING")
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+}
+
+model StudentGroupChallenge {
+  id            String   @id @default(cuid())
+  institutionId String
+  communityId   String
+  subjectId     String
+  createdById   String
+  kind          String
+  title         String
+  description   String?
+  target        Int      @default(1)
+  startsAt      DateTime
+  endsAt        DateTime
+  status        String   @default("ACTIVE")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([institutionId, communityId, status, endsAt])
+}
+
+model StudentGroupChallengeParticipant {
+  id          String   @id @default(cuid())
+  challengeId String
+  userId      String
+  progress    Int      @default(0)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@unique([challengeId, userId])
+}
+
+model StudentCommunityReputation {
+  id            String   @id @default(cuid())
+  institutionId String
+  userId        String
+  eventType     String
+  sourceId      String
+  points        Int
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, eventType, sourceId])
+  @@index([institutionId, userId, createdAt])
+}
+model StudentAcceptedAnswerHistory {
+  id               String   @id @default(cuid())
+  institutionId    String
+  discussionId     String
+  previousReplyId  String?
+  nextReplyId      String?
+  actorId          String
+  action           String
+  createdAt        DateTime @default(now())
+
+  @@index([institutionId, discussionId, createdAt])
 }

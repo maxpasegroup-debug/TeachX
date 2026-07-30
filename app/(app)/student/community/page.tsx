@@ -1,0 +1,2 @@
+import { redirect } from "next/navigation";import{auth}from"@/auth";import{getStudentCommunity}from"@/services/student-community-service";import{StudentCommunityWorkspace}from"@/features/student-community/components/student-community-workspace";
+export default async function StudentCommunityPage(){const s=await auth();if(!s?.user.id||!s.user.institutionId||!s.user.roles.includes("STUDENT"))redirect("/login");const data=await getStudentCommunity(s.user.id,s.user.institutionId);return <StudentCommunityWorkspace data={data}/>}
