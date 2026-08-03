@@ -1,0 +1,2 @@
+import { auth } from "@/auth";import { userHasPermission } from "@/lib/rbac";import { redirect } from "next/navigation";import { getDirectorOperationsIntelligence } from "@/services/director-operations-service";import { OperationsCommandCenter } from "./workspace";
+export default async function DirectorOperationsPage(){const session=await auth();if(!session?.user||!userHasPermission(session.user.roles,"director.view"))redirect("/access-denied");return <OperationsCommandCenter data={await getDirectorOperationsIntelligence({institutionId:session.user.institutionId})}/>}
