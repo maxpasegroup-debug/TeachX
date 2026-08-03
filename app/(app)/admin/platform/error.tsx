@@ -1,0 +1,2 @@
+"use client";
+export default function Error({ reset }: { reset: () => void }) { return <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-8"><h1 className="text-xl font-semibold">Platform intelligence is unavailable</h1><p className="mt-2 text-sm text-muted-foreground">The source services could not be reached. No platform records were changed.</p><button className="mt-5 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground" onClick={reset}>Try again</button></div>; }
