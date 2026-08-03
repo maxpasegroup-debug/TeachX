@@ -1,0 +1,1 @@
+export default function Loading() { return <main className="min-h-screen animate-pulse bg-[#f3f0e8] p-6"><div className="h-36 bg-[#17241f]"/><div className="mt-6 grid gap-3 md:grid-cols-4">{Array.from({length:8},(_,i)=><div key={i} className="h-32 bg-white"/>)}</div></main>; }
