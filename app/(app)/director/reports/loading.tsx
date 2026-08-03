@@ -1,0 +1,1 @@
+export default function Loading(){return <main className="min-h-screen bg-[#f3f0e8] p-6"><div className="h-28 animate-pulse bg-[#17241f]"/><div className="mt-6 grid gap-4 md:grid-cols-3">{[1,2,3,4,5,6].map(i=><div key={i} className="h-36 animate-pulse bg-white"/>)}</div></main>}

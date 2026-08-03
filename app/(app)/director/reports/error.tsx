@@ -1,0 +1,2 @@
+"use client";
+export default function Error({reset}:{reset:()=>void}){return <main className="min-h-screen bg-[#f3f0e8] p-6"><section className="max-w-xl border-l-4 border-[#b86a32] bg-white p-7"><p className="text-xs font-bold uppercase tracking-widest text-[#b86a32]">Report center unavailable</p><h1 className="mt-3 text-2xl font-semibold">Executive evidence could not load.</h1><button onClick={reset} className="mt-5 bg-[#17241f] px-4 py-3 text-xs font-bold text-white">Try again</button></section></main>}
