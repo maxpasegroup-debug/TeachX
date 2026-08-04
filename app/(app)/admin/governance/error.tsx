@@ -1,0 +1,2 @@
+"use client";
+export default function Error({ reset }: { reset: () => void }) { return <main className="rounded-2xl border border-destructive/30 p-8"><h1 className="text-xl font-semibold">Governance data is unavailable</h1><p className="mt-2 text-sm text-muted-foreground">The platform read model could not be loaded. No controls were changed.</p><button className="mt-4 rounded-lg bg-primary px-4 py-2 text-primary-foreground" onClick={reset}>Try again</button></main>; }
