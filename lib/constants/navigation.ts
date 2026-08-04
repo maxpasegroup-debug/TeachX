@@ -11,6 +11,7 @@ import {
   CalendarDays,
   Bell,
   History,
+  FileText,
   Map,
   NotebookPen,
   LucideIcon,
@@ -86,6 +87,10 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "Purchases", href: "/student/purchases", icon: WalletCards },
     { label: "Community", href: "/communication", icon: MessageCircle },
     { label: "Bookmarks", href: "/student/bookmarks", icon: LibraryBig },
+    { label: "Command Center", href: "/student/search", icon: Search },
+    { label: "Notifications", href: "/student/notifications", icon: Bell },
+    { label: "Timeline", href: "/student/timeline", icon: History },
+    { label: "Files", href: "/student/files", icon: FileText },
     { label: "Settings", href: "/student/settings", icon: Settings }
   ],
   admin: [
