@@ -1,16 +1,12 @@
 import { auth } from "@/auth";
-import { StudentAIHome } from "@/features/student-ai/components/student-ai-home";
-import { getStudentAIHome } from "@/services/student-ai-learning-service";
-import { getStudentOperatingHome } from "@/services/teachx-operating-service";
-import { getStudentFoundation } from "@/services/student-foundation-service";
+import { StudentDailyHome } from "@/features/student-dashboard/components/student-daily-home";
+import { getStudentDashboard } from "@/services/student-dashboard-service";
 
 export default async function StudentHomePage() {
   const session = await auth();
-  const input = {
+  const data = await getStudentDashboard({
     userId: session?.user.id,
     institutionId: session?.user.institutionId
-  };
-  const [data, operatingHome, foundation] = await Promise.all([getStudentAIHome(input), getStudentOperatingHome(input), getStudentFoundation(session?.user.id)]);
-
-  return <StudentAIHome name={session?.user.name} data={data} foundation={foundation} profileCompletion={operatingHome.completion} />;
+  });
+  return <StudentDailyHome name={session?.user.name} data={data} />;
 }
