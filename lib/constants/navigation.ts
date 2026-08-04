@@ -97,6 +97,7 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "Growth", href: "/admin/platform-analytics", icon: PanelTop },
     { label: "Customer Success", href: "/admin/customer-success", icon: LifeBuoy },
     { label: "Governance", href: "/admin/governance", icon: ShieldCheck },
+    { label: "AI Platform", href: "/admin/ai-platform", icon: Bot },
     { label: "Marketplace", href: "/admin/marketplace", icon: Store },
     { label: "Subscriptions", href: "/admin/subscriptions", icon: WalletCards },
     { label: "Orders", href: "/admin/orders", icon: WalletCards },

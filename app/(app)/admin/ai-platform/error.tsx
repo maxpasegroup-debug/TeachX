@@ -1,0 +1,2 @@
+"use client";
+export default function Error({reset}:{reset:()=>void}){return <main className="rounded-2xl border border-destructive/30 p-6"><h1 className="text-lg font-semibold">AI platform intelligence is unavailable</h1><p className="mt-2 text-sm text-muted-foreground">The existing AI evidence service could not be read. No data was changed.</p><button className="mt-4 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground" onClick={reset}>Retry</button></main>}
