@@ -1,0 +1,2 @@
+"use client";
+export default function Error({reset}:{reset:()=>void}){return <main className="rounded-3xl border p-8"><h1 className="text-xl font-semibold">Business evidence is unavailable</h1><p className="mt-2 text-sm text-muted-foreground">The commerce records could not be loaded. Retry the request or inspect the existing commerce services.</p><button onClick={reset} className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Retry</button></main>}
