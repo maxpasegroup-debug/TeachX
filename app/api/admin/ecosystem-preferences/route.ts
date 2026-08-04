@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/db";
+export async function POST(request:Request){const session=await auth();if(!session?.user.id||!session.user.roles.includes("ADMIN"))return NextResponse.json({error:"Unauthorized"},{status:403});const body=await request.json() as {compact?:unknown;format?:unknown};if(typeof body.compact!=="boolean"||!["csv","json"].includes(String(body.format)))return NextResponse.json({error:"Invalid preferences"},{status:400});const value={compact:body.compact,format:String(body.format) as "csv"|"json"};await prisma.userPreference.upsert({where:{userId_key:{userId:session.user.id,key:"adminx.ecosystem.preferences"}},create:{userId:session.user.id,key:"adminx.ecosystem.preferences",value},update:{value}});return NextResponse.json({ok:true})}

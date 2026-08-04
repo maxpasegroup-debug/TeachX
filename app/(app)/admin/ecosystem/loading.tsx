@@ -1,0 +1,1 @@
+export default function Loading(){return <main className="space-y-5 animate-pulse"><div className="h-48 rounded-3xl bg-muted"/><div className="grid gap-3 md:grid-cols-4">{Array.from({length:8},(_,i)=><div key={i} className="h-28 rounded-xl bg-muted"/>)}</div></main>}
