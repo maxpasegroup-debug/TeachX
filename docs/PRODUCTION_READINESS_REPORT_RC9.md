@@ -34,7 +34,6 @@ Verified readiness:
 
 Open performance notes:
 
-- `public/brand/hero-teacher.png` is about 1.5 MB and `public/brand/hero-student.png` is about 1.9 MB. They are acceptable for RC launch but should be converted to WebP/AVIF after final art approval.
 - Lighthouse CLI is not installed in this workspace, so numeric Lighthouse scores were not measured locally during RC9.
 - Browser-level Core Web Vitals should be captured against the deployed Railway URL before public marketing traffic begins.
 

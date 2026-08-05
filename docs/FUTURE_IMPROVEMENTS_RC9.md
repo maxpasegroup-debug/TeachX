@@ -3,7 +3,6 @@
 ## Version 1.1 Recommendations
 
 - Add a dedicated 1200x630 Open Graph image for TeachX Guru.
-- Convert launch hero imagery to WebP/AVIF and keep PNG fallbacks only if needed.
 - Add 192x192, 512x512, and apple-touch PNG icons generated from the final brand mark.
 - Replace `next lint` with the ESLint CLI and wire it into CI.
 - Add Lighthouse CI against the deployed Railway preview and production URLs.

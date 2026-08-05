@@ -22,32 +22,6 @@ export function TableSkeleton() {
   );
 }
 
-export function SearchSkeleton() {
-  return (
-    <Card className="space-y-3 p-4 shadow-soft">
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-10 w-5/6" />
-      <Skeleton className="h-10 w-3/4" />
-    </Card>
-  );
-}
-
-export function DashboardSkeleton() {
-  return (
-    <div className="space-y-6">
-      <Skeleton className="h-48 w-full rounded-[2rem]" />
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <CardSkeleton key={index} />
-        ))}
-      </div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <TableSkeleton />
-        <SearchSkeleton />
-      </div>
-    </div>
-  );
-}
 type WorkspaceSkeletonProps = {
   cardCount?: number;
   heroClassName?: string;

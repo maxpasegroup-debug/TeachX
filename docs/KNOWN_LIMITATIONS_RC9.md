@@ -8,7 +8,6 @@
 
 ## Assets
 
-- The hero teacher and student PNG assets are high quality but large. Convert approved final artwork to WebP/AVIF for v1.1.
 - Social sharing metadata currently points to the SVG app icon. A dedicated 1200x630 launch image should be added before broad public campaigns.
 - Manifest currently uses an SVG icon. Add generated PNG icon sizes for stricter PWA/device compatibility.
 
