@@ -34,7 +34,7 @@ export type NavigationItem = {
   icon: LucideIcon;
 };
 
-export type NavigationWorkspace = "teacher" | "student" | "admin";
+export type NavigationWorkspace = "teacher" | "student" | "parent" | "director" | "campus" | "admin";
 
 // Shared Platform: workspace navigation remains role-aware because future
 // frontends reuse the same auth, RBAC, and shell primitives.
@@ -68,13 +68,13 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "Collaboration", href: "/teacher/community/collaboration", icon: LibraryBig },
     { label: "Wallet", href: "/teacher/business/wallet", icon: WalletCards },
     { label: "Subscription", href: "/teacher/business/subscription", icon: WalletCards },
-    { label: "Settings", href: "/teacher/settings", icon: Settings }
+    { label: "Settings", href: "/settings", icon: Settings }
   ],
   student: [
     { label: "Home", href: "/student", icon: LayoutDashboard },
     { label: "My Journey", href: "/student/journey", icon: Map },
     { label: "My Learning Map", href: "/student/onboarding", icon: Sparkles },
-    { label: "Profile", href: "/student/profile", icon: GraduationCap },
+    { label: "Profile", href: "/profile", icon: GraduationCap },
     { label: "Goals", href: "/student/goals", icon: Gauge },
     { label: "Connections", href: "/student/connections", icon: UsersRound },
     { label: "AI Preferences", href: "/student/personalization", icon: Bot },
@@ -91,9 +91,32 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "Notifications", href: "/student/notifications", icon: Bell },
     { label: "Timeline", href: "/student/timeline", icon: History },
     { label: "Files", href: "/student/files", icon: FileText },
-    { label: "Settings", href: "/student/settings", icon: Settings }
+    { label: "Settings", href: "/settings", icon: Settings }
   ],
-  admin: [
+  parent: [
+    { label: "Family Home", href: "/parent", icon: LayoutDashboard },
+    { label: "Child Progress", href: "/parent?section=progress", icon: GraduationCap },
+    { label: "Attendance & Calendar", href: "/parent?section=activity", icon: CalendarDays },
+    { label: "Messages", href: "/parent?section=communication", icon: MessageCircle },
+    { label: "Reports", href: "/parent?section=reports", icon: FileText },
+    { label: "Settings", href: "/settings", icon: Settings }
+  ],
+  director: [
+    { label: "Executive Home", href: "/director", icon: LayoutDashboard },
+    { label: "Academic Intelligence", href: "/director/intelligence", icon: GraduationCap },
+    { label: "Reports", href: "/director/reports", icon: FileText },
+    { label: "Operations", href: "/director/operations", icon: Building2 },
+    { label: "AI Intelligence", href: "/director/ai", icon: Bot },
+    { label: "Settings", href: "/settings", icon: Settings }
+  ],
+  campus: [
+    { label: "Campus Home", href: "/campus", icon: LayoutDashboard },
+    { label: "Attendance", href: "/campus?module=attendance", icon: UsersRound },
+    { label: "Visitors", href: "/campus?module=visitors", icon: Building2 },
+    { label: "Operations", href: "/campus", icon: Gauge },
+    { label: "Alerts", href: "/campus?module=security", icon: ShieldCheck },
+    { label: "Settings", href: "/settings", icon: Settings }
+  ],  admin: [
     { label: "Overview", href: "/admin", icon: PanelTop },
     { label: "Control Center", href: "/admin/control/dashboard", icon: Gauge },
     { label: "Institution", href: "/institution/dashboard", icon: Building2 },
@@ -110,7 +133,7 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "Subscriptions", href: "/admin/subscriptions", icon: WalletCards },
     { label: "Orders", href: "/admin/orders", icon: WalletCards },
     { label: "Community", href: "/admin/announcements", icon: MessageCircle },
-    { label: "Settings", href: "/admin/settings", icon: Settings }
+    { label: "Settings", href: "/settings", icon: Settings }
   ]
 };
 
@@ -118,6 +141,9 @@ const teacherRoles: RoleKey[] = ["ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_T
 
 export function resolveNavigationWorkspace(roles: RoleKey[] = []): NavigationWorkspace {
   if (roles.includes("STUDENT")) return "student";
+  if (roles.includes("PARENT")) return "parent";
+  if (roles.includes("DIRECTOR")) return "director";
+  if (roles.includes("RECEPTION") || roles.includes("ACCOUNTS")) return "campus";
   if (roles.some((role) => teacherRoles.includes(role))) return "teacher";
   return "admin";
 }

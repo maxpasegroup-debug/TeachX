@@ -1,0 +1,1 @@
+export default function MarketXLoading() { return <div className="space-y-4 animate-pulse"><div className="h-48 rounded-[2rem] bg-muted"/><div className="grid gap-4 md:grid-cols-3"><div className="h-32 rounded-2xl bg-muted"/><div className="h-32 rounded-2xl bg-muted"/><div className="h-32 rounded-2xl bg-muted"/></div></div>; }

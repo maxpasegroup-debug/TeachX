@@ -9,6 +9,11 @@ export const routePermissions: Record<string, PermissionKey> = {
   "/admin": "dashboard.view",
   "/learning": "dashboard.view",
   "/parent": "dashboard.view",
+  "/parentx": "dashboard.view",
+  "/campus": "operations.view",
+  "/cloud": "dashboard.view",
+  "/marketx": "dashboard.view",
+  "/tara": "dashboard.view",
   "/classrooms": "classrooms.view",
   "/courses": "courses.manage",
   "/batches": "batches.manage",
@@ -25,7 +30,10 @@ export const routePermissions: Record<string, PermissionKey> = {
   "/director": "director.view",
   "/operations": "operations.view",
   "/reports": "reports.view",
-  "/settings": "settings.view"
+  // Institution configuration remains restricted, while personal settings are
+  // available to every signed-in workspace through the canonical router.
+  "/settings/institution": "settings.manage",
+  "/settings": "dashboard.view"
 };
 
 export function getRoutePermission(pathname: string) {

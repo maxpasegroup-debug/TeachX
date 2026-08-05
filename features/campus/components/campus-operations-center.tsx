@@ -15,8 +15,8 @@ const modules: { id: Module; label: string; icon: typeof Activity }[] = [
   { id: "overview", label: "Command center", icon: Activity }, { id: "attendance", label: "Attendance", icon: ClipboardCheck }, { id: "visitors", label: "Visitors", icon: UsersRound }, { id: "transport", label: "Transport", icon: Bus }, { id: "hostel", label: "Hostel", icon: Building2 }, { id: "library", label: "Library", icon: BookOpen }, { id: "maintenance", label: "Maintenance", icon: Wrench }, { id: "inventory", label: "Inventory", icon: ClipboardCheck }, { id: "security", label: "Security", icon: ShieldAlert }, { id: "settings", label: "Settings", icon: Activity }
 ];
 
-export function CampusOperationsCenter({ data, institutionName }: { data: CampusData; institutionName: string }) {
-  const [active, setActive] = useState<Module>("overview");
+export function CampusOperationsCenter({ data, institutionName, initialModule = "overview" }: { data: CampusData; institutionName: string; initialModule?: string }) {
+  const [active, setActive] = useState<Module>(modules.some(({ id }) => id === initialModule) ? initialModule as Module : "overview");
   const [query, setQuery] = useState("");
   const q = query.toLowerCase();
   const visitors = useMemo(() => data.visitors.filter((item) => [item.name, item.purpose, item.status].join(" ").toLowerCase().includes(q)), [data.visitors, q]);

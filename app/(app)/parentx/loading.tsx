@@ -1,0 +1,1 @@
+export default function ParentXLoading() { return <div className="space-y-4 animate-pulse"><div className="h-40 rounded-[2rem] bg-muted"/><div className="h-36 rounded-2xl bg-muted"/></div>; }
