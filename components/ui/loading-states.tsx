@@ -48,3 +48,20 @@ export function DashboardSkeleton() {
     </div>
   );
 }
+type WorkspaceSkeletonProps = {
+  cardCount?: number;
+  heroClassName?: string;
+};
+
+export function WorkspaceSkeleton({ cardCount = 3, heroClassName = "h-48" }: WorkspaceSkeletonProps) {
+  return (
+    <div aria-busy="true" className="space-y-4 animate-pulse">
+      <Skeleton className={`${heroClassName} w-full rounded-[2rem]`} />
+      <div className="grid gap-4 md:grid-cols-3">
+        {Array.from({ length: cardCount }).map((_, index) => (
+          <Skeleton className="h-32 rounded-2xl" key={index} />
+        ))}
+      </div>
+    </div>
+  );
+}

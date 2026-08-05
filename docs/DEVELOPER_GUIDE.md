@@ -28,3 +28,11 @@ npm run build
 - Use Prisma relation filters for ownership checks.
 - Validate mutating API payloads with Zod.
 - Avoid logging secrets, prompts, passwords, tokens, or payment data.
+## Architecture Guardrails
+
+- Keep route files thin: validate request/session context, call a service or server action, and return the result.
+- Reuse `components/ui` primitives for standard controls and loading, empty, and error states.
+- Do not add a service, hook, DTO, or type when an equivalent owner already exists; extend the existing owner instead.
+- Prefer feature-local components for single-workspace composition and shared components only for behavior used by multiple features.
+- Do not move files merely to satisfy a folder pattern. Move code only when ownership is demonstrably wrong and imports remain acyclic.
+- Preserve public URLs, API payloads, RBAC checks, database schema, and server-action semantics during refactors.
