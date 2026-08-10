@@ -1,4 +1,4 @@
-const CACHE_NAME = "teachx-offline-v1";
+const CACHE_NAME = "teachx-offline-v2";
 const OFFLINE_URL = "/offline";
 const APP_SHELL = ["/", OFFLINE_URL, "/manifest.webmanifest", "/icons/icon.svg"];
 
