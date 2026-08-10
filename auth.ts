@@ -12,6 +12,9 @@ const loginSchema = z.object({
 });
 
 export const authConfig = {
+  // Railway serves the same application through TeachX and LearnX. Trust the
+  // reverse proxy host while redirects remain restricted by the callback below.
+  trustHost: true,
   pages: {
     signIn: "/login"
   },
