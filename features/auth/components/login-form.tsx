@@ -42,7 +42,10 @@ export function LoginForm({ callbackUrl, audience = "teachx" }: LoginFormProps) 
       return;
     }
 
-    router.replace(result.url ?? destination);
+    // Auth.js may return a configured server base URL (for example Railway's
+    // localhost address). Keep post-login navigation on the domain the user
+    // opened instead of trusting that absolute response URL.
+    router.replace(destination);
     router.refresh();
   }
 
