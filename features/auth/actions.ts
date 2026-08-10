@@ -29,6 +29,14 @@ async function getAuthRedirect(path: string) {
   return origin ? new URL(path, origin).toString() : path;
 }
 
+function credentialsFormData(email: string, password: string, redirectTo: string) {
+  const data = new FormData();
+  data.set("email", email);
+  data.set("password", password);
+  data.set("redirectTo", redirectTo);
+  return data;
+}
+
 export async function loginAction(previousState: string | undefined, formData: FormData) {
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -36,11 +44,11 @@ export async function loginAction(previousState: string | undefined, formData: F
   }
 
   try {
-    await signIn("credentials", {
-      email: parsed.data.email.toLowerCase(),
-      password: parsed.data.password,
-      redirectTo: await getAuthRedirect(`/entry?mode=login&next=${encodeURIComponent(getSafeEntryTarget(parsed.data.callbackUrl))}`)
-    });
+    await signIn("credentials", credentialsFormData(
+      parsed.data.email.toLowerCase(),
+      parsed.data.password,
+      await getAuthRedirect(`/entry?mode=login&next=${encodeURIComponent(getSafeEntryTarget(parsed.data.callbackUrl))}`)
+    ));
   } catch (error) {
     if (error instanceof AuthError) {
       return "Email or password is incorrect.";
@@ -97,11 +105,11 @@ export async function signupAction(_: string | undefined, formData: FormData) {
     }
   });
 
-  await signIn("credentials", {
-    email: user.email,
-    password: parsed.data.password,
-    redirectTo: await getAuthRedirect(`/entry?mode=signup&next=${encodeURIComponent(parsed.data.userType === "teacher" ? "/teacher" : "/student")}`)
-  });
+  await signIn("credentials", credentialsFormData(
+    user.email,
+    parsed.data.password,
+    await getAuthRedirect(`/entry?mode=signup&next=${encodeURIComponent(parsed.data.userType === "teacher" ? "/teacher" : "/student")}`)
+  ));
 }
 
 const forgotPasswordSchema = z.object({
