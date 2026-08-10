@@ -49,6 +49,7 @@ const trustItems = [
 export function AuthFormShell({ title, subtitle, children, journey = "login" }: AuthFormShellProps) {
   const copy = visualCopy[journey];
   const Icon = copy.icon;
+  const isLearnXJourney = journey === "student";
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-surface px-5 py-8 text-foreground sm:px-8">
@@ -57,7 +58,7 @@ export function AuthFormShell({ title, subtitle, children, journey = "login" }: 
       <div className="pointer-events-none absolute right-0 bottom-24 -z-10 h-80 w-80 rounded-full bg-brand-gold/10 blur-3xl motion-soft-glow" />
 
       <header className="mx-auto flex w-full max-w-7xl items-center justify-between">
-        {journey === "student" ? <Link className="flex items-center gap-3" href="/student"><span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-cyan-500 to-emerald-400 font-semibold text-white">LX</span><span><span className="block font-semibold">LearnX Guru</span><span className="block text-xs text-muted-foreground">AI Learning Operating System</span></span></Link> : <BrandLogo />}
+        {isLearnXJourney ? <Link className="flex items-center gap-3" href="/"><span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-cyan-500 to-emerald-400 font-semibold text-white">LX</span><span><span className="block font-semibold">LearnX Guru</span><span className="block text-xs text-muted-foreground">AI Learning Operating System</span></span></Link> : <BrandLogo />}
         <a className="nav-link rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition duration-brand ease-brand hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" href="/">
           Back Home
         </a>
@@ -95,7 +96,7 @@ export function AuthFormShell({ title, subtitle, children, journey = "login" }: 
         <MotionPrimitive className="order-1 lg:order-2" variant="scale">
           <section aria-labelledby="auth-title" className="premium-glass-card rounded-[2rem] border border-white/80 bg-white/78 p-6 shadow-brand backdrop-blur-2xl sm:p-8">
             <div className="mb-8 text-center">
-              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-ink text-sm font-semibold text-white shadow-brand-soft">TX</div>
+              <div className={isLearnXJourney ? "mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-cyan-500 text-sm font-semibold text-white shadow-brand-soft" : "mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-ink text-sm font-semibold text-white shadow-brand-soft"}>{isLearnXJourney ? "LX" : "TX"}</div>
               <h1 className="text-3xl font-semibold tracking-normal text-foreground sm:text-4xl" id="auth-title">{title}</h1>
               <p className="mx-auto mt-3 max-w-md leading-7 text-muted-foreground">{subtitle}</p>
             </div>
