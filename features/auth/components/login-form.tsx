@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { CheckCircle2, LockKeyhole } from "lucide-react";
 
-import { loginAction } from "@/features/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,11 +16,38 @@ type LoginFormProps = {
 };
 
 export function LoginForm({ callbackUrl, audience = "teachx" }: LoginFormProps) {
-  const [error, action, pending] = useActionState(loginAction, undefined);
+  const router = useRouter();
+  const [error, setError] = useState<string>();
+  const [pending, setPending] = useState(false);
   const isLearnX = audience === "learnx";
+  const nextPath = isLearnX ? "/student" : callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : "/dashboard";
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(undefined);
+    setPending(true);
+
+    const form = new FormData(event.currentTarget);
+    const destination = `/entry?mode=login&next=${encodeURIComponent(nextPath)}`;
+    const result = await signIn("credentials", {
+      email: String(form.get("email") ?? "").trim().toLowerCase(),
+      password: String(form.get("password") ?? ""),
+      redirect: false,
+      callbackUrl: destination
+    });
+
+    setPending(false);
+    if (!result?.ok) {
+      setError("Email or password is incorrect.");
+      return;
+    }
+
+    router.replace(result.url ?? destination);
+    router.refresh();
+  }
 
   return (
-    <form action={action} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <input type="hidden" name="callbackUrl" value={callbackUrl ?? ""} />
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
