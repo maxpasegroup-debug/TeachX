@@ -63,6 +63,24 @@ export const authConfig = {
     })
   ],
   callbacks: {
+    redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+
+      try {
+        const target = new URL(url);
+        const allowedOrigins = new Set([
+          new URL(baseUrl).origin,
+          "https://teachx.guru",
+          "https://www.teachx.guru",
+          "https://learnx.guru",
+          "https://www.learnx.guru"
+        ]);
+
+        return allowedOrigins.has(target.origin) ? target.toString() : baseUrl;
+      } catch {
+        return baseUrl;
+      }
+    },
     jwt({ token, user }) {
       if (user) {
         token.id = user.id ?? token.sub ?? "";

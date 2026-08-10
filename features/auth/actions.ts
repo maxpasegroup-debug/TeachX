@@ -3,11 +3,13 @@
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/db";
+import { getRequestOrigin } from "@/lib/host";
 import type { RoleKey } from "@/lib/constants/roles";
 
 const loginSchema = z.object({
@@ -22,6 +24,11 @@ function getSafeEntryTarget(path?: string) {
   return path;
 }
 
+async function getAuthRedirect(path: string) {
+  const origin = getRequestOrigin(await headers());
+  return origin ? new URL(path, origin).toString() : path;
+}
+
 export async function loginAction(previousState: string | undefined, formData: FormData) {
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -32,7 +39,7 @@ export async function loginAction(previousState: string | undefined, formData: F
     await signIn("credentials", {
       email: parsed.data.email.toLowerCase(),
       password: parsed.data.password,
-      redirectTo: `/entry?mode=login&next=${encodeURIComponent(getSafeEntryTarget(parsed.data.callbackUrl))}`
+      redirectTo: await getAuthRedirect(`/entry?mode=login&next=${encodeURIComponent(getSafeEntryTarget(parsed.data.callbackUrl))}`)
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -93,7 +100,7 @@ export async function signupAction(_: string | undefined, formData: FormData) {
   await signIn("credentials", {
     email: user.email,
     password: parsed.data.password,
-    redirectTo: `/entry?mode=signup&next=${encodeURIComponent(parsed.data.userType === "teacher" ? "/teacher" : "/student")}`
+    redirectTo: await getAuthRedirect(`/entry?mode=signup&next=${encodeURIComponent(parsed.data.userType === "teacher" ? "/teacher" : "/student")}`)
   });
 }
 
