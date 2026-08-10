@@ -15,7 +15,8 @@ export default async function middleware(request: NextRequest) {
   const isPublicRoute = isLandingPage || publicRoutes.some((route) => nextUrl.pathname === route || nextUrl.pathname.startsWith(`${route}/`));
   const token = await getToken({
     req: request,
-    secret: process.env.AUTH_SECRET
+    secret: process.env.AUTH_SECRET,
+    cookieName: process.env.NODE_ENV === "production" ? "__Secure-authjs.session-token" : "authjs.session-token"
   });
   const isAuthenticated = Boolean(token);
 
