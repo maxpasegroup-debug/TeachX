@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { submitLaunchFeedbackAction } from "@/features/launch-intelligence/actions";
 
 type FeedbackEntry = {
   id: string;
@@ -45,9 +46,11 @@ export function FeedbackWidget() {
   const [mode, setMode] = useState<"feedback" | "bug">("feedback");
   const [rating, setRating] = useState(0);
   const [sent, setSent] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState("");
   const browser = useMemo(() => (typeof navigator === "undefined" ? "Unknown browser" : navigator.userAgent), []);
 
-  function submit(formData: FormData) {
+  async function submit(formData: FormData) {
     const entry: FeedbackEntry = {
       id: crypto.randomUUID(),
       kind: mode,
@@ -63,8 +66,24 @@ export function FeedbackWidget() {
     };
 
     saveEntry(entry);
-    setSent(true);
-    setRating(0);
+    formData.set("mode", mode);
+    formData.set("rating", String(rating));
+    formData.set("route", entry.route);
+    formData.set("browser", browser);
+
+    setPending(true);
+    setMessage("");
+    try {
+      const result = await submitLaunchFeedbackAction(formData);
+      setMessage(result.message);
+      setSent(result.ok);
+      if (result.ok) setRating(0);
+    } catch {
+      setMessage("Feedback was saved on this device, but could not be sent to the server.");
+      setSent(true);
+    } finally {
+      setPending(false);
+    }
   }
 
   if (!open) {
@@ -86,7 +105,7 @@ export function FeedbackWidget() {
         <div>
           <Badge>Beta feedback</Badge>
           <h2 className="mt-3 text-xl font-semibold">Launch Feedback</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Stored locally until production feedback persistence is connected.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Sent to the launch support queue and mirrored on this device.</p>
         </div>
         <button aria-label="Close feedback widget" className="rounded-xl p-2 text-muted-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary" onClick={() => setOpen(false)} type="button">
           <X className="h-4 w-4" />
@@ -95,7 +114,7 @@ export function FeedbackWidget() {
 
       {sent ? (
         <div className="mt-5 rounded-2xl bg-sky-50 p-4 text-sm text-sky-900">
-          Thanks. Your beta feedback was saved on this device.
+          {message || "Thanks. Your feedback was sent."}
           <Button className="mt-4 w-full" onClick={() => setSent(false)} type="button" variant="secondary">
             Add another note
           </Button>
@@ -119,7 +138,7 @@ export function FeedbackWidget() {
                 <div className="mt-2 flex gap-1" role="radiogroup" aria-label="Experience rating">
                   {[1, 2, 3, 4, 5].map((value) => (
                     <button className={`text-2xl ${value <= rating ? "text-amber-500" : "text-muted-foreground"}`} key={value} onClick={() => setRating(value)} type="button" aria-label={`${value} star`}>
-                      ★
+                      *
                     </button>
                   ))}
                 </div>
@@ -137,13 +156,14 @@ export function FeedbackWidget() {
                 <option>High</option>
                 <option>Critical</option>
               </Select>
-              <div className="rounded-xl border border-dashed border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">Optional screenshot placeholder. Current route, browser, and timestamp are captured automatically.</div>
+              <div className="rounded-xl border border-dashed border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">Current route, browser, and timestamp are captured automatically.</div>
             </>
           )}
 
-          <Button type="submit">
+          {message ? <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{message}</p> : null}
+          <Button disabled={pending} type="submit">
             <Send className="mr-2 h-4 w-4" />
-            Submit
+            {pending ? "Sending" : "Submit"}
           </Button>
         </form>
       )}

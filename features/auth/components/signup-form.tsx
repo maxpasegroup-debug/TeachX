@@ -61,7 +61,12 @@ export function SignupForm({ userType }: SignupFormProps) {
       </div>
       <label className="flex items-start gap-3 rounded-2xl border border-white/80 bg-white/60 px-4 py-3 text-sm leading-6 text-muted-foreground">
         <input className="mt-1 h-4 w-4 rounded border-border text-brand-blue focus:ring-brand-blue" name="agreement" required type="checkbox" />
-        I agree to use {isTeacher ? "TeachX Guru" : "LearnX Guru"} responsibly and accept the platform privacy and account terms.
+        <span>
+          I agree to use {isTeacher ? "TeachX Guru" : "LearnX Guru"} responsibly and accept the{" "}
+          <Link className="font-semibold text-foreground underline" href="/privacy">Privacy Policy</Link>,{" "}
+          <Link className="font-semibold text-foreground underline" href="/terms">Terms</Link>, and{" "}
+          <Link className="font-semibold text-foreground underline" href="/cookies">Cookie Policy</Link>.
+        </span>
       </label>
       {error ? <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
       <Button className="premium-button h-13 w-full rounded-2xl shadow-brand transition duration-brand ease-brand" disabled={pending} type="submit">

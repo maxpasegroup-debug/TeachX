@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ArrowRight, Bell, BookOpen, Bookmark, CalendarDays, Download, FileText, FolderOpen, GraduationCap, History, Lightbulb, NotebookPen, Pin, Sparkles, Target, UsersRound } from "lucide-react";
+import { ArrowRight, Bell, BookOpen, Bookmark, CalendarDays, CheckCircle2, Download, FileText, FolderOpen, GraduationCap, History, LifeBuoy, Lightbulb, NotebookPen, Pin, Sparkles, Target, UsersRound } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -113,22 +113,30 @@ export function TeacherOperatingDashboard({ name, completion, recentItems, favor
   daily: { todaysClasses: ListItem[]; schedule: ListItem[]; pendingTasks: ListItem[]; recentAI: ListItem[]; recentResources: ListItem[]; activity: ListItem[] };
   canAccessInstitution: boolean;
 }) {
-  const quickActions = [
-    { title: "My Classroom", description: "Open classes, attendance, homework, and teaching resources.", href: "/teacher/workspace/classrooms", icon: UsersRound },
-    { title: "Lesson Library", description: "Create or continue a saved lesson.", href: "/teacher/workspace/lessons", icon: FileText },
-    { title: "Planner", description: "Review schedules, exams, reminders, and deadlines.", href: "/teacher/workspace/planner", icon: CalendarDays },
-    { title: "Notes", description: "Capture personal, teaching, and AI notes.", href: "/teacher/workspace/notes", icon: NotebookPen },
-    { title: "My Resources", description: "Open uploads, purchases, and downloads.", href: "/teacher/workspace/resources", icon: FolderOpen }
+  const simpleActions = [
+    { title: "Create Lesson", description: "Use AI to prepare a classroom-ready lesson plan.", href: "/teacher/ai-studio/create/lesson-generator", icon: Sparkles },
+    { title: "Create Worksheet", description: "Make a printable practice sheet with answers.", href: "/teacher/ai-studio/create/worksheet-generator", icon: FileText },
+    { title: "Create Quiz", description: "Generate quick questions for revision or assessment.", href: "/teacher/ai-studio/create/quiz-generator", icon: CheckCircle2 },
+    { title: "My Classes", description: "Open attendance, homework, students, and materials.", href: "/teacher/workspace/classrooms", icon: UsersRound },
+    { title: "My Downloads", description: "Find resources you saved, bought, or downloaded.", href: "/teacher/workspace/resources", icon: Download },
+    { title: "Get Help", description: "Ask the launch team for support or report a problem.", href: "/teacher/support", icon: LifeBuoy }
+  ];
+
+  const templateActions = [
+    { title: "40 minute lesson", href: "/teacher/ai-studio/create/lesson-generator", meta: "Objective, activities, homework" },
+    { title: "10 question worksheet", href: "/teacher/ai-studio/create/worksheet-generator", meta: "Mixed questions with answer key" },
+    { title: "Parent message", href: "/teacher/ai-studio/create/parent-communication", meta: "Respectful WhatsApp or email draft" },
+    { title: "Homework set", href: "/teacher/ai-studio/create/homework-generator", meta: "Clear tasks and submission notes" }
   ];
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[2rem] border border-border bg-gradient-to-br from-sky-50 via-white to-blue-50 p-6 shadow-soft sm:p-8">
-        <Badge>Teacher OS</Badge>
+      <section className="rounded-[2rem] border border-border bg-gradient-to-br from-sky-50 via-white to-blue-50 p-5 shadow-soft sm:p-8">
+        <Badge>Teacher Simple Mode</Badge>
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px] lg:items-end">
           <div>
-            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Good Morning, {firstName(name)}</h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">Build one useful teaching asset today. Small systems compound into a stronger teaching business.</p>
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">Good morning, {firstName(name)}</h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">Start with one useful teaching task. Create, save, and share material without opening the advanced tools first.</p>
           </div>
           <Card className="grid gap-4 p-5 shadow-sm sm:grid-cols-2 lg:grid-cols-1">
             <div>
@@ -145,13 +153,41 @@ export function TeacherOperatingDashboard({ name, completion, recentItems, favor
 
       <ActivationChecklist name={name} profileCompletionPercentage={completion.percentage} role="teacher" />
 
-      <GlobalCommandBar />
-
       <section>
-        <h2 className="mb-4 text-2xl font-semibold">Quick Actions</h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          {quickActions.map((action) => <QuickActionCard {...action} key={action.title} />)}
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-semibold">Start Here</h2>
+            <p className="mt-1 text-sm text-muted-foreground">The five buttons most teachers need on day one.</p>
+          </div>
+          <Link className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2 text-sm font-semibold hover:bg-muted" href="/teacher/ai-studio">
+            All AI tools
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+          {simpleActions.map((action) => <QuickActionCard {...action} key={action.title} />)}
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[1fr_360px]">
+        <Card className="p-5 shadow-soft">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold">Ready Templates</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Fast paths for common classroom work.</p>
+            </div>
+            <Sparkles className="h-5 w-5 text-sky-700" />
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {templateActions.map((item) => (
+              <Link className="rounded-xl border border-border bg-background p-4 hover:border-sky-200 hover:bg-sky-50" href={item.href} key={item.title}>
+                <p className="font-semibold">{item.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{item.meta}</p>
+              </Link>
+            ))}
+          </div>
+        </Card>
+        <ProfileCompletionCard completion={completion} href="/profile" />
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -167,11 +203,11 @@ export function TeacherOperatingDashboard({ name, completion, recentItems, favor
           <ListPanel title="Saved Drafts" icon={Pin} items={savedSearches} emptyTitle="No saved drafts yet" />
           <ListPanel title="Recently Opened" icon={History} items={favorites} emptyTitle="No recent activity yet" />
         </div>
-        <ProfileCompletionCard completion={completion} href="/profile" />
+        <GlobalCommandBar />
       </section>
 
       <section>
-        <h2 className="mb-4 text-2xl font-semibold">Connected Ecosystem Widgets</h2>
+        <h2 className="mb-4 text-2xl font-semibold">Advanced Tools</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {[
             ["AI Studio", "/teacher/ai-studio"],
@@ -183,7 +219,8 @@ export function TeacherOperatingDashboard({ name, completion, recentItems, favor
             ["Recent Files", "/teacher/workspace/resources"],
             ["Calendar", "/teacher/workspace/planner"],
             ["Planner", "/teacher/workspace/planner"],
-            ["Notifications", "/teacher/workspace/notifications"]
+            ["Notifications", "/teacher/workspace/notifications"],
+            ["Get Help", "/teacher/support"]
           ].map(([label, href]) => <Link className="rounded-2xl border border-border bg-surface p-4 text-sm font-semibold shadow-sm hover:bg-muted" href={href} key={label}>{label}</Link>)}
         </div>
       </section>

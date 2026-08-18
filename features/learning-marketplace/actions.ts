@@ -99,7 +99,7 @@ export async function publishLearningResourceAction(formData: FormData) {
     await createModuleNotification({ institutionId, type: "CONTENT", title: "Resource published", body: resource.title, link: `/resources/${resource.id}` });
   }
 
-  revalidatePath("/teacher/resources");
+  revalidatePath("/teacher/workspace/resources");
   revalidatePath("/resources");
 }
 
@@ -118,7 +118,7 @@ export async function updateResourceStatusAction(formData: FormData) {
         : { status: "DRAFT" as const, visibility: "TEACHERS" as const };
 
   await prisma.contentItem.updateMany({ where: { id: resourceId, createdById: session.user.id, institutionId }, data });
-  revalidatePath("/teacher/resources");
+  revalidatePath("/teacher/workspace/resources");
   revalidatePath("/resources");
 }
 
@@ -148,7 +148,7 @@ export async function duplicateLearningResourceAction(formData: FormData) {
     }
   });
 
-  revalidatePath("/teacher/resources");
+  revalidatePath("/teacher/workspace/resources");
 }
 
 export async function deleteLearningResourceAction(formData: FormData) {
@@ -157,7 +157,7 @@ export async function deleteLearningResourceAction(formData: FormData) {
   const resourceId = value(formData, "resourceId");
   if (!resourceId) return;
   await prisma.contentItem.deleteMany({ where: { id: resourceId, createdById: session.user.id, institutionId, status: { not: "PUBLISHED" } } });
-  revalidatePath("/teacher/resources");
+  revalidatePath("/teacher/workspace/resources");
 }
 
 export async function bookmarkLearningResourceAction(formData: FormData) {
@@ -173,7 +173,7 @@ export async function bookmarkLearningResourceAction(formData: FormData) {
   });
 
   if (resource.createdById && resource.createdById !== session.user.id) {
-    await prisma.notification.create({ data: { userId: resource.createdById, institutionId: resource.institutionId, title: "Resource bookmarked", body: `${session.user.name ?? "A student"} saved ${resource.title}.`, link: "/teacher/resources" } });
+    await prisma.notification.create({ data: { userId: resource.createdById, institutionId: resource.institutionId, title: "Resource bookmarked", body: `${session.user.name ?? "A student"} saved ${resource.title}.`, link: "/teacher/workspace/resources" } });
   }
 
   revalidatePath(`/resources/${resource.id}`);
@@ -211,7 +211,7 @@ export async function downloadLearningResourceAction(formData: FormData) {
   });
 
   if (resource.createdById && resource.createdById !== session.user.id) {
-    await prisma.notification.create({ data: { userId: resource.createdById, institutionId: resource.institutionId, title: "Resource downloaded", body: `${session.user.name ?? "A student"} downloaded ${resource.title}.`, link: "/teacher/resources" } });
+    await prisma.notification.create({ data: { userId: resource.createdById, institutionId: resource.institutionId, title: "Resource downloaded", body: `${session.user.name ?? "A student"} downloaded ${resource.title}.`, link: "/teacher/workspace/resources" } });
   }
 
   revalidatePath(`/resources/${resource.id}`);
@@ -246,5 +246,5 @@ export async function saveAIConversationAsResourceAction(formData: FormData) {
     }
   });
 
-  revalidatePath("/teacher/resources");
+  revalidatePath("/teacher/workspace/resources");
 }

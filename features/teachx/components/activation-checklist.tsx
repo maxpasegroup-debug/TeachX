@@ -31,10 +31,10 @@ const checklistCopy: Record<ActivationRole, { eyebrow: string; intro: string; st
     intro: "Set up the essentials for teaching, creating, publishing, and inviting learners into your world.",
     steps: [
       { id: "profile", title: "Complete Profile", description: "Add your photo, bio, subjects, languages, and teaching mode.", href: "/profile" },
-      { id: "lesson", title: "Create Your First Lesson", description: "Start a useful lesson outline from your workspace.", href: "/teacher/resources" },
-      { id: "ai-lesson", title: "Generate Your First AI Lesson", description: "Open AI Studio and prepare your first AI-assisted lesson.", href: "/teacher/ai-studio" },
-      { id: "resource", title: "Publish Your First Teaching Resource", description: "Save or publish a classroom-ready resource.", href: "/teacher/resources" },
-      { id: "invite", title: "Invite Your First Student", description: "Prepare your teaching presence and share your profile.", href: "/teacher/marketplace" }
+      { id: "lesson", title: "Create Your First Lesson", description: "Start a useful lesson outline from your workspace.", href: "/teacher/workspace/lessons" },
+      { id: "ai-lesson", title: "Generate Your First AI Lesson", description: "Open AI Studio and prepare your first AI-assisted lesson.", href: "/teacher/ai-studio/create/lesson-generator" },
+      { id: "resource", title: "Save Your First Teaching Resource", description: "Create a classroom-ready resource you can reuse later.", href: "/teacher/workspace/resources" },
+      { id: "invite", title: "Prepare Your Public Profile", description: "Make your teacher profile ready before sharing it with learners.", href: "/teacher/business/profile" }
     ]
   },
   student: {

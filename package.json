@@ -8,6 +8,11 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "launch:verify": "node scripts/launch-verify.mjs",
+    "launch:smoke": "node scripts/launch-smoke.mjs",
+    "launch:gate": "node scripts/launch-gate.mjs",
+    "launch:gate:production": "node scripts/launch-gate.mjs --production",
+    "launch:monitor": "node scripts/launch-monitor.mjs",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "prisma:migrate": "prisma migrate dev"

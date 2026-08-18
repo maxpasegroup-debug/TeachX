@@ -10,6 +10,7 @@ import { z } from "zod";
 import { signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getRequestOrigin } from "@/lib/host";
+import { getClientKey, rateLimit } from "@/lib/security";
 import type { RoleKey } from "@/lib/constants/roles";
 
 const loginSchema = z.object({
@@ -29,6 +30,11 @@ async function getAuthRedirect(path: string) {
   return origin ? new URL(path, origin).toString() : path;
 }
 
+async function getActionClientKey(fallback: string) {
+  const h = await headers();
+  return getClientKey({ headers: h } as Request, fallback);
+}
+
 function credentialsFormData(email: string, password: string, redirectTo: string) {
   const data = new FormData();
   data.set("email", email);
@@ -42,6 +48,9 @@ export async function loginAction(previousState: string | undefined, formData: F
   if (!parsed.success) {
     return parsed.error.issues[0]?.message ?? "Please check your login details.";
   }
+
+  const limited = rateLimit(`login:${await getActionClientKey(parsed.data.email.toLowerCase())}`, 10, 60_000);
+  if (limited) return "Too many login attempts. Please try again shortly.";
 
   try {
     await signIn("credentials", credentialsFormData(
@@ -62,8 +71,13 @@ const signupSchema = z.object({
   name: z.string().min(2, "Enter your full name."),
   email: z.string().email("Enter a valid email address."),
   password: z.string().min(8, "Password must be at least 8 characters."),
+  confirmPassword: z.string().min(8, "Confirm your password."),
   phone: z.string().optional(),
-  goal: z.string().optional()
+  goal: z.string().optional(),
+  agreement: z.literal("on", { errorMap: () => ({ message: "Please accept the privacy policy and terms." }) })
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match.",
+  path: ["confirmPassword"]
 });
 
 const roleByUserType: Record<z.infer<typeof signupSchema>["userType"], RoleKey> = {
@@ -76,6 +90,9 @@ export async function signupAction(_: string | undefined, formData: FormData) {
   if (!parsed.success) return parsed.error.issues[0]?.message ?? "Please check your signup details.";
 
   const email = parsed.data.email.toLowerCase();
+  const limited = rateLimit(`signup:${await getActionClientKey(email)}`, 5, 60_000);
+  if (limited) return "Too many signup attempts. Please try again shortly.";
+
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) return "An account already exists with this email.";
 

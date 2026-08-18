@@ -1,6 +1,6 @@
 import type { PermissionKey } from "@/lib/constants/roles";
 
-export const publicRoutes = ["/login", "/forgot-password", "/reset-password", "/guest-portal", "/setup", "/welcome", "/teachers", "/students", "/signup", "/marketplace", "/resources", "/manifest.webmanifest", "/robots.txt", "/sitemap.xml", "/offline", "/icons", "/brand"] as const;
+export const publicRoutes = ["/login", "/forgot-password", "/reset-password", "/guest-portal", "/setup", "/welcome", "/teachers", "/students", "/signup", "/pricing", "/trust", "/status", "/privacy", "/terms", "/security", "/cookies", "/refund-policy", "/contact", "/marketplace", "/resources", "/manifest.webmanifest", "/robots.txt", "/sitemap.xml", "/.well-known", "/offline", "/icons", "/brand"] as const;
 
 export const routePermissions: Record<string, PermissionKey> = {
   "/dashboard": "dashboard.view",

@@ -30,8 +30,14 @@ export async function generateAIStudioContent(_: AIStudioGenerationState, formDa
     const entries = formData.getAll(field.name).map(String).map((entry) => entry.trim()).filter(Boolean);
     return `${field.label}: ${entries.join(", ") || "Not specified"}`;
   });
+  const classroomPreset = [
+    `Output language: ${value(formData, "outputLanguage") || "English"}`,
+    `Curriculum / board: ${value(formData, "curriculumBoard") || "Teacher's local curriculum"}`,
+    `Sharing format: ${value(formData, "sharingFormat") || "Printable classroom handout"}`
+  ];
   const prompt = [
     `Create a complete ${tool.title}.`,
+    ...classroomPreset,
     ...details,
     "",
     "Required output:",
@@ -55,6 +61,110 @@ export async function generateAIStudioContent(_: AIStudioGenerationState, formDa
 
   revalidatePath("/teacher/ai-studio");
   return { text: result.text, conversationId: result.conversationId };
+}
+
+export async function improveAIStudioContentAction(formData: FormData): Promise<AIStudioGenerationState> {
+  const session = await auth();
+  if (!session?.user) return { error: "Please sign in." };
+
+  const id = value(formData, "conversationId");
+  const content = value(formData, "content");
+  const mode = value(formData, "mode") || "improve";
+  if (!id || !content) return { error: "Generate content before improving it." };
+
+  const conversation = await prisma.aIConversation.findFirst({ where: { id, userId: session.user.id, scope: "TEACHER" } });
+  if (!conversation) return { error: "AI generation was not found." };
+
+  const modeInstruction: Record<string, string> = {
+    simplify: "Simplify this for a rural or first-time teacher. Use shorter sentences, clearer sections, and practical classroom steps.",
+    language: `Translate or adapt this into ${value(formData, "outputLanguage") || "the requested language"} while preserving structure and teacher intent.`,
+    share: "Make this easy to share with students or parents on WhatsApp. Keep it concise, structured, and ready to copy.",
+    improve: "Improve clarity, formatting, classroom usability, and completeness without adding unsupported personal facts."
+  };
+
+  const result = await runAI({
+    institutionId: session.user.institutionId,
+    userId: session.user.id,
+    scope: "TEACHER",
+    feature: `improve-${mode}`,
+    prompt: [
+      modeInstruction[mode] ?? modeInstruction.improve,
+      "",
+      "Original teacher material:",
+      content
+    ].join("\n"),
+    context: {
+      sourceConversationId: id,
+      improvementMode: mode
+    }
+  });
+
+  revalidatePath("/teacher/ai-studio");
+  revalidatePath("/teacher/ai-studio/history");
+  return { text: result.text, conversationId: result.conversationId };
+}
+
+function contentTypeForSave(kind: string, toolSlug: string) {
+  if (kind === "lesson") return "NOTES" as const;
+  if (toolSlug.includes("worksheet") || toolSlug.includes("homework")) return "WORKSHEET" as const;
+  if (toolSlug.includes("question-paper")) return "QUESTION_PAPER" as const;
+  if (toolSlug.includes("presentation")) return "PPT" as const;
+  return "DOCUMENT" as const;
+}
+
+export async function saveAIOutputToTeacherLibraryAction(formData: FormData) {
+  const session = await auth();
+  const id = value(formData, "conversationId");
+  const content = value(formData, "content");
+  const courseId = value(formData, "courseId");
+  const saveKind = value(formData, "saveKind") || "resource";
+  if (!session?.user.id || !session.user.institutionId || !id || !content || !courseId) return;
+
+  const [conversation, course] = await Promise.all([
+    prisma.aIConversation.findFirst({ where: { id, userId: session.user.id, scope: "TEACHER" } }),
+    prisma.course.findFirst({ where: { id: courseId, institutionId: session.user.institutionId } })
+  ]);
+  if (!conversation || !course) return;
+
+  const context = conversation.context && typeof conversation.context === "object" && !Array.isArray(conversation.context)
+    ? conversation.context as Record<string, unknown>
+    : {};
+  const toolSlug = String(context.toolSlug ?? "ai-studio");
+  const title = value(formData, "title") || conversation.title;
+
+  await prisma.contentItem.create({
+    data: {
+      institutionId: session.user.institutionId,
+      createdById: session.user.id,
+      courseId,
+      title,
+      description: content,
+      type: contentTypeForSave(saveKind, toolSlug),
+      status: "DRAFT",
+      visibility: saveKind === "lesson" ? "PRIVATE" : "TEACHERS",
+      aiReadyNotes: {
+        source: "ai-studio",
+        conversationId: conversation.id,
+        toolSlug,
+        saveKind,
+        outputLanguage: value(formData, "outputLanguage") || "English",
+        curriculumBoard: value(formData, "curriculumBoard") || "Teacher's local curriculum"
+      },
+      versions: {
+        create: {
+          version: 1,
+          title,
+          updatedById: session.user.id,
+          changeNote: saveKind === "lesson" ? "Saved from AI Studio to Lesson Library" : "Saved from AI Studio to Resource Library"
+        }
+      },
+      analytics: { create: {} }
+    }
+  });
+
+  revalidatePath("/teacher");
+  revalidatePath("/teacher/workspace/lessons");
+  revalidatePath("/teacher/workspace/resources");
 }
 
 export async function saveAIConversationContentAction(formData: FormData) {

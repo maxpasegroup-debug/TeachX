@@ -122,17 +122,17 @@ export async function getTeacherOperatingHome(input: { userId?: string; institut
     },
     daily: {
       todaysClasses: teacherDashboard.todaysClasses.map(({ classroom, entry }) => ({
-        title: `${entry.subject?.name ?? "Class"} · ${classroom.batch.name}`,
-        meta: `${entry.timeSlot.startsAt}–${entry.timeSlot.endsAt}`,
+        title: `${entry.subject?.name ?? "Class"} - ${classroom.batch.name}`,
+        meta: `${entry.timeSlot.startsAt}-${entry.timeSlot.endsAt}`,
         href: `/classrooms/${classroom.id}`
       })),
       schedule: teacherDashboard.upcomingClasses.map(({ classroom, entry }) => ({
-        title: `${entry.day} · ${entry.subject?.name ?? "Class"}`,
-        meta: `${entry.timeSlot.startsAt}–${entry.timeSlot.endsAt} · ${classroom.batch.name}`,
+        title: `${entry.day} - ${entry.subject?.name ?? "Class"}`,
+        meta: `${entry.timeSlot.startsAt}-${entry.timeSlot.endsAt} - ${classroom.batch.name}`,
         href: `/classrooms/${classroom.id}`
       })),
       pendingTasks: [
-        ...teacherDashboard.pendingAttendance.map((classroom) => ({ title: `Take attendance · ${classroom.batch.name}`, meta: "Attendance", href: `/classrooms/${classroom.id}` })),
+        ...teacherDashboard.pendingAttendance.map((classroom) => ({ title: `Take attendance - ${classroom.batch.name}`, meta: "Attendance", href: `/classrooms/${classroom.id}` })),
         ...(teacherDashboard.assignmentsAwaitingReview ? [{ title: `${teacherDashboard.assignmentsAwaitingReview} homework submissions to review`, meta: "Homework", href: "/teacher/workspace/classrooms" }] : [])
       ],
       recentAI: recentAI.map((item) => ({ title: item.title, meta: item.updatedAt.toLocaleString(), href: "/teacher/workspace/saved-ai" })),

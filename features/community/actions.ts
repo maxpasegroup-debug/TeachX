@@ -81,7 +81,7 @@ export async function updateBookingWorkflowAction(formData: FormData) {
   await prisma.notification.create({ data: { userId: recipientId, institutionId: session.user.institutionId, title: "Booking request updated", body: `${request.subject} is now ${status}.`, link: "/communication", metadata: { category: "BOOKING", priority: "HIGH" } } });
   await recordActivity({ institutionId: session.user.institutionId, actorId: session.user.id, type: "SYSTEM", title: `Booking ${status.toLowerCase()}`, body: request.subject, entity: "TeacherBookingRequest", entityId: request.id, link: "/communication" });
   revalidatePath("/communication");
-  revalidatePath("/teacher/marketplace");
+  revalidatePath("/teacher/business/marketplace");
   revalidatePath("/student/teachers");
 }
 

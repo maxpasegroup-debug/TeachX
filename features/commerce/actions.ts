@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
@@ -14,6 +15,35 @@ function value(formData: FormData, key: string) {
 function numberValue(formData: FormData, key: string) {
   const raw = Number(value(formData, key));
   return Number.isFinite(raw) ? raw : 0;
+}
+
+async function createDraftCommerceInvoice(input: {
+  orderId: string;
+  buyerId: string;
+  buyerName?: string | null;
+  buyerEmail?: string | null;
+  institutionId?: string | null;
+  subtotal: number;
+  total: number;
+  tax?: number;
+  metadata?: Record<string, unknown>;
+}) {
+  const count = await prisma.commerceInvoice.count({ where: { institutionId: input.institutionId ?? undefined } });
+  return prisma.commerceInvoice.create({
+    data: {
+      institutionId: input.institutionId ?? undefined,
+      orderId: input.orderId,
+      buyerId: input.buyerId,
+      invoiceNumber: `TX-COM-${new Date().getFullYear()}-${String(count + 1).padStart(5, "0")}`,
+      billingName: input.buyerName ?? "TeachX customer",
+      billingEmail: input.buyerEmail ?? "billing@teachx.guru",
+      subtotal: input.subtotal,
+      tax: input.tax ?? 0,
+      total: input.total,
+      status: "DRAFT",
+      metadata: { ...input.metadata, launchInvoice: true }
+    }
+  });
 }
 
 export async function createResourcePurchaseOrderAction(formData: FormData) {
@@ -53,14 +83,14 @@ export async function createResourcePurchaseOrderAction(formData: FormData) {
         institutionId: resource.institutionId,
         title: "Resource order created",
         body: `${session.user.name ?? "A student"} created an order for ${resource.title}.`,
-        link: "/teacher/wallet"
+        link: "/teacher/business/wallet"
       }
     });
   }
 
   revalidatePath(`/resources/${resource.id}`);
   revalidatePath("/student/purchases");
-  revalidatePath("/teacher/wallet");
+  revalidatePath("/teacher/business/wallet");
 }
 
 export async function changeSubscriptionAction(formData: FormData) {
@@ -71,6 +101,50 @@ export async function changeSubscriptionAction(formData: FormData) {
   const plan = await prisma.subscriptionPlan.findFirst({ where: { id: planId, isActive: true } });
   if (!plan) return;
 
+  const amount = Number(plan.price);
+  if (amount > 0) {
+    const order = await createCommerceOrder({
+      buyerId: session.user.id,
+      institutionId: session.user.institutionId,
+      type: "SUBSCRIPTION_PURCHASE",
+      title: plan.name,
+      itemType: "SUBSCRIPTION",
+      amount,
+      planId: plan.id,
+      metadata: {
+        interval: plan.interval,
+        provider: "checkout-ready",
+        gatewayState: "pending-provider-configuration",
+        requestedPlanId: plan.id
+      }
+    });
+    await createDraftCommerceInvoice({
+      orderId: order.id,
+      buyerId: session.user.id,
+      buyerName: session.user.name,
+      buyerEmail: session.user.email,
+      institutionId: session.user.institutionId,
+      subtotal: amount,
+      total: amount,
+      metadata: { planId: plan.id, checkoutRequired: true }
+    });
+
+    await prisma.notification.create({
+      data: {
+        userId: session.user.id,
+        institutionId: session.user.institutionId,
+        title: "Checkout order created",
+        body: `${plan.name} is ready for payment. Live gateway collection will activate after Razorpay or Stripe is configured.`,
+        link: `/checkout/${order.id}`
+      }
+    });
+
+    revalidatePath("/teacher/business/subscription");
+    revalidatePath("/student/purchases");
+    revalidatePath("/admin/subscriptions");
+    redirect(`/checkout/${order.id}`);
+  }
+
   await prisma.userSubscription.updateMany({ where: { userId: session.user.id, status: "ACTIVE", plan: { audience: plan.audience } }, data: { status: "EXPIRED" } });
   await prisma.userSubscription.create({
     data: {
@@ -79,24 +153,35 @@ export async function changeSubscriptionAction(formData: FormData) {
       planId: plan.id,
       status: "ACTIVE",
       currentPeriodEnd: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
-      metadata: { source: "commerce-os", payment: Number(plan.price) > 0 ? "future-gateway" : "free-plan" }
+      metadata: { source: "commerce-os", payment: "free-plan" }
     }
   });
 
-  await createCommerceOrder({
+  const order = await createCommerceOrder({
     buyerId: session.user.id,
     institutionId: session.user.institutionId,
     type: "SUBSCRIPTION_PURCHASE",
     title: plan.name,
     itemType: "SUBSCRIPTION",
-    amount: Number(plan.price),
+    amount,
     planId: plan.id,
-    metadata: { interval: plan.interval, provider: "future" }
+    metadata: { interval: plan.interval, provider: "free-plan", activated: true }
+  });
+  await createDraftCommerceInvoice({
+    orderId: order.id,
+    buyerId: session.user.id,
+    buyerName: session.user.name,
+    buyerEmail: session.user.email,
+    institutionId: session.user.institutionId,
+    subtotal: amount,
+    total: amount,
+    metadata: { planId: plan.id, freePlan: true }
   });
 
-  await prisma.notification.create({ data: { userId: session.user.id, institutionId: session.user.institutionId, title: "Subscription updated", body: `Your plan is now ${plan.name}.`, link: "/student/purchases" } });
+  await prisma.notification.create({ data: { userId: session.user.id, institutionId: session.user.institutionId, title: "Subscription updated", body: `Your plan is now ${plan.name}.`, link: "/teacher/business/subscription" } });
 
-  revalidatePath("/teacher/wallet");
+  revalidatePath("/teacher/business/subscription");
+  revalidatePath("/teacher/business/wallet");
   revalidatePath("/student/purchases");
   revalidatePath("/admin/subscriptions");
 }
@@ -133,7 +218,7 @@ export async function createAICreditPackOrderAction(formData: FormData) {
   });
 
   await prisma.notification.create({ data: { userId: session.user.id, institutionId: session.user.institutionId, title: "AI credit order created", body: "Checkout provider integration is prepared for a later phase.", link: "/student/purchases" } });
-  revalidatePath("/teacher/wallet");
+  revalidatePath("/teacher/business/wallet");
   revalidatePath("/student/purchases");
 }
 
@@ -158,7 +243,7 @@ export async function createBookingReservationOrderAction(formData: FormData) {
   });
 
   revalidatePath("/student/purchases");
-  revalidatePath("/teacher/wallet");
+  revalidatePath("/teacher/business/wallet");
 }
 
 export async function createCouponAction(formData: FormData) {

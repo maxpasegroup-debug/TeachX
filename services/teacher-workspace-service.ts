@@ -75,7 +75,7 @@ export async function getTeacherWorkspaceData(input: {
         homeworkPending: submissions.filter((submission) => submission.status === "SUBMITTED" || submission.status === "LATE").length,
         notes: classroom.announcements.map((announcement) => announcement.title),
         timetable: classroom.batch.timetableEntries.map((entry) => ({
-          id: entry.id, day: entry.day, time: `${entry.timeSlot.startsAt}–${entry.timeSlot.endsAt}`,
+          id: entry.id, day: entry.day, time: `${entry.timeSlot.startsAt}-${entry.timeSlot.endsAt}`,
           subject: entry.subject?.name ?? "Subject", room: entry.room?.name ?? "Room not assigned"
         }))
       };
@@ -92,8 +92,8 @@ export async function getTeacherWorkspaceData(input: {
       startsAt: event.startsAt.toISOString(), endsAt: event.endsAt.toISOString()
     })),
     timetable: teacher.upcomingClasses.map(({ classroom, entry }) => ({
-      id: entry.id, title: `${entry.subject?.name ?? "Class"} · ${classroom.batch.name}`, type: "TEACHING",
-      day: entry.day, time: `${entry.timeSlot.startsAt}–${entry.timeSlot.endsAt}`, href: `/classrooms/${classroom.id}`
+      id: entry.id, title: `${entry.subject?.name ?? "Class"} - ${classroom.batch.name}`, type: "TEACHING",
+      day: entry.day, time: `${entry.timeSlot.startsAt}-${entry.timeSlot.endsAt}`, href: `/classrooms/${classroom.id}`
     })),
     exams: exams.map((exam) => ({ id: exam.id, title: exam.name, type: "EXAM", startsAt: exam.startsAt?.toISOString() ?? exam.createdAt.toISOString(), course: exam.course.name })),
     notes: notes.map((note) => {

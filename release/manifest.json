@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "product": "TeachX",
+  "version": "1.0.0-rc.1",
+  "channel": "release-candidate",
+  "status": "production-verification-required",
+  "owner": "TeachX launch team",
+  "requiredGates": [
+    "launch:verify",
+    "prisma:validate",
+    "typecheck",
+    "lint",
+    "build",
+    "strict-production-smoke",
+    "manual-teacher-rehearsal",
+    "manual-admin-rehearsal"
+  ],
+  "rollbackTriggers": [
+    "readiness probe failure",
+    "authentication or authorization regression",
+    "unverified paid access",
+    "teacher creation workflow unavailable",
+    "support intake unavailable"
+  ]
+}
+

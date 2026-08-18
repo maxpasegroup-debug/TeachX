@@ -14,7 +14,7 @@ export async function GET() {
       ok: runtime.ok,
       status: runtime.ok ? "ready" : "configuration_incomplete",
       database: "connected",
-      missing: runtime.missing,
+      launchMode: runtime.launchMode,
       timestamp: new Date().toISOString()
     }, { status: runtime.ok ? 200 : 503 });
   } catch {
@@ -22,7 +22,7 @@ export async function GET() {
       ok: false,
       status: "database_unavailable",
       database: "unavailable",
-      missing: runtime.missing,
+      launchMode: "configuration_incomplete",
       timestamp: new Date().toISOString()
     }, { status: 503 });
   }

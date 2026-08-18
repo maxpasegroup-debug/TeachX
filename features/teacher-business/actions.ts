@@ -7,7 +7,7 @@ import { prisma } from "@/lib/db";
 
 function value(formData: FormData, key: string) { return String(formData.get(key) ?? "").trim(); }
 function list(formData: FormData, key: string) { return value(formData, key).split(",").map((item) => item.trim()).filter(Boolean); }
-function refresh() { revalidatePath("/teacher/business", "layout"); revalidatePath("/teacher/marketplace"); revalidatePath("/marketplace"); }
+function refresh() { revalidatePath("/teacher/business", "layout"); revalidatePath("/teacher/business/marketplace"); revalidatePath("/marketplace"); }
 async function session() {
   const result = await auth();
   if (!result?.user.id || !result.user.institutionId) throw new Error("Teacher business access is required.");

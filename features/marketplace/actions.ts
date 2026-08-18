@@ -68,7 +68,7 @@ export async function updateTeacherMarketplaceProfileAction(formData: FormData) 
     }
   });
 
-  revalidatePath("/teacher/marketplace");
+  revalidatePath("/teacher/business/marketplace");
   revalidatePath("/marketplace");
 }
 
@@ -92,7 +92,7 @@ export async function favoriteTeacherAction(formData: FormData) {
         institutionId: session.user.institutionId,
         title: "Your profile was saved",
         body: `${session.user.name ?? "A student"} saved your teacher profile.`,
-        link: "/teacher/marketplace"
+        link: "/teacher/business/marketplace"
       }
     });
   }
@@ -128,7 +128,7 @@ export async function createTeacherBookingRequestAction(formData: FormData) {
       institutionId: session.user.institutionId,
       title: "New booking request",
       body: `${session.user.name ?? "A student"} requested a class for ${value(formData, "subject") || "learning support"}.`,
-      link: "/teacher/marketplace"
+      link: "/teacher/business/marketplace"
     }
   });
 

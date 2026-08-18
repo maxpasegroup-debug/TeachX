@@ -46,7 +46,7 @@ export function AIHistoryPage({ items }: { items: HistoryItem[] }) {
       <div>
         <h1 className="text-3xl font-semibold">Recent History</h1>
         <p className="mt-2 text-muted-foreground">Search, edit, duplicate, favorite, export, or delete any Studio generation.</p>
-        <Input className="mt-5 max-w-xl" onChange={(event) => setQuery(event.target.value)} placeholder="Search generated materials…" type="search" value={query} />
+        <Input className="mt-5 max-w-xl" onChange={(event) => setQuery(event.target.value)} placeholder="Search generated materials..." type="search" value={query} />
       </div>
       {!filtered.length ? <EmptyState icon={<FileText className="h-5 w-5" />} title="No matching generations" description="Try another title, topic, or phrase." /> : null}
       {groups.map((entry) => (
@@ -68,7 +68,7 @@ export function AIHistoryPage({ items }: { items: HistoryItem[] }) {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h3 className="text-xl font-semibold">{item.title}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">Version {version} · {tokens} tokens · {item.updatedAt.toLocaleString()}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Version {version} - {tokens} tokens - {item.updatedAt.toLocaleString()}</p>
                     </div>
                     <FileText className="h-5 w-5 text-sky-700" />
                   </div>
@@ -84,7 +84,7 @@ export function AIHistoryPage({ items }: { items: HistoryItem[] }) {
                     <details className="mt-3 rounded-xl border border-border bg-background p-4">
                       <summary className="cursor-pointer text-sm font-medium"><History className="mr-2 inline h-4 w-4" />Version history ({versions.length})</summary>
                       <div className="mt-3 space-y-3">
-                        {versions.map((entry, index) => <div className="rounded-lg bg-surface p-3" key={`${entry.version}-${index}`}><p className="text-xs font-semibold">Version {entry.version} · {entry.savedAt ? new Date(entry.savedAt).toLocaleString() : "Earlier save"}</p><pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap text-xs text-muted-foreground">{entry.content}</pre></div>)}
+                        {versions.map((entry, index) => <div className="rounded-lg bg-surface p-3" key={`${entry.version}-${index}`}><p className="text-xs font-semibold">Version {entry.version} - {entry.savedAt ? new Date(entry.savedAt).toLocaleString() : "Earlier save"}</p><pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap text-xs text-muted-foreground">{entry.content}</pre></div>)}
                       </div>
                     </details>
                   ) : null}

@@ -206,7 +206,7 @@ export default async function ProfilePage() {
               <div className="-mt-12 flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white bg-sky-100 text-xl font-semibold text-sky-800 shadow-sm">{getInitials(user?.name)}</div>
               <h2 className="mt-4 text-xl font-semibold">Profile Preview</h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">Preview your marketplace presence and public teaching identity.</p>
-              <Link className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-soft hover:bg-foreground focus:outline-none focus:ring-2 focus:ring-primary" href={user?.teacherProfile?.id ? `/marketplace/teachers/${user.teacherProfile.id}` : "/teacher/marketplace"}>
+              <Link className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-soft hover:bg-foreground focus:outline-none focus:ring-2 focus:ring-primary" href={user?.teacherProfile?.id ? `/marketplace/teachers/${user.teacherProfile.id}` : "/teacher/business/profile"}>
                 <Eye className="h-4 w-4" />
                 Preview Public Profile
               </Link>

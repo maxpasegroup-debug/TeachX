@@ -124,11 +124,23 @@ const pricingPlans = [
     features: ["AI starter credits", "Professional profile", "Resource drafts", "Marketplace preview"]
   },
   {
+    name: "Rural Starter",
+    price: "149",
+    line: "Affordable daily AI help.",
+    featured: true,
+    features: ["500 AI credits", "WhatsApp-ready output", "PDF and Word exports", "40 saved resources"]
+  },
+  {
+    name: "Plus",
+    price: "299",
+    line: "Create, publish, and grow.",
+    features: ["1,500 AI credits", "Publish resources", "Marketplace presence", "Standard exports"]
+  },
+  {
     name: "Pro",
     price: "799",
-    line: "Create, publish, and grow.",
-    featured: true,
-    features: ["More AI credits", "Publish resources", "Teacher analytics", "Priority launch tools"]
+    line: "For serious teacher creators.",
+    features: ["5,000 AI credits", "Advanced analytics", "Premium publishing", "500 resources"]
   },
   {
     name: "Institution",
@@ -279,6 +291,9 @@ export function AudienceLanding({ config }: { config: AudienceLandingConfig }) {
           <Link className="nav-link hidden rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition duration-brand ease-brand hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:inline-flex" href="#pricing">
             Pricing
           </Link>
+          <Link className="nav-link hidden rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition duration-brand ease-brand hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 md:inline-flex" href="/trust">
+            Trust
+          </Link>
           <Link className="nav-link rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition duration-brand ease-brand hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" href={config.loginHref}>
             Login
           </Link>
@@ -407,7 +422,7 @@ export function AudienceLanding({ config }: { config: AudienceLandingConfig }) {
 
       <section className="mx-auto w-full max-w-7xl px-5 py-16 sm:px-8">
         <SectionHeading eyebrow="Resource Marketplace" title="Publish once. Grow beyond one classroom." />
-        <div className="mt-12 grid gap-5 lg:grid-cols-3">
+        <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
           {marketplaceCards.map(([title, price, downloads, rating], index) => (
             <article className="premium-glass-card overflow-hidden rounded-[2rem] border border-white/80 bg-white/82 shadow-brand-soft backdrop-blur" key={title}>
               <div className={`h-44 ${index === 0 ? "bg-gradient-to-br from-blue-500 to-cyan-400" : index === 1 ? "bg-gradient-to-br from-violet-500 to-fuchsia-400" : "bg-gradient-to-br from-orange-400 to-amber-300"} p-5 text-white`}>
@@ -426,6 +441,9 @@ export function AudienceLanding({ config }: { config: AudienceLandingConfig }) {
               </div>
             </article>
           ))}
+        </div>
+        <div className="mt-8 text-center">
+          <Link className="inline-flex rounded-full border border-border bg-white px-5 py-3 text-sm font-semibold hover:bg-muted" href="/pricing">Open full pricing</Link>
         </div>
       </section>
 
@@ -513,20 +531,24 @@ export function AudienceLanding({ config }: { config: AudienceLandingConfig }) {
             <div className="space-y-3">
               <p className="font-semibold text-foreground">Company</p>
               <Link className="block hover:text-foreground" href="/">Home</Link>
-              <Link className="block hover:text-foreground" href="#pricing">Pricing</Link>
+              <Link className="block hover:text-foreground" href="/pricing">Pricing</Link>
               <Link className="block hover:text-foreground" href={config.loginHref}>Login</Link>
             </div>
             <div className="space-y-3">
               <p className="font-semibold text-foreground">Support</p>
               <Link className="block hover:text-foreground" href="/resources">Resources</Link>
               <Link className="block hover:text-foreground" href="/marketplace">Marketplace</Link>
-              <a className="block hover:text-foreground" href="mailto:support@teachx.guru">Contact</a>
+              <Link className="block hover:text-foreground" href="/trust">Trust Center</Link>
+              <Link className="block hover:text-foreground" href="/status">System Status</Link>
+              <Link className="block hover:text-foreground" href="/contact">Contact</Link>
             </div>
             <div className="space-y-3">
               <p className="font-semibold text-foreground">Legal</p>
               <Link className="block hover:text-foreground" href="/privacy">Privacy</Link>
               <Link className="block hover:text-foreground" href="/terms">Terms</Link>
-              <span className="block">Social soon</span>
+              <Link className="block hover:text-foreground" href="/security">Security</Link>
+              <Link className="block hover:text-foreground" href="/refund-policy">Refunds</Link>
+              <Link className="block hover:text-foreground" href="/cookies">Cookies</Link>
             </div>
           </div>
         </div>

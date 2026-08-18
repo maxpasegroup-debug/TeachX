@@ -17,6 +17,7 @@ import {
   LucideIcon,
   MessageCircle,
   PanelTop,
+  Rocket,
   Search,
   Settings,
   ShieldCheck,
@@ -50,6 +51,7 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "Activity", href: "/teacher/workspace/activity", icon: History },
     { label: "Notifications", href: "/teacher/workspace/notifications", icon: Bell },
     { label: "Search", href: "/teacher/workspace/search", icon: Search },
+    { label: "Help", href: "/teacher/support", icon: LifeBuoy },
     { label: "AI Studio", href: "/teacher/ai-studio", icon: Sparkles },
     { label: "AI Chat", href: "/teacher/ai-studio/chat", icon: Bot },
     { label: "AI History", href: "/teacher/ai-studio/history", icon: Search },
@@ -118,6 +120,7 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "Settings", href: "/settings", icon: Settings }
   ],  admin: [
     { label: "Overview", href: "/admin", icon: PanelTop },
+    { label: "Launch", href: "/admin/launch", icon: Rocket },
     { label: "Control Center", href: "/admin/control/dashboard", icon: Gauge },
     { label: "Institution", href: "/institution/dashboard", icon: Building2 },
     { label: "Teachers", href: "/admin/teachers", icon: UsersRound },
@@ -133,6 +136,7 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "Subscriptions", href: "/admin/subscriptions", icon: WalletCards },
     { label: "Orders", href: "/admin/orders", icon: WalletCards },
     { label: "Community", href: "/admin/announcements", icon: MessageCircle },
+    { label: "Support", href: "/admin/support", icon: LifeBuoy },
     { label: "Settings", href: "/settings", icon: Settings }
   ]
 };

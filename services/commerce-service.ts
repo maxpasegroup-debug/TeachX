@@ -4,12 +4,61 @@ import { prisma } from "@/lib/db";
 import { getResourceMetadata } from "@/services/learning-marketplace-service";
 
 export const defaultSubscriptionPlans = [
-  { key: "teacher-free", name: "Teacher Free", audience: "TEACHER" as const, price: 0, aiMonthlyCredits: 100, marketplaceAccess: true, resourceLimit: 10, storageLimitMb: 250, featureFlags: { aiStudio: true, marketplace: true, exports: "basic" } },
-  { key: "teacher-plus", name: "Teacher Plus", audience: "TEACHER" as const, price: 499, aiMonthlyCredits: 1500, marketplaceAccess: true, resourceLimit: 100, storageLimitMb: 2048, featureFlags: { aiStudio: true, marketplace: true, premiumResources: true, exports: "standard" } },
-  { key: "teacher-pro", name: "Teacher Pro", audience: "TEACHER" as const, price: 999, aiMonthlyCredits: 5000, marketplaceAccess: true, resourceLimit: 500, storageLimitMb: 10240, featureFlags: { aiStudio: true, marketplace: true, premiumResources: true, analytics: true, exports: "advanced" } },
-  { key: "teacher-institution", name: "Institution", audience: "TEACHER" as const, price: 0, aiMonthlyCredits: 25000, marketplaceAccess: true, resourceLimit: 5000, storageLimitMb: 102400, featureFlags: { placeholder: true, teams: true, adminControls: true } },
+  { key: "teacher-free", name: "Teacher Free", audience: "TEACHER" as const, price: 0, aiMonthlyCredits: 100, marketplaceAccess: true, resourceLimit: 10, storageLimitMb: 250, featureFlags: { aiStudio: true, marketplace: true, exports: "basic", launchPlan: true } },
+  { key: "teacher-rural-starter", name: "Rural Starter", audience: "TEACHER" as const, price: 149, aiMonthlyCredits: 500, marketplaceAccess: true, resourceLimit: 40, storageLimitMb: 1024, featureFlags: { aiStudio: true, marketplace: true, exports: "standard", whatsappSharing: true, launchPlan: true } },
+  { key: "teacher-plus", name: "Teacher Plus", audience: "TEACHER" as const, price: 299, aiMonthlyCredits: 1500, marketplaceAccess: true, resourceLimit: 150, storageLimitMb: 3072, featureFlags: { aiStudio: true, marketplace: true, premiumResources: true, exports: "standard", launchPlan: true } },
+  { key: "teacher-pro", name: "Teacher Pro", audience: "TEACHER" as const, price: 799, aiMonthlyCredits: 5000, marketplaceAccess: true, resourceLimit: 500, storageLimitMb: 10240, featureFlags: { aiStudio: true, marketplace: true, premiumResources: true, analytics: true, exports: "advanced", launchPlan: true } },
+  { key: "teacher-institution", name: "Institution", audience: "TEACHER" as const, price: 0, aiMonthlyCredits: 25000, marketplaceAccess: true, resourceLimit: 5000, storageLimitMb: 102400, featureFlags: { placeholder: true, teams: true, adminControls: true, customPricing: true, launchPlan: true } },
   { key: "student-free", name: "Student Free", audience: "STUDENT" as const, price: 0, aiMonthlyCredits: 80, marketplaceAccess: true, resourceLimit: 25, storageLimitMb: 250, featureFlags: { aiTutor: true, freeResources: true } },
   { key: "student-premium", name: "Student Premium", audience: "STUDENT" as const, price: 299, aiMonthlyCredits: 1200, marketplaceAccess: true, resourceLimit: 250, storageLimitMb: 2048, featureFlags: { aiTutor: true, premiumResources: true, practice: true, downloads: "expanded" } }
+];
+
+export const teacherLaunchPricing = [
+  {
+    key: "teacher-free",
+    name: "Free",
+    audience: "New and exploring teachers",
+    indiaPrice: "INR 0",
+    globalPrice: "$0",
+    description: "Create first classroom materials and test TeachX safely.",
+    highlights: ["100 AI credits/month", "10 saved resources", "Basic export", "Teacher profile draft"]
+  },
+  {
+    key: "teacher-rural-starter",
+    name: "Rural Starter",
+    audience: "Mobile-first and rural teachers",
+    indiaPrice: "INR 149/mo",
+    globalPrice: "$3/mo",
+    description: "Low-cost plan for regular lesson, worksheet, and WhatsApp sharing use.",
+    highlights: ["500 AI credits/month", "40 saved resources", "WhatsApp-ready output", "PDF/Word/handout export"]
+  },
+  {
+    key: "teacher-plus",
+    name: "Teacher Plus",
+    audience: "Active tutors and school teachers",
+    indiaPrice: "INR 299/mo",
+    globalPrice: "$7/mo",
+    description: "More AI creation and resource management for weekly teaching work.",
+    highlights: ["1,500 AI credits/month", "150 saved resources", "Marketplace presence", "Standard exports"]
+  },
+  {
+    key: "teacher-pro",
+    name: "Teacher Pro",
+    audience: "Professional creators and coaching teachers",
+    indiaPrice: "INR 799/mo",
+    globalPrice: "$15/mo",
+    description: "Advanced capacity for creators who publish, sell, and track performance.",
+    highlights: ["5,000 AI credits/month", "500 saved resources", "Advanced analytics", "Premium publishing tools"]
+  },
+  {
+    key: "teacher-institution",
+    name: "Institution",
+    audience: "Schools, coaching centers, and teams",
+    indiaPrice: "Custom",
+    globalPrice: "Custom",
+    description: "Team controls, larger limits, institution branding, and onboarding support.",
+    highlights: ["25,000+ AI credits/month", "Teacher teams", "Admin controls", "Custom storage and support"]
+  }
 ];
 
 export const paymentProviders = [
@@ -22,29 +71,34 @@ export type CommerceOrderWithItems = Prisma.CommerceOrderGetPayload<{
 }>;
 
 export async function ensureDefaultSubscriptionPlans(institutionId?: string | null) {
-  const existing = await prisma.subscriptionPlan.findMany({
-    where: { OR: [{ institutionId: institutionId ?? undefined }, { institutionId: null }] },
-    orderBy: [{ audience: "asc" }, { price: "asc" }]
-  });
-  if (existing.length) return existing;
-
-  await prisma.subscriptionPlan.createMany({
-    data: defaultSubscriptionPlans.map((plan) => ({
-      institutionId: institutionId ?? undefined,
-      key: plan.key,
+  for (const plan of defaultSubscriptionPlans) {
+    const existing = await prisma.subscriptionPlan.findFirst({ where: { institutionId: institutionId ?? null, key: plan.key } });
+    const data = {
       name: plan.name,
-      audience: plan.audience,
       price: plan.price,
       aiMonthlyCredits: plan.aiMonthlyCredits,
       marketplaceAccess: plan.marketplaceAccess,
       resourceLimit: plan.resourceLimit,
       storageLimitMb: plan.storageLimitMb,
-      featureFlags: plan.featureFlags
-    }))
-  });
+      featureFlags: plan.featureFlags,
+      isActive: true
+    };
+    if (existing) {
+      await prisma.subscriptionPlan.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.subscriptionPlan.create({
+        data: {
+          institutionId: institutionId ?? undefined,
+          key: plan.key,
+          audience: plan.audience,
+          ...data
+        }
+      });
+    }
+  }
 
   return prisma.subscriptionPlan.findMany({
-    where: { institutionId: institutionId ?? undefined },
+    where: { OR: [{ institutionId: institutionId ?? undefined }, { institutionId: null }] },
     orderBy: [{ audience: "asc" }, { price: "asc" }]
   });
 }

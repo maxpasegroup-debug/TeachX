@@ -61,7 +61,7 @@ export function AIStudioHome({ name, credits, usage, recent, favoriteCount }: AI
 
       <div className="flex h-14 items-center gap-3 rounded-2xl border border-border bg-surface px-5 shadow-sm">
         <Search className="h-5 w-5 text-muted-foreground" />
-        <input aria-label="Search AI Teaching Studio tools" className="min-w-0 flex-1 bg-transparent outline-none" onChange={(event) => setSearch(event.target.value)} placeholder="Search lesson, worksheet, assessment, communication…" type="search" value={search} />
+        <input aria-label="Search AI Teaching Studio tools" className="min-w-0 flex-1 bg-transparent outline-none" onChange={(event) => setSearch(event.target.value)} placeholder="Search lesson, worksheet, assessment, communication..." type="search" value={search} />
       </div>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
