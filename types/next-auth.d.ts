@@ -6,6 +6,8 @@ declare module "next-auth" {
   interface User {
     institutionId?: string | null;
     roles: RoleKey[];
+    authMethod: "phone-pin" | "password";
+    authSessionVersion: number;
   }
 
   interface Session {
@@ -22,5 +24,7 @@ declare module "next-auth/jwt" {
     id: string;
     institutionId?: string | null;
     roles: RoleKey[];
+    authMethod: "phone-pin" | "password";
+    authSessionVersion: number;
   }
 }

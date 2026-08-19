@@ -1,0 +1,17 @@
+{
+  "publicExact": [
+    "/api/guest/courses",
+    "/api/health",
+    "/api/email/webhooks/resend",
+    "/api/payments/webhooks/razorpay",
+    "/api/payments/webhooks/stripe",
+    "/api/privacy/consent",
+    "/api/ready",
+    "/api/setup",
+    "/api/status",
+    "/api/version"
+  ],
+  "publicPrefixes": [
+    "/api/auth"
+  ]
+}

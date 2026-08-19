@@ -35,9 +35,8 @@ const uploadSchema = z.object({
   batchId: z.string().optional(),
   title: z.string().min(2),
   description: z.string().optional(),
-  type: z.enum(["VIDEO", "PDF", "PPT", "IMAGE", "AUDIO", "ZIP", "EXTERNAL_LINK", "DOCUMENT", "NOTES", "WORKSHEET", "QUESTION_PAPER", "ANSWER_KEY", "REFERENCE"]),
-  fileUrl: z.string().optional(),
-  externalUrl: z.string().optional(),
+  type: z.literal("EXTERNAL_LINK"),
+  externalUrl: z.string().url().refine((value) => new URL(value).protocol === "https:"),
   status: z.enum(["DRAFT", "SUBMITTED", "PUBLISHED"])
 });
 
@@ -52,8 +51,7 @@ export async function createContentAction(_: string | undefined, formData: FormD
     batchId: text(formData.get("batchId")),
     title: text(formData.get("title")),
     description: text(formData.get("description")),
-    type: text(formData.get("type")) ?? "NOTES",
-    fileUrl: text(formData.get("fileUrl")),
+    type: "EXTERNAL_LINK",
     externalUrl: text(formData.get("externalUrl")),
     status: text(formData.get("status")) ?? "DRAFT"
   });

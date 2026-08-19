@@ -30,7 +30,7 @@ export default function CookiePolicyPage() {
         },
         {
           title: "Teacher choices",
-          body: "You can manage cookies in your browser. Blocking essential cookies may prevent login, checkout, saved preferences, or app features from working correctly."
+          body: "TeachX provides first-visit choices for functional, analytics, and marketing storage and honors supported Global Privacy Control signals. You can also clear choices in your browser. Blocking essential cookies may prevent login or secure account operation."
         }
       ]}
     />

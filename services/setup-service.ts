@@ -34,9 +34,11 @@ export async function completeFirstRunSetup(input: unknown) {
 
   const data = setupSchema.parse(input);
   const passwordHash = await bcrypt.hash(data.adminPassword, 12);
-  const permissions = await prisma.permission.findMany();
 
   return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(847236192)`;
+    if ((await tx.institution.count()) > 0) throw new Error("First run setup is already complete.");
+    const permissions = await tx.permission.findMany();
     const institution = await tx.institution.create({
       data: {
         name: data.institutionName,

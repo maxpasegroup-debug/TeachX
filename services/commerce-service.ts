@@ -1,16 +1,17 @@
 import type { CommerceAudience, CommerceOrderType, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
+import { getPaymentConfig } from "@/lib/payments/config";
 import { getResourceMetadata } from "@/services/learning-marketplace-service";
 
 export const defaultSubscriptionPlans = [
-  { key: "teacher-free", name: "Teacher Free", audience: "TEACHER" as const, price: 0, aiMonthlyCredits: 100, marketplaceAccess: true, resourceLimit: 10, storageLimitMb: 250, featureFlags: { aiStudio: true, marketplace: true, exports: "basic", launchPlan: true } },
-  { key: "teacher-rural-starter", name: "Rural Starter", audience: "TEACHER" as const, price: 149, aiMonthlyCredits: 500, marketplaceAccess: true, resourceLimit: 40, storageLimitMb: 1024, featureFlags: { aiStudio: true, marketplace: true, exports: "standard", whatsappSharing: true, launchPlan: true } },
-  { key: "teacher-plus", name: "Teacher Plus", audience: "TEACHER" as const, price: 299, aiMonthlyCredits: 1500, marketplaceAccess: true, resourceLimit: 150, storageLimitMb: 3072, featureFlags: { aiStudio: true, marketplace: true, premiumResources: true, exports: "standard", launchPlan: true } },
-  { key: "teacher-pro", name: "Teacher Pro", audience: "TEACHER" as const, price: 799, aiMonthlyCredits: 5000, marketplaceAccess: true, resourceLimit: 500, storageLimitMb: 10240, featureFlags: { aiStudio: true, marketplace: true, premiumResources: true, analytics: true, exports: "advanced", launchPlan: true } },
-  { key: "teacher-institution", name: "Institution", audience: "TEACHER" as const, price: 0, aiMonthlyCredits: 25000, marketplaceAccess: true, resourceLimit: 5000, storageLimitMb: 102400, featureFlags: { placeholder: true, teams: true, adminControls: true, customPricing: true, launchPlan: true } },
-  { key: "student-free", name: "Student Free", audience: "STUDENT" as const, price: 0, aiMonthlyCredits: 80, marketplaceAccess: true, resourceLimit: 25, storageLimitMb: 250, featureFlags: { aiTutor: true, freeResources: true } },
-  { key: "student-premium", name: "Student Premium", audience: "STUDENT" as const, price: 299, aiMonthlyCredits: 1200, marketplaceAccess: true, resourceLimit: 250, storageLimitMb: 2048, featureFlags: { aiTutor: true, premiumResources: true, practice: true, downloads: "expanded" } }
+  { key: "teacher-free", name: "Teacher Free", audience: "TEACHER" as const, price: 0, globalPrice: 0, aiMonthlyCredits: 100, marketplaceAccess: true, resourceLimit: 10, storageLimitMb: 250, featureFlags: { aiStudio: true, marketplace: true, exports: "basic", launchPlan: true } },
+  { key: "teacher-rural-starter", name: "Rural Starter", audience: "TEACHER" as const, price: 149, globalPrice: 3, aiMonthlyCredits: 500, marketplaceAccess: true, resourceLimit: 40, storageLimitMb: 1024, featureFlags: { aiStudio: true, marketplace: true, exports: "standard", whatsappSharing: true, launchPlan: true } },
+  { key: "teacher-plus", name: "Teacher Plus", audience: "TEACHER" as const, price: 299, globalPrice: 7, aiMonthlyCredits: 1500, marketplaceAccess: true, resourceLimit: 150, storageLimitMb: 3072, featureFlags: { aiStudio: true, marketplace: true, premiumResources: true, exports: "standard", launchPlan: true } },
+  { key: "teacher-pro", name: "Teacher Pro", audience: "TEACHER" as const, price: 799, globalPrice: 15, aiMonthlyCredits: 5000, marketplaceAccess: true, resourceLimit: 500, storageLimitMb: 10240, featureFlags: { aiStudio: true, marketplace: true, premiumResources: true, analytics: true, exports: "advanced", launchPlan: true } },
+  { key: "teacher-institution", name: "Institution", audience: "TEACHER" as const, price: 0, globalPrice: 0, aiMonthlyCredits: 25000, marketplaceAccess: true, resourceLimit: 5000, storageLimitMb: 102400, featureFlags: { placeholder: true, teams: true, adminControls: true, customPricing: true, launchPlan: true } },
+  { key: "student-free", name: "Student Free", audience: "STUDENT" as const, price: 0, globalPrice: 0, aiMonthlyCredits: 80, marketplaceAccess: true, resourceLimit: 25, storageLimitMb: 250, featureFlags: { aiTutor: true, freeResources: true } },
+  { key: "student-premium", name: "Student Premium", audience: "STUDENT" as const, price: 299, globalPrice: 7, aiMonthlyCredits: 1200, marketplaceAccess: true, resourceLimit: 250, storageLimitMb: 2048, featureFlags: { aiTutor: true, premiumResources: true, practice: true, downloads: "expanded" } }
 ];
 
 export const teacherLaunchPricing = [
@@ -71,11 +72,14 @@ export type CommerceOrderWithItems = Prisma.CommerceOrderGetPayload<{
 }>;
 
 export async function ensureDefaultSubscriptionPlans(institutionId?: string | null) {
+  const institution = institutionId ? await prisma.institution.findUnique({ where: { id: institutionId }, select: { currency: true } }) : null;
+  const international = Boolean(institution && institution.currency.toUpperCase() !== "INR");
   for (const plan of defaultSubscriptionPlans) {
     const existing = await prisma.subscriptionPlan.findFirst({ where: { institutionId: institutionId ?? null, key: plan.key } });
     const data = {
       name: plan.name,
-      price: plan.price,
+      price: international ? plan.globalPrice : plan.price,
+      currency: international ? "USD" : "INR",
       aiMonthlyCredits: plan.aiMonthlyCredits,
       marketplaceAccess: plan.marketplaceAccess,
       resourceLimit: plan.resourceLimit,
@@ -151,11 +155,11 @@ export async function getAICreditSummary(input: { userId?: string; institutionId
     prisma.aIUsage.aggregate({ where: { userId: input.userId, createdAt: { gte: start } }, _sum: { totalTokens: true }, _count: true }),
     prisma.aIUsage.groupBy({ by: ["feature"], where: { userId: input.userId, createdAt: { gte: start } }, _sum: { totalTokens: true }, _count: true }),
     prisma.aIUsage.findMany({ where: { userId: input.userId }, orderBy: { createdAt: "desc" }, take: 12 }),
-    prisma.walletTransaction.findMany({ where: { userId: input.userId, metadata: { path: ["creditType"], equals: "AI" } }, orderBy: { createdAt: "desc" }, take: 12 })
+    prisma.walletTransaction.findMany({ where: { userId: input.userId, pending: false, metadata: { path: ["creditType"], equals: "AI" } }, orderBy: { createdAt: "desc" }, take: 50 })
   ]);
 
   const monthlyAllocation = subscription?.plan.aiMonthlyCredits ?? 0;
-  const packCredits = creditTransactions.reduce((total, item) => total + Number(item.amount), 0);
+  const packCredits = creditTransactions.reduce((total, item) => total + (["DEBIT", "SPENDING", "REFUND"].includes(item.type) ? -Number(item.amount) : Number(item.amount)), 0);
   const used = Math.ceil((usage._sum.totalTokens ?? 0) / 100);
   const balance = Math.max(0, monthlyAllocation + packCredits - used);
 
@@ -205,6 +209,7 @@ export async function createCommerceOrder(input: {
   title: string;
   itemType: "RESOURCE" | "SUBSCRIPTION" | "AI_CREDITS" | "BOOKING";
   amount: number;
+  currency?: string;
   resourceId?: string;
   sellerId?: string | null;
   planId?: string;
@@ -219,6 +224,7 @@ export async function createCommerceOrder(input: {
       status: input.amount > 0 ? "PENDING_PAYMENT" : "FULFILLED",
       subtotal: input.amount,
       total: input.amount,
+      currency: input.currency || "INR",
       metadata: input.metadata,
       items: {
         create: {
@@ -294,6 +300,7 @@ export async function getStudentCommerceDashboard(userId?: string, institutionId
 }
 
 export async function getAdminCommerceDashboard(institutionId?: string | null) {
+  const paymentConfig = getPaymentConfig();
   const [plans, orders, wallets, transactions, coupons, aiUsage, subscriptions, invoices] = await Promise.all([
     ensureDefaultSubscriptionPlans(institutionId),
     prisma.commerceOrder.findMany({ where: { institutionId: institutionId ?? undefined }, include: { buyer: true, items: { include: { seller: true, resource: true, plan: true } }, invoices: true }, orderBy: { createdAt: "desc" }, take: 60 }),
@@ -306,6 +313,10 @@ export async function getAdminCommerceDashboard(institutionId?: string | null) {
   ]);
 
   const paidOrders = orders.filter((order) => order.status === "PAID" || order.status === "FULFILLED");
+  const totalsByCurrency = (source: typeof orders) => Array.from(source.reduce((totals, order) => {
+    totals.set(order.currency, (totals.get(order.currency) ?? 0) + Number(order.total));
+    return totals;
+  }, new Map<string, number>())).map(([currency, total]) => ({ currency, total }));
   return {
     plans,
     orders,
@@ -315,10 +326,15 @@ export async function getAdminCommerceDashboard(institutionId?: string | null) {
     aiUsage,
     subscriptions,
     invoices,
-    providers: paymentProviders,
+    providers: paymentProviders.map((provider) => ({
+      ...provider,
+      status: (provider.key === "stripe" ? paymentConfig.stripe : paymentConfig.razorpay) ? "Configured" : "Not configured"
+    })),
     stats: {
       revenue: paidOrders.reduce((total, order) => total + Number(order.total), 0),
       pending: orders.filter((order) => order.status === "PENDING_PAYMENT").reduce((total, order) => total + Number(order.total), 0),
+      revenueByCurrency: totalsByCurrency(paidOrders),
+      pendingByCurrency: totalsByCurrency(orders.filter((order) => order.status === "PENDING_PAYMENT")),
       orders: orders.length,
       activeSubscriptions: subscriptions.filter((item) => item.status === "ACTIVE").length,
       wallets: wallets.length,

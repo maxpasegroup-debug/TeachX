@@ -33,7 +33,10 @@ const protectedRoutes = [
   "/teacher",
   "/teacher/support",
   "/admin/launch",
-  "/api/launch/readiness"
+  "/api/launch/readiness",
+  "/api/observability/readiness",
+  "/api/backup/readiness",
+  "/api/email/readiness"
 ];
 
 function withTimeout(ms) {

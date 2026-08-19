@@ -2,19 +2,32 @@
 
 import type { ActivityType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { CONTRAST_COOKIE, LOCALE_COOKIE, MOTION_COOKIE, resolveLocale, resolveTimeZone, TIME_ZONE_COOKIE } from "@/lib/i18n/config";
 
 const value=(fd:FormData,key:string)=>String(fd.get(key)??"").trim();
 export async function saveUnifiedTeacherSettingsAction(fd:FormData){
   const session=await auth(); if(!session?.user.id) throw new Error("Sign in to update settings.");
+  const locale=resolveLocale(value(fd,"locale"));
+  const timeZone=resolveTimeZone(value(fd,"timeZone"));
+  const reducedMotion=fd.get("reducedMotion")==="on";
+  const highContrast=fd.get("highContrast")==="on";
   const settings={
-    appearance:value(fd,"appearance")||"system",language:value(fd,"language")||"English",privacy:value(fd,"privacy")||"professional",
+    appearance:value(fd,"appearance")||"system",locale:locale.code,timeZone,reducedMotion,highContrast,privacy:value(fd,"privacy")||"professional",
     securityAlerts:fd.get("securityAlerts")==="on",aiStyle:value(fd,"aiStyle")||"balanced",marketplaceEmails:fd.get("marketplaceEmails")==="on",
     communityDiscovery:fd.get("communityDiscovery")==="on",offlineHints:fd.get("offlineHints")==="on"
   };
   await prisma.userPreference.upsert({where:{userId_key:{userId:session.user.id,key:"teacher.settings"}},create:{userId:session.user.id,key:"teacher.settings",value:settings},update:{value:settings}});
+  const cookieStore=await cookies();
+  const cookieOptions={httpOnly:true,sameSite:"lax" as const,secure:process.env.NODE_ENV==="production",path:"/",maxAge:31_536_000};
+  cookieStore.set(LOCALE_COOKIE,locale.code,cookieOptions);
+  cookieStore.set(TIME_ZONE_COOKIE,timeZone,cookieOptions);
+  cookieStore.set(MOTION_COOKIE,reducedMotion?"reduce":"system",cookieOptions);
+  cookieStore.set(CONTRAST_COOKIE,highContrast?"high":"standard",cookieOptions);
   const types=fd.getAll("notificationTypes").map(String) as ActivityType[];
   await prisma.$transaction((["SYSTEM","CONTENT","ANNOUNCEMENT","ASSIGNMENT","PLANNER"] as ActivityType[]).map(type=>prisma.notificationPreference.upsert({where:{userId_type:{userId:session.user.id,type}},create:{userId:session.user.id,type,enabled:types.includes(type),channels:{inApp:true}},update:{enabled:types.includes(type),channels:{inApp:true}}})));
   revalidatePath("/teacher/settings");
+  revalidatePath("/", "layout");
 }

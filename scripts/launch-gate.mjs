@@ -51,6 +51,29 @@ if (production) {
 console.log(`TeachX release gate: ${production ? "production" : "local"}`);
 
 run("Launch structure", "launch:verify");
+run("Dependency security audit", "security:audit");
+run("API security policy", "security:routes");
+run("Security regression tests", "security:test");
+run("Observability policy", "observability:audit");
+run("Observability regression tests", "observability:test");
+run("Recovery policy", "recovery:audit");
+run("Recovery regression tests", "recovery:test");
+run("Payment integrity policy", "payments:audit");
+run("Payment regression tests", "payments:test");
+run("Transactional email policy", "email:audit");
+run("Transactional email regression tests", "email:test");
+run("Private storage policy", "storage:audit");
+run("Private storage regression tests", "storage:test");
+run("Low-connectivity resilience policy", "resilience:audit");
+run("Low-connectivity resilience tests", "resilience:test");
+run("Globalization and accessibility policy", "globalization:audit");
+run("Globalization and accessibility tests", "globalization:test");
+run("Global scale and performance policy", "performance:audit");
+run("Global scale and performance tests", "performance:test");
+run("Production operations policy", "operations:audit");
+run("Production operations tests", "operations:test");
+run("Global privacy governance policy", "privacy:audit");
+run("Global privacy governance tests", "privacy:test");
 run("Prisma schema", "prisma:validate", {
   DATABASE_URL: process.env.DATABASE_URL || "postgresql://launch_gate:launch_gate@127.0.0.1:5432/teachx_validation"
 });
@@ -59,6 +82,15 @@ run("Lint", "lint");
 run("Production build", "build");
 
 if (production) {
+  run("Live recovery evidence", "recovery:verify");
+  run("Live payment evidence", "payments:verify");
+  run("Live email evidence", "email:verify");
+  run("Live private storage evidence", "storage:verify");
+  run("Live low-connectivity evidence", "resilience:verify");
+  run("Live globalization and accessibility evidence", "globalization:verify");
+  run("Live global scale and performance evidence", "performance:verify");
+  run("Live production operations evidence", "operations:verify");
+  run("Live global privacy evidence", "privacy:verify");
   run("Strict production smoke", "launch:smoke", { SMOKE_STRICT_READY: "1" });
 }
 

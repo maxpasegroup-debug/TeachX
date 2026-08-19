@@ -13,10 +13,8 @@ const uploadSchema = z.object({
   batchId: z.string().optional(),
   title: z.string().trim().min(2).max(180),
   description: z.string().trim().max(2000).optional(),
-  type: z.enum(["VIDEO", "PDF", "PPT", "IMAGE", "AUDIO", "ZIP", "EXTERNAL_LINK", "DOCUMENT", "NOTES", "WORKSHEET", "QUESTION_PAPER", "ANSWER_KEY", "REFERENCE"]).optional(),
-  fileUrl: z.string().url().optional(),
-  externalUrl: z.string().url().optional(),
-  sizeBytes: z.coerce.number().int().min(0).max(500 * 1024 * 1024).optional(),
+  type: z.literal("EXTERNAL_LINK"),
+  externalUrl: z.string().url().refine((value) => new URL(value).protocol === "https:", "An HTTPS external link is required."),
   durationSeconds: z.coerce.number().int().min(0).max(24 * 60 * 60).optional(),
   status: z.enum(["DRAFT", "SUBMITTED", "PUBLISHED"]).optional()
 });
@@ -40,10 +38,9 @@ export async function POST(request: Request) {
     batchId: body.batchId,
     title: body.title,
     description: body.description,
-    type: body.type ?? "NOTES",
-    fileUrl: body.fileUrl,
+    type: body.type,
     externalUrl: body.externalUrl,
-    sizeBytes: Number(body.sizeBytes ?? 0),
+    sizeBytes: 0,
     durationSeconds: Number(body.durationSeconds ?? 0),
     status: body.status ?? "DRAFT"
   });

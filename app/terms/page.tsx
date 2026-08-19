@@ -18,7 +18,7 @@ export default function TermsPage() {
       sections={[
         {
           title: "Account responsibility",
-          body: "You are responsible for your account activity, password security, profile information, resources, marketplace submissions, and classroom use of generated material.",
+          body: "You are responsible for your account activity, password or PIN security, control of your registered mobile number, profile information, resources, marketplace submissions, and classroom use of generated material. Verification codes must not be shared.",
           items: ["Use accurate signup details and keep access credentials private.", "Do not share accounts, bypass permissions, scrape the platform, or interfere with service security.", "Teachers must review AI outputs before using them with students, parents, institutions, or buyers."]
         },
         {

@@ -22,7 +22,7 @@ export default function SecurityPage() {
         },
         {
           title: "Platform safeguards",
-          body: "The app uses secure response headers, no-store cache headers for API routes, password hashing, protected session cookies in production, and audit logs for important actions.",
+          body: "The app uses secure response headers, no-store cache headers for API routes, password and PIN hashing, short-lived one-time SMS codes, retry limits, temporary account lockouts, protected session cookies in production, and audit logs for important actions.",
           items: ["Security headers reduce clickjacking, content sniffing, referrer leakage, and unnecessary browser permissions.", "Payments are designed so paid access is not granted before checkout verification.", "Student and teacher community flows include moderation and rate-limit style controls where supported."]
         },
         {

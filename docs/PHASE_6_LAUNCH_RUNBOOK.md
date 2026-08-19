@@ -21,6 +21,11 @@ Production must set:
 - `DATABASE_URL`
 - `AUTH_SECRET`
 - `AUTH_URL`
+- `REDIS_URL`
+- `SETUP_SECRET` (at least 32 random characters; rotate it after initial setup)
+- `SENTRY_DSN`
+- `NEXT_PUBLIC_SENTRY_DSN`
+- Recovery variables listed in `docs/PHASE_13_DATA_RESILIENCE.md`
 - `NEXT_PUBLIC_APP_URL`
 
 Recommended before public marketing:

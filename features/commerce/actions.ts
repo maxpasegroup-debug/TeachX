@@ -28,13 +28,19 @@ async function createDraftCommerceInvoice(input: {
   tax?: number;
   metadata?: Record<string, unknown>;
 }) {
-  const count = await prisma.commerceInvoice.count({ where: { institutionId: input.institutionId ?? undefined } });
-  return prisma.commerceInvoice.create({
-    data: {
+  const existing = await prisma.commerceInvoice.findFirst({ where: { orderId: input.orderId } });
+  if (existing) return existing;
+
+  const id = `commerce-invoice-${input.orderId}`;
+  return prisma.commerceInvoice.upsert({
+    where: { id },
+    update: {},
+    create: {
+      id,
       institutionId: input.institutionId ?? undefined,
       orderId: input.orderId,
       buyerId: input.buyerId,
-      invoiceNumber: `TX-COM-${new Date().getFullYear()}-${String(count + 1).padStart(5, "0")}`,
+      invoiceNumber: `TX-${input.orderId.toUpperCase()}`,
       billingName: input.buyerName ?? "TeachX customer",
       billingEmail: input.buyerEmail ?? "billing@teachx.guru",
       subtotal: input.subtotal,
@@ -110,6 +116,7 @@ export async function changeSubscriptionAction(formData: FormData) {
       title: plan.name,
       itemType: "SUBSCRIPTION",
       amount,
+      currency: plan.currency,
       planId: plan.id,
       metadata: {
         interval: plan.interval,
@@ -134,7 +141,7 @@ export async function changeSubscriptionAction(formData: FormData) {
         userId: session.user.id,
         institutionId: session.user.institutionId,
         title: "Checkout order created",
-        body: `${plan.name} is ready for payment. Live gateway collection will activate after Razorpay or Stripe is configured.`,
+        body: `${plan.name} is ready for secure payment.`,
         link: `/checkout/${order.id}`
       }
     });
@@ -285,23 +292,19 @@ export async function createCommerceInvoicePlaceholderAction(formData: FormData)
   const order = await prisma.commerceOrder.findFirst({ where: { id: orderId, OR: [{ buyerId: session.user.id }, { institutionId: session.user.institutionId, buyer: { roles: { some: { role: { key: "STUDENT" } } } } }] }, include: { buyer: true } });
   if (!order) return;
 
-  const count = await prisma.commerceInvoice.count({ where: { institutionId: order.institutionId ?? undefined } });
-  await prisma.commerceInvoice.create({
-    data: {
-      institutionId: order.institutionId ?? undefined,
-      orderId: order.id,
-      buyerId: order.buyerId,
-      invoiceNumber: `TX-COM-${new Date().getFullYear()}-${String(count + 1).padStart(5, "0")}`,
-      billingName: order.buyer.name,
-      billingEmail: order.buyer.email,
+  await createDraftCommerceInvoice({
+    orderId: order.id,
+    buyerId: order.buyerId,
+    buyerName: order.buyer.name,
+    buyerEmail: order.buyer.email,
+    institutionId: order.institutionId,
+    subtotal: Number(order.subtotal),
+    tax: Number(order.tax),
+    total: Number(order.total),
+    metadata: {
       gstNumber: value(formData, "gstNumber") || undefined,
       billingAddress: value(formData, "billingAddress") || undefined,
-      businessDetails: { architectureOnly: true },
-      subtotal: order.subtotal,
-      tax: order.tax,
-      total: order.total,
-      status: "DRAFT",
-      metadata: { gstReady: true }
+      gstReady: true
     }
   });
 

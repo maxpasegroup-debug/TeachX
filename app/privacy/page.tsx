@@ -14,12 +14,12 @@ export default function PrivacyPage() {
       description="We keep teacher data purposeful, limited, and tied to the product experience: account access, AI creation, resources, marketplace workflows, support, and platform safety."
       icon={LockKeyhole}
       title="Privacy Policy"
-      updated="17 August 2026"
+      updated="19 August 2026"
       sections={[
         {
           title: "What we collect",
           body: "TeachX Guru collects the information needed to run a teacher workspace and improve safety.",
-          items: ["Account details such as name, email, phone, password hash, role, and profile information.", "Teacher-created content such as lessons, worksheets, resources, prompts, exports, profile details, and marketplace listings.", "Operational data such as subscription status, orders, invoices, support tickets, notifications, and audit logs.", "AI usage metadata needed for history, credits, troubleshooting, quality, and abuse prevention."]
+          items: ["Account details such as name, optional email, verified mobile number, password or PIN hash, role, and profile information.", "Verification and security records such as one-time-code delivery status, expiry, failed attempts, account lockouts, and session revocation events. TeachX does not retain the readable SMS code.", "Teacher-created content such as lessons, worksheets, resources, prompts, exports, profile details, and marketplace listings.", "Operational data such as subscription status, orders, invoices, support tickets, notifications, and audit logs.", "AI usage metadata needed for history, credits, troubleshooting, quality, and abuse prevention."]
         },
         {
           title: "How we use data",
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
         {
           title: "Your choices",
           body: "Teachers can update profile details, manage saved resources, request account support, and ask for data access or deletion where legally available.",
-          items: ["Some records, such as invoices, audit logs, and fraud or compliance evidence, may need to be retained.", "Marketplace purchases, published resources, and institutional records may follow additional ownership or retention rules.", "Contact support for access, correction, export, deletion, or consent questions."]
+          items: ["Use the signed-in Privacy Center to download a minimized account snapshot and submit access, export, correction, deletion, restriction, or objection requests.", "Some records, such as invoices, audit logs, safeguarding, fraud, dispute, and compliance evidence, may need to be restricted or retained.", "Marketplace purchases, published resources, and institutional records may follow additional ownership or retention rules."]
         }
       ]}
       footnote="This policy is product guidance for launch readiness and should be reviewed by local counsel before operating in a new jurisdiction."

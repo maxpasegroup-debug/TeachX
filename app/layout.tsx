@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { cookies } from "next/headers";
 
 import "./globals.css";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
+import { PrivacyChoices } from "@/components/privacy/privacy-choices";
 import { getPublicBaseUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
+import { CONTRAST_COOKIE, LOCALE_COOKIE, MOTION_COOKIE, resolveLocale, resolveTimeZone, TIME_ZONE_COOKIE } from "@/lib/i18n/config";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -48,17 +51,25 @@ export const metadata: Metadata = {
     images: ["/icons/icon.svg"]
   },
   icons: {
-    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/icons/apple-touch-icon.svg", type: "image/svg+xml" }]
+    icon: [{ url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" }, { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" }],
+    apple: [{ url: "/icons/apple-touch-icon.png", type: "image/png", sizes: "180x180" }]
   }
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const cookieStore = await cookies();
+  const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE)?.value);
+  const timeZone = resolveTimeZone(cookieStore.get(TIME_ZONE_COOKIE)?.value);
+  const motion = cookieStore.get(MOTION_COOKIE)?.value === "reduce" ? "reduce" : "system";
+  const contrast = cookieStore.get(CONTRAST_COOKIE)?.value === "high" ? "high" : "standard";
+
   return (
-    <html lang="en">
+    <html data-contrast={contrast} data-motion={motion} data-time-zone={timeZone} dir={locale.direction} lang={locale.code}>
       <body className={cn(inter.className, "antialiased")}>
-        {children}
+        <a className="skip-link" href="#main-content">Skip to main content</a>
+        <div id="main-content" tabIndex={-1}>{children}</div>
         <PwaInstallPrompt />
+        <PrivacyChoices hasChoice={cookieStore.has("teachx_privacy")} />
       </body>
     </html>
   );

@@ -52,7 +52,7 @@ export async function submitLaunchFeedbackAction(formData: FormData) {
 
   const h = await headers();
   const key = h.get("x-forwarded-for")?.split(",")[0]?.trim() || session.user.id;
-  const limited = rateLimit(`launch-feedback:${key}:${session.user.id}`, 8, 60_000);
+  const limited = await rateLimit(`launch-feedback:${key}:${session.user.id}`, 8, 60_000);
   if (limited) return { ok: false, message: "Too many feedback submissions. Please try again shortly." };
 
   const parsed = launchFeedbackSchema.safeParse(Object.fromEntries(formData));

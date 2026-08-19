@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/db";
+import { captureOperationalError } from "@/lib/observability/logger";
+import { getBackupEvidence } from "@/lib/recovery/backup-evidence";
+import type { BackupEvidence } from "@/lib/recovery/backup-evidence";
+import { getRecoveryConfig } from "@/lib/recovery/config";
 
-export async function getBackupReadiness(institutionId: string) {
+export async function getBackupReadiness(institutionId: string, requestId?: string) {
+  const config = getRecoveryConfig();
   const [settings, contentItems, users, auditLogs] = await Promise.all([
     prisma.setting.count({ where: { institutionId } }),
     prisma.contentItem.count({ where: { institutionId } }),
@@ -8,11 +13,45 @@ export async function getBackupReadiness(institutionId: string) {
     prisma.auditLog.count({ where: { institutionId } })
   ]);
 
+  let evidence: BackupEvidence;
+  try {
+    evidence = await getBackupEvidence();
+  } catch (error) {
+    captureOperationalError(error, "recovery.evidence_unavailable", { requestId });
+    evidence = { available: false, reason: "provider_unavailable" };
+  }
+
+  const verified = evidence.available
+    && evidence.backupFresh
+    && evidence.checksumPresent
+    && Boolean(evidence.restoreDrill?.fresh && evidence.restoreDrill.checksumVerified && evidence.restoreDrill.schemaVerified);
+  const ok = Boolean(config.storageConfigured && config.pitrEnabled && config.volumeBackupEnabled && config.mediaProtection && config.policyValid && verified);
+
   return {
-    database: { status: "ready", scope: "PostgreSQL logical dump per institution" },
-    media: { status: "ready", filesTracked: contentItems, scope: "Content item fileUrl and externalUrl inventory" },
-    configuration: { status: "ready", settings },
-    restore: { status: "manual-review-required", note: "Restore must target an empty tenant database or isolated schema." },
-    counts: { users, auditLogs }
+    ok,
+    provider: config.provider,
+    protection: {
+      volumeSnapshots: config.volumeBackupEnabled,
+      volumeSchedule: config.volumeSchedule || "unconfigured",
+      pointInTimeRecovery: config.pitrEnabled,
+      offsiteStorage: config.storageConfigured,
+      mediaVersioning: config.mediaProtection,
+      mediaRetentionDays: config.mediaRetentionDays
+    },
+    objectives: {
+      rpoHours: config.rpoHours,
+      rtoMinutes: config.rtoMinutes,
+      retentionDays: config.retentionDays,
+      restoreDrillMaxAgeDays: config.drillMaxAgeDays,
+      valid: config.policyValid
+    },
+    evidence,
+    inventory: {
+      settings,
+      users,
+      auditLogs,
+      mediaRecords: contentItems,
+      note: "Media inventory counts references only; object durability remains owned by the configured storage provider."
+    }
   };
 }

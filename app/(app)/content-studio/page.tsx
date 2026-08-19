@@ -25,7 +25,7 @@ export default async function ContentStudioPage() {
         eyebrow="Academic content"
         title="Content Studio"
       />
-      <ContentStudio analytics={analytics} overview={overview} queues={queues} readOnly={readOnly} storage={storage} />
+      <ContentStudio analytics={analytics} draftScope={session?.user.id ?? "anonymous"} overview={overview} queues={queues} readOnly={readOnly} storage={storage} />
     </>
   );
 }

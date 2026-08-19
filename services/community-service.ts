@@ -3,10 +3,11 @@ import type { CommunicationChannel, GenericDiscussionScope } from "@prisma/clien
 import { prisma } from "@/lib/db";
 import { getRecentActivities } from "@/services/activity-service";
 import { getCommunicationCenter } from "@/services/communication-service";
+import { getEmailConfig } from "@/lib/email/config";
 
 export const notificationProviders = [
   { key: "in-app", label: "In-app", status: "Active architecture" },
-  { key: "email", label: "Email", status: "Provider placeholder" },
+  { key: "email", label: "Email", status: getEmailConfig().live ? "Transactional active" : "Not configured" },
   { key: "whatsapp", label: "WhatsApp", status: "Provider placeholder" },
   { key: "push", label: "Push", status: "Provider placeholder" },
   { key: "sms", label: "SMS", status: "Provider placeholder" }

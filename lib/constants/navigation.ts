@@ -9,6 +9,7 @@ import {
   LifeBuoy,
   LibraryBig,
   CalendarDays,
+  CircleAlert,
   Bell,
   History,
   FileText,
@@ -70,7 +71,8 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "Collaboration", href: "/teacher/community/collaboration", icon: LibraryBig },
     { label: "Wallet", href: "/teacher/business/wallet", icon: WalletCards },
     { label: "Subscription", href: "/teacher/business/subscription", icon: WalletCards },
-    { label: "Settings", href: "/settings", icon: Settings }
+    { label: "Settings", href: "/settings", icon: Settings },
+    { label: "Privacy", href: "/privacy-center", icon: ShieldCheck }
   ],
   student: [
     { label: "Home", href: "/student", icon: LayoutDashboard },
@@ -93,7 +95,8 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "Notifications", href: "/student/notifications", icon: Bell },
     { label: "Timeline", href: "/student/timeline", icon: History },
     { label: "Files", href: "/student/files", icon: FileText },
-    { label: "Settings", href: "/settings", icon: Settings }
+    { label: "Settings", href: "/settings", icon: Settings },
+    { label: "Privacy", href: "/privacy-center", icon: ShieldCheck }
   ],
   parent: [
     { label: "Family Home", href: "/parent", icon: LayoutDashboard },
@@ -121,6 +124,8 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
   ],  admin: [
     { label: "Overview", href: "/admin", icon: PanelTop },
     { label: "Launch", href: "/admin/launch", icon: Rocket },
+    { label: "Incidents", href: "/admin/incidents", icon: CircleAlert },
+    { label: "Privacy", href: "/admin/privacy", icon: ShieldCheck },
     { label: "Control Center", href: "/admin/control/dashboard", icon: Gauge },
     { label: "Institution", href: "/institution/dashboard", icon: Building2 },
     { label: "Teachers", href: "/admin/teachers", icon: UsersRound },

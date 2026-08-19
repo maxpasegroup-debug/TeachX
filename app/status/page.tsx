@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, ArrowLeft, CheckCircle2, CircleAlert, Clock3, LifeBuoy, XCircle } from "lucide-react";
+import { Activity, ArrowLeft, CheckCircle2, CircleAlert, Clock3, LifeBuoy, Wrench, XCircle } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { getPublicSystemStatus, type PublicComponentStatus } from "@/services/public-status-service";
@@ -48,6 +48,14 @@ export default async function StatusPage() {
       </section>
 
       <section className="mx-auto max-w-5xl px-5 py-10 sm:px-8">
+        {status.maintenance?.maintenanceEnabled ? (
+          <div className="mb-8 border-y border-amber-300 bg-amber-50 px-4 py-5 text-amber-950">
+            <div className="flex items-start gap-3">
+              <Wrench className="mt-0.5 h-5 w-5 shrink-0" />
+              <div><h2 className="font-semibold">Scheduled maintenance</h2><p className="mt-1 text-sm leading-6">{status.maintenance.maintenanceMessage}</p></div>
+            </div>
+          </div>
+        ) : null}
         <div className="border-b border-border pb-7">
           <div className="flex items-center gap-3">
             <Activity className={`h-6 w-6 ${overall.color}`} />
@@ -78,6 +86,26 @@ export default async function StatusPage() {
           })}
         </div>
 
+        {status.incidents.length ? (
+          <section className="mt-10 border-t border-border pt-8">
+            <h2 className="text-2xl font-semibold">Incident history</h2>
+            <div className="mt-5 divide-y divide-border border-y border-border">
+              {status.incidents.map((incident) => (
+                <article className="py-6" key={incident.id}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="font-semibold">{incident.title}</h3>
+                    <Badge>{incident.status.toLowerCase()}</Badge>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{incident.affectedComponents.join(", ")} · Started {new Date(incident.startedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })} UTC</p>
+                  <ol className="mt-4 space-y-3">
+                    {incident.updates.map((update) => <li className="border-l-2 border-border pl-4 text-sm" key={`${incident.id}-${update.createdAt.toISOString()}`}><strong>{update.status.toLowerCase()}</strong><p className="mt-1 leading-6 text-muted-foreground">{update.publicMessage}</p></li>)}
+                  </ol>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-7">
           <p className="text-sm text-muted-foreground">Still having trouble? Tell us what happened and which tool you were using.</p>
           <Link className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline" href="/contact">
@@ -89,4 +117,3 @@ export default async function StatusPage() {
     </main>
   );
 }
-

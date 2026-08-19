@@ -69,7 +69,7 @@ export default function PricingPage() {
         <Card className="p-5">
           <ShieldCheck className="h-5 w-5 text-sky-700" />
           <h2 className="mt-4 font-semibold">Paid access waits for checkout</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">Free plans activate immediately. Paid plans create checkout orders and activate only after payment integration is live.</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">Free plans activate immediately. Paid plans activate only after secure provider confirmation.</p>
           <Link className="mt-3 inline-block text-sm font-semibold text-primary underline" href="/refund-policy">Read billing policy</Link>
         </Card>
         <Card className="p-5">

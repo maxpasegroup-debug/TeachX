@@ -6,7 +6,7 @@
   --background: 210 20% 98%;
   --foreground: 222 47% 11%;
   --muted: 210 20% 94%;
-  --muted-foreground: 215 16% 47%;
+  --muted-foreground: 215 18% 38%;
   --border: 214 24% 90%;
   --surface: 0 0% 100%;
   --primary: 222 47% 11%;
@@ -42,6 +42,62 @@ body {
   color: hsl(var(--foreground));
   scroll-behavior: smooth;
   scroll-padding-top: 6rem;
+}
+
+.skip-link {
+  position: fixed;
+  inset-block-start: 0.75rem;
+  inset-inline-start: 0.75rem;
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  border: 2px solid currentColor;
+  background: hsl(var(--surface));
+  color: hsl(var(--foreground));
+  font-weight: 700;
+  transform: translateY(-180%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+:focus-visible {
+  outline: 3px solid hsl(var(--brand-blue));
+  outline-offset: 3px;
+}
+
+html[data-contrast="high"] {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --muted: 0 0% 92%;
+  --muted-foreground: 0 0% 20%;
+  --border: 0 0% 28%;
+  --primary: 0 0% 0%;
+  --brand-blue: 220 100% 35%;
+}
+
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 button,

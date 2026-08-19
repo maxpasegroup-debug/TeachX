@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { BadgePercent, BarChart3, Bot, CreditCard, Download, FileText, Gift, Lock, PackageCheck, ReceiptText, Sparkles, WalletCards } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { FullRefundButton, PaymentReadinessPanel } from "@/components/commerce/payment-admin-actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -16,8 +17,8 @@ type TeacherCommerce = Awaited<ReturnType<typeof getTeacherCommerceDashboard>>;
 type StudentCommerce = Awaited<ReturnType<typeof getStudentCommerceDashboard>>;
 type AdminCommerce = Awaited<ReturnType<typeof getAdminCommerceDashboard>>;
 
-function money(value: number | string) {
-  return `INR ${Number(value).toLocaleString("en-IN")}`;
+function money(value: number | string, currency = "INR") {
+  return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", { style: "currency", currency }).format(Number(value));
 }
 
 function date(value?: Date | null) {
@@ -137,8 +138,8 @@ export function AdminCommerceDashboard({ data, section = "overview" }: { data: A
     <div className="space-y-8">
       <Hero eyebrow="Admin Commerce" title="Commerce OS control room." description="Subscriptions, orders, transactions, wallets, AI usage, coupons, billing placeholders, and provider readiness in one calm operating layer." />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-        <Metric label="Revenue" value={money(data.stats.revenue)} />
-        <Metric label="Pending" value={money(data.stats.pending)} />
+        <Metric label="Revenue" value={data.stats.revenueByCurrency.map((item) => money(item.total, item.currency)).join(" + ") || money(0)} />
+        <Metric label="Pending" value={data.stats.pendingByCurrency.map((item) => money(item.total, item.currency)).join(" + ") || money(0)} />
         <Metric label="Orders" value={data.stats.orders.toString()} />
         <Metric label="Subscriptions" value={data.stats.activeSubscriptions.toString()} />
         <Metric label="Wallets" value={data.stats.wallets.toString()} />
@@ -178,7 +179,7 @@ function PlanCatalog({ data }: { data: AdminCommerce }) {
 }
 
 function AdminOrders({ data }: { data: AdminCommerce }) {
-  return <SimplePanel title="Orders" icon={<PackageCheck className="h-5 w-5" />} items={data.orders.map((order) => `${order.buyer.name} - ${order.type.replaceAll("_", " ")} - ${order.status} - ${money(Number(order.total))}`)} />;
+  return <Card className="p-5 shadow-soft"><div className="flex items-center gap-3 text-sky-700"><PackageCheck className="h-5 w-5" /><h2 className="text-xl font-semibold text-foreground">Orders</h2></div><div className="mt-5 space-y-3">{data.orders.length ? data.orders.map((order) => <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-3 last:border-0" key={order.id}><p className="text-sm">{order.buyer.name} - {order.type.replaceAll("_", " ")} - {order.status} - {money(Number(order.total), order.currency)}</p>{order.status === "PAID" || order.status === "FULFILLED" ? <FullRefundButton orderId={order.id} /> : null}</div>) : <EmptyState icon={<FileText className="h-5 w-5" />} title="No orders yet" description="Commerce activity will appear here." />}</div></Card>;
 }
 
 function AdminTransactions({ data }: { data: AdminCommerce }) {
@@ -211,6 +212,7 @@ function ProviderPanel({ data }: { data: AdminCommerce }) {
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         {data.providers.map((provider) => <div className="rounded-2xl border border-dashed border-border bg-background p-5" key={provider.key}><div className="flex items-center justify-between gap-3"><h3 className="font-semibold">{provider.name}</h3><Badge><Lock className="mr-1 h-3 w-3" />{provider.status}</Badge></div><p className="mt-3 text-sm text-muted-foreground">{provider.supports.join(", ")}</p></div>)}
       </div>
+      <div className="mt-5"><PaymentReadinessPanel /></div>
     </Card>
   );
 }

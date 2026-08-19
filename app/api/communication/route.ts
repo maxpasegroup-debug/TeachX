@@ -12,7 +12,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const limited = rateLimit(`communication:${getClientKey(request, "communication")}`, 20, 60_000);
+  const limited = await rateLimit(`communication:${getClientKey(request, "communication")}`, 20, 60_000);
   if (limited) return limited;
   const access = await requireApiSession("dashboard.view");
   if ("response" in access) return access.response;

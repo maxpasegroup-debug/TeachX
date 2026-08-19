@@ -3,6 +3,9 @@
 import { useActionState, useMemo, useState } from "react";
 
 import { approveContentAction, archiveContentAction, createContentAction, createContentFolderAction, duplicateContentAction, publishContentAction, reviewContentAction, submitContentReviewAction } from "@/features/content/actions";
+import { PrivateUploadForm } from "@/features/content/components/private-upload-form";
+import Link from "next/link";
+import { Download, ExternalLink } from "lucide-react";
 import type { getContentAnalytics } from "@/services/content-analytics-service";
 import type { getContentStudioOverview } from "@/services/content-service";
 import type { getApprovalQueues } from "@/services/review-service";
@@ -11,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { sentenceCase } from "@/lib/format";
 
 type ContentStudioProps = {
@@ -19,10 +21,11 @@ type ContentStudioProps = {
   queues: Awaited<ReturnType<typeof getApprovalQueues>>;
   analytics: Awaited<ReturnType<typeof getContentAnalytics>>;
   storage: Awaited<ReturnType<typeof getStorageDashboard>>;
+  draftScope: string;
   readOnly?: boolean;
 };
 
-export function ContentStudio({ overview, queues, analytics, storage, readOnly = false }: ContentStudioProps) {
+export function ContentStudio({ overview, queues, analytics, storage, draftScope, readOnly = false }: ContentStudioProps) {
   const [search, setSearch] = useState("");
   const filteredItems = useMemo(() => {
     const term = search.toLowerCase().trim();
@@ -46,7 +49,7 @@ export function ContentStudio({ overview, queues, analytics, storage, readOnly =
 
       {!readOnly ? (
         <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-          <UploadCenter overview={overview} />
+          <UploadCenter draftScope={draftScope} overview={overview} />
           <FolderPanel overview={overview} />
         </section>
       ) : null}
@@ -64,47 +67,25 @@ export function ContentStudio({ overview, queues, analytics, storage, readOnly =
   );
 }
 
-function UploadCenter({ overview }: { overview: ContentStudioProps["overview"] }) {
-  const [message, action, pending] = useActionState(createContentAction, undefined);
+function UploadCenter({ overview, draftScope }: { overview: ContentStudioProps["overview"]; draftScope: string }) {
+  const [linkMessage, linkAction, linkPending] = useActionState(createContentAction, undefined);
   return (
     <Card className="p-6">
       <h2 className="text-xl font-semibold">Teacher Upload Center</h2>
       <p className="mt-1 text-sm text-muted-foreground">Prepare a lesson. Save draft, submit for review, or publish if allowed.</p>
-      <form action={action} className="mt-6 grid gap-4">
-        <Input name="title" placeholder="Lesson title" />
-        <Textarea name="description" placeholder="Short description or notes" />
-        <div className="grid gap-4 md:grid-cols-3">
-          <Select name="courseId"><option value="">Course</option>{overview.courses.map((course) => <option key={course.id} value={course.id}>{course.name}</option>)}</Select>
-          <Select name="subjectId"><option value="">Subject</option>{overview.subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}</Select>
-          <Select name="chapterId"><option value="">Chapter</option>{overview.chapters.map((chapter) => <option key={chapter.id} value={chapter.id}>{chapter.name}</option>)}</Select>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Select name="topicId"><option value="">Topic</option>{overview.topics.map((topic) => <option key={topic.id} value={topic.id}>{topic.name}</option>)}</Select>
-          <Select name="classroomId"><option value="">Classroom</option>{overview.classrooms.map((classroom) => <option key={classroom.id} value={classroom.id}>{classroom.title}</option>)}</Select>
-          <Select name="batchId"><option value="">Batch</option>{overview.batches.map((batch) => <option key={batch.id} value={batch.id}>{batch.name}</option>)}</Select>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Select name="type">
-            <option value="VIDEO">Video</option>
-            <option value="PDF">PDF</option>
-            <option value="PPT">PPT</option>
-            <option value="IMAGE">Image</option>
-            <option value="AUDIO">Audio</option>
-            <option value="ZIP">ZIP</option>
-            <option value="EXTERNAL_LINK">External Link</option>
-            <option value="NOTES">Notes</option>
-            <option value="WORKSHEET">Worksheet</option>
-            <option value="QUESTION_PAPER">Question Paper</option>
-            <option value="ANSWER_KEY">Answer Key</option>
-            <option value="REFERENCE">Reference</option>
-          </Select>
-          <Select name="status"><option value="DRAFT">Save Draft</option><option value="SUBMITTED">Submit for Review</option><option value="PUBLISHED">Publish</option></Select>
-          <Input name="fileUrl" placeholder="File URL or storage path" />
-        </div>
-        <Input name="externalUrl" placeholder="External video or reference link" />
-        <Button disabled={pending} type="submit">{pending ? "Saving" : "Save Content"}</Button>
-        {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      </form>
+      <PrivateUploadForm batches={overview.batches} chapters={overview.chapters} classrooms={overview.classrooms} courses={overview.courses} draftScope={draftScope} subjects={overview.subjects} topics={overview.topics} />
+      <details className="mt-6 border-t pt-4">
+        <summary className="cursor-pointer text-sm font-semibold">Add an external link</summary>
+        <form action={linkAction} className="mt-4 grid gap-4 md:grid-cols-2">
+          <input name="type" type="hidden" value="EXTERNAL_LINK" />
+          <Input name="title" placeholder="Resource title" required />
+          <Select name="courseId" required><option value="">Course</option>{overview.courses.map((course) => <option key={course.id} value={course.id}>{course.name}</option>)}</Select>
+          <Input className="md:col-span-2" name="externalUrl" placeholder="https://example.com/resource" required type="url" />
+          <Select name="status" defaultValue="DRAFT"><option value="DRAFT">Save draft</option><option value="SUBMITTED">Submit for review</option><option value="PUBLISHED">Publish</option></Select>
+          <Button disabled={linkPending} type="submit" variant="secondary"><ExternalLink aria-hidden="true" className="mr-2 h-4 w-4" />{linkPending ? "Saving" : "Add link"}</Button>
+          {linkMessage ? <p className="text-sm text-muted-foreground md:col-span-2">{linkMessage}</p> : null}
+        </form>
+      </details>
     </Card>
   );
 }
@@ -155,6 +136,7 @@ function ContentRow({ item, readOnly }: { item: ContentStudioProps["overview"]["
       <h3 className="mt-1 text-lg font-semibold">{item.title}</h3>
       <p className="mt-2 text-sm text-muted-foreground">{item.course.name} {item.subject ? `- ${item.subject.name}` : ""} {item.topic ? `- ${item.topic.name}` : ""}</p>
       <p className="mt-2 text-sm text-muted-foreground">Views {item.analytics?.views ?? 0} - Downloads {item.analytics?.downloads ?? 0} - Completion {item.analytics?.completionRate ?? 0}%</p>
+      {item.storageObject?.status === "ACTIVE" ? <Link className="mt-3 inline-flex items-center text-sm font-semibold text-primary" href={`/api/storage/objects/${item.storageObject.id}/download`}><Download aria-hidden="true" className="mr-2 h-4 w-4" />Download file</Link> : item.externalUrl ? <Link className="mt-3 inline-flex text-sm font-semibold text-primary" href={item.externalUrl} rel="noreferrer" target="_blank">Open external link</Link> : null}
       {!readOnly ? (
         <div className="mt-4 grid gap-3 md:grid-cols-4">
           <TinyForm action={submitAction} disabled={submitPending} itemId={item.id} label="Submit" />

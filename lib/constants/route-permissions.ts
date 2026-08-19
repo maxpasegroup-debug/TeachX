@@ -1,6 +1,12 @@
 import type { PermissionKey } from "@/lib/constants/roles";
+import apiRoutePolicy from "@/security/api-route-policy.json";
 
-export const publicRoutes = ["/login", "/forgot-password", "/reset-password", "/guest-portal", "/setup", "/welcome", "/teachers", "/students", "/signup", "/pricing", "/trust", "/status", "/privacy", "/terms", "/security", "/cookies", "/refund-policy", "/contact", "/marketplace", "/resources", "/manifest.webmanifest", "/robots.txt", "/sitemap.xml", "/.well-known", "/offline", "/icons", "/brand"] as const;
+export const publicRoutes = ["/login", "/forgot-password", "/reset-password", "/verify-email", "/guest-portal", "/setup", "/welcome", "/teachers", "/students", "/signup", "/pricing", "/trust", "/status", "/privacy", "/terms", "/security", "/cookies", "/refund-policy", "/contact", "/marketplace", "/resources", "/manifest.webmanifest", "/robots.txt", "/sitemap.xml", "/sw.js", "/.well-known", "/offline", "/icons", "/brand"] as const;
+
+export function isPublicApiRoute(pathname: string) {
+  return apiRoutePolicy.publicExact.includes(pathname)
+    || apiRoutePolicy.publicPrefixes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
 
 export const routePermissions: Record<string, PermissionKey> = {
   "/dashboard": "dashboard.view",
@@ -33,7 +39,8 @@ export const routePermissions: Record<string, PermissionKey> = {
   // Institution configuration remains restricted, while personal settings are
   // available to every signed-in workspace through the canonical router.
   "/settings/institution": "settings.manage",
-  "/settings": "dashboard.view"
+  "/settings": "dashboard.view",
+  "/privacy-center": "dashboard.view"
 };
 
 export function getRoutePermission(pathname: string) {

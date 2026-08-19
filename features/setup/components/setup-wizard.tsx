@@ -24,7 +24,7 @@ export function SetupWizard() {
         <SetupStep number="3" title="Branch"><Field label="Branch Name" name="branchName" placeholder="Main Campus" /><Field label="Branch Code" name="branchCode" placeholder="MAIN" /></SetupStep>
         <SetupStep number="4" title="Courses"><Field label="First Course" name="courseName" placeholder="Foundation Course" /><Field label="Course Code" name="courseCode" placeholder="FOUNDATION" /></SetupStep>
         <SetupStep number="5" title="Fee Heads"><Field label="First Fee Head" name="feeHeadName" placeholder="Course Fee" /></SetupStep>
-        <SetupStep number="6" title="Administrator"><Field label="Admin Name" name="adminName" /><Field label="Admin Email" name="adminEmail" type="email" /><Field label="Admin Password" name="adminPassword" type="password" /></SetupStep>
+        <SetupStep number="6" title="Administrator"><Field label="Admin Name" name="adminName" /><Field label="Admin Email" name="adminEmail" type="email" /><Field label="Admin Password" name="adminPassword" type="password" /><Field label="One-time Setup Secret" name="setupSecret" type="password" /></SetupStep>
       </section>
       <Card className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
         <div>

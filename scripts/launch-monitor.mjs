@@ -4,8 +4,9 @@ import process from "node:process";
 const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 const rawBaseUrl = process.env.MONITOR_BASE_URL || process.env.SMOKE_BASE_URL;
 const timeoutMs = Number(process.env.MONITOR_TIMEOUT_MS || 10000);
-const maxLatencyMs = Number(process.env.MONITOR_MAX_LATENCY_MS || 3000);
+const maxLatencyMs = Number(process.env.MONITOR_MAX_LATENCY_MS || process.env.OPERATIONS_P95_TARGET_MS || 1500);
 const expectedVersion = process.env.MONITOR_EXPECTED_VERSION || packageJson.version;
+const attempts = Math.max(1, Math.min(10, Number(process.env.MONITOR_ATTEMPTS || 3)));
 
 if (!rawBaseUrl) {
   console.error("TeachX monitor requires MONITOR_BASE_URL=https://your-production-domain.");
@@ -34,21 +35,30 @@ function check(name, pass, detail) {
 }
 
 const checks = [];
+const latencies = [];
 
-for (const probe of ["/api/health", "/api/ready", "/api/status", "/api/version"]) {
-  try {
-    const result = await request(probe);
-    checks.push(check(`${probe}:http`, result.response.ok, `HTTP ${result.response.status}`));
-    checks.push(check(`${probe}:latency`, result.latencyMs <= maxLatencyMs, `${result.latencyMs}ms (limit ${maxLatencyMs}ms)`));
+for (let attempt = 1; attempt <= attempts; attempt += 1) {
+  for (const probe of ["/api/health", "/api/ready", "/api/status", "/api/version"]) {
+    try {
+      const result = await request(probe);
+      latencies.push(result.latencyMs);
+      const name = `${probe}:attempt-${attempt}`;
+      checks.push(check(`${name}:http`, result.response.ok, `HTTP ${result.response.status}`));
+      checks.push(check(`${name}:latency`, result.latencyMs <= maxLatencyMs, `${result.latencyMs}ms (limit ${maxLatencyMs}ms)`));
 
-    if (probe === "/api/health") checks.push(check(`${probe}:body`, result.body?.ok === true, "health reports ok"));
-    if (probe === "/api/ready") checks.push(check(`${probe}:body`, result.body?.ok === true && result.body?.status === "ready", `readiness is ${result.body?.status ?? "unknown"}`));
-    if (probe === "/api/status") checks.push(check(`${probe}:body`, result.body?.overall !== "outage", `public status is ${result.body?.overall ?? "unknown"}`));
-    if (probe === "/api/version") checks.push(check(`${probe}:version`, result.body?.version === expectedVersion, `expected ${expectedVersion}, received ${result.body?.version ?? "unknown"}`));
-  } catch (error) {
-    checks.push(check(`${probe}:request`, false, error instanceof Error ? error.message : "request failed"));
+      if (probe === "/api/health") checks.push(check(`${name}:body`, result.body?.ok === true, "health reports ok"));
+      if (probe === "/api/ready") checks.push(check(`${name}:body`, result.body?.ok === true && result.body?.status === "ready", `readiness is ${result.body?.status ?? "unknown"}`));
+      if (probe === "/api/status") checks.push(check(`${name}:body`, result.body?.overall !== "outage" && Array.isArray(result.body?.incidents), `public status is ${result.body?.overall ?? "unknown"}`));
+      if (probe === "/api/version") checks.push(check(`${name}:version`, result.body?.version === expectedVersion, `expected ${expectedVersion}, received ${result.body?.version ?? "unknown"}`));
+    } catch (error) {
+      checks.push(check(`${probe}:attempt-${attempt}:request`, false, error instanceof Error ? error.message : "request failed"));
+    }
   }
 }
+
+const orderedLatencies = latencies.toSorted((a, b) => a - b);
+const p95LatencyMs = orderedLatencies.length ? orderedLatencies[Math.ceil(orderedLatencies.length * 0.95) - 1] : null;
+checks.push(check("monitor:p95", p95LatencyMs !== null && p95LatencyMs <= maxLatencyMs, `${p95LatencyMs ?? "missing"}ms (limit ${maxLatencyMs}ms)`));
 
 try {
   const root = await request("/");
@@ -69,6 +79,7 @@ const report = {
   passed: checks.length - failed.length,
   failed: failed.length,
   checks
+  , p95LatencyMs
 };
 
 if (process.env.MONITOR_JSON === "1") {
@@ -79,4 +90,3 @@ if (process.env.MONITOR_JSON === "1") {
 }
 
 if (failed.length) process.exit(1);
-

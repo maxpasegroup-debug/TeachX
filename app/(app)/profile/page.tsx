@@ -85,7 +85,7 @@ export default async function ProfilePage() {
     { label: "Languages", done: Boolean(user?.teacherProfile?.languages.length) },
     { label: "Teaching Availability", done: Boolean(user?.teacherProfile?.availability) },
     { label: "Teaching Preferences", done: Boolean(user?.teacherProfile?.teachingMode ?? user?.teacherProfile?.teachingStyle) },
-    { label: "Profile Verification", done: Boolean(user?.emailVerifiedAt) }
+    { label: "Profile Verification", done: Boolean(user?.emailVerifiedAt || user?.phoneVerifiedAt) }
   ];
   const studentStrength: StrengthItem[] = [
     { label: "Photo", done: Boolean(user?.profile?.avatarUrl) },

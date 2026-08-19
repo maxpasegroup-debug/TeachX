@@ -4,7 +4,13 @@
 node_modules
 dist
 coverage
+test-results/
+.lighthouseci/
+playwright-report/
 *.log
 .tmp/
 tsconfig.tsbuildinfo
 prisma/dev.db
+*.dump
+*.dump.sha256
+recovery-evidence*.json

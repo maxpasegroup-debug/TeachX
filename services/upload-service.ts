@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 
 export async function createContentUpload(input: {
   institutionId: string;
@@ -16,13 +17,15 @@ export async function createContentUpload(input: {
   type: "VIDEO" | "PDF" | "PPT" | "IMAGE" | "AUDIO" | "ZIP" | "EXTERNAL_LINK" | "DOCUMENT" | "NOTES" | "WORKSHEET" | "QUESTION_PAPER" | "ANSWER_KEY" | "REFERENCE";
   fileUrl?: string;
   externalUrl?: string;
+  storageKey?: string;
+  mimeType?: string;
   sizeBytes?: number;
   durationSeconds?: number;
   status?: "DRAFT" | "SUBMITTED" | "PUBLISHED";
-}) {
+}, db: Prisma.TransactionClient | typeof prisma = prisma) {
   const status = input.status ?? "DRAFT";
 
-  return prisma.contentItem.create({
+  return db.contentItem.create({
     data: {
       institutionId: input.institutionId,
       createdById: input.createdById,
@@ -39,6 +42,8 @@ export async function createContentUpload(input: {
       type: input.type,
       fileUrl: input.fileUrl,
       externalUrl: input.externalUrl,
+      storageKey: input.storageKey,
+      mimeType: input.mimeType,
       sizeBytes: input.sizeBytes ?? 0,
       durationSeconds: input.durationSeconds ?? 0,
       status,
@@ -55,6 +60,7 @@ export async function createContentUpload(input: {
           title: input.title,
           fileUrl: input.fileUrl,
           externalUrl: input.externalUrl,
+          storageKey: input.storageKey,
           sizeBytes: input.sizeBytes ?? 0,
           updatedById: input.createdById,
           changeNote: "Initial upload"

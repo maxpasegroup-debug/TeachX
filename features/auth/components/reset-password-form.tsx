@@ -17,6 +17,10 @@ export function ResetPasswordForm({ token }: { token: string }) {
         <Label htmlFor="password">New password</Label>
         <Input className="rounded-2xl bg-white/85 transition duration-brand ease-brand focus:border-brand-blue focus:shadow-brand-soft" id="password" name="password" type="password" autoComplete="new-password" placeholder="Minimum 8 characters" required />
       </div>
+      <div className="space-y-2">
+        <Label htmlFor="confirmPassword">Confirm new password</Label>
+        <Input className="rounded-2xl bg-white/85 transition duration-brand ease-brand focus:border-brand-blue focus:shadow-brand-soft" id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" placeholder="Repeat your new password" required />
+      </div>
       {message ? <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{message}</p> : null}
       <Button className="premium-button h-13 w-full rounded-2xl shadow-brand transition duration-brand ease-brand" disabled={pending} type="submit">
         {pending ? "Updating" : "Reset password"}

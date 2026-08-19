@@ -186,7 +186,7 @@ function MiniWindow({ title, children, className = "" }: { title: string; childr
           <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
         </div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{title}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-700">{title}</p>
       </div>
       {children}
     </div>
@@ -226,10 +226,10 @@ function WorkspaceMockup() {
                 <div className="space-y-3">
                   <div className="rounded-2xl bg-blue-50 p-4">
                     <p className="text-sm font-semibold text-blue-800">Grade 9 Physics</p>
-                    <h3 className="mt-2 text-2xl font-semibold">Newton Laws</h3>
+                    <p className="mt-2 text-2xl font-semibold">Newton Laws</p>
                   </div>
                   {["Learning outcomes", "Class activity", "Homework prompts"].map((item) => (
-                    <div className="flex items-center gap-3 rounded-2xl bg-muted/70 px-4 py-3 text-sm font-medium text-muted-foreground" key={item}>
+                    <div className="flex items-center gap-3 rounded-2xl bg-muted/70 px-4 py-3 text-sm font-medium text-slate-700" key={item}>
                       <Check className="h-4 w-4 text-emerald-600" />
                       {item}
                     </div>
@@ -305,7 +305,7 @@ export function AudienceLanding({ config }: { config: AudienceLandingConfig }) {
 
       <section className="mx-auto w-full max-w-7xl px-5 pb-16 pt-20 text-center sm:px-8 lg:pb-24 lg:pt-24">
         <MotionPrimitive variant="fade-up">
-          <div className="mx-auto mb-7 inline-flex items-center gap-2 rounded-full border border-brand-blue/15 bg-white/80 px-4 py-2 text-sm font-semibold text-brand-blue shadow-sm backdrop-blur">
+          <div className="mx-auto mb-7 inline-flex items-center gap-2 rounded-full border border-brand-blue/15 bg-white/80 px-4 py-2 text-sm font-semibold text-blue-800 shadow-sm backdrop-blur">
             <Sparkles className="h-4 w-4" />
             The Professional AI Workspace for Teachers
           </div>

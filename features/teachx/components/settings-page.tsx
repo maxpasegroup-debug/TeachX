@@ -3,6 +3,7 @@ import { Bell, Languages, Lock, Monitor, Palette, Shield, UserRound } from "luci
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { EmailOperationsPanel } from "@/components/email/email-operations-panel";
 import { SwitchRow } from "@/features/teachx/components/switch-row";
 
 type SettingsPageProps = {
@@ -29,6 +30,7 @@ export function SettingsPage({ workspace }: SettingsPageProps) {
       </section>
 
       <section className="grid gap-5 lg:grid-cols-2">
+        {workspace === "Admin" ? <EmailOperationsPanel /> : null}
         {sections.map((section) => {
           const Icon = section.icon;
 

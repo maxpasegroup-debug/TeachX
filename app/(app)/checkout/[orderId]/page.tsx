@@ -5,7 +5,9 @@ import { CreditCard, Lock, ShieldCheck } from "lucide-react";
 import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { CheckoutPaymentActions } from "@/components/commerce/checkout-payment-actions";
 import { prisma } from "@/lib/db";
+import { getPaymentConfig } from "@/lib/payments/config";
 import { paymentProviders } from "@/services/commerce-service";
 
 function money(value: number, currency = "INR") {
@@ -13,9 +15,8 @@ function money(value: number, currency = "INR") {
 }
 
 function providerState() {
-  const razorpayReady = Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
-  const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
-  return { razorpayReady, stripeReady };
+  const config = getPaymentConfig();
+  return { razorpayReady: config.razorpay, stripeReady: config.stripe, live: config.live };
 }
 
 export default async function CheckoutPage({ params }: { params: Promise<{ orderId: string }> }) {
@@ -39,6 +40,8 @@ export default async function CheckoutPage({ params }: { params: Promise<{ order
   const state = providerState();
   const isPaid = ["PAID", "FULFILLED"].includes(order.status);
   const isFree = Number(order.total) === 0;
+  const providerReady = order.currency === "INR" ? state.razorpayReady : state.stripeReady;
+  const payable = state.live && providerReady && order.status === "PENDING_PAYMENT" && !isFree;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -46,7 +49,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ order
         <Badge>Checkout</Badge>
         <h1 className="mt-5 text-4xl font-semibold tracking-tight">Review your order</h1>
         <p className="mt-3 max-w-2xl text-lg leading-8 text-muted-foreground">
-          TeachX has created a secure commerce order. Paid access activates after a live Razorpay or Stripe payment event is connected and verified.
+          Pay through the provider selected for your billing currency. Access activates only after TeachX verifies the provider&apos;s signed payment event.
         </p>
       </section>
 
@@ -82,7 +85,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ order
           <CreditCard className="h-5 w-5 text-sky-700" />
           <h2 className="mt-4 text-xl font-semibold">Payment status</h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {isPaid || isFree ? "This order does not need live checkout." : "Live checkout is locked until provider credentials, webhooks, and settlement checks are enabled."}
+            {isPaid || isFree ? "This order does not need payment." : payable ? "Secure checkout is ready. Closing the browser after payment will not interrupt verification." : "Checkout remains locked until provider, tax, refund, and reconciliation controls are verified."}
           </p>
           <div className="mt-5 space-y-3">
             {paymentProviders.map((provider) => {
@@ -91,7 +94,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ order
                 <div className="rounded-xl border border-border bg-background p-4" key={provider.key}>
                   <div className="flex items-center justify-between gap-3">
                     <strong>{provider.name}</strong>
-                    <Badge>{ready ? "Keys detected" : "Keys missing"}</Badge>
+                    <Badge>{ready ? "Configured" : "Unavailable"}</Badge>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">{provider.supports.join(", ")}</p>
                 </div>
@@ -100,8 +103,9 @@ export default async function CheckoutPage({ params }: { params: Promise<{ order
           </div>
           <div className="mt-5 rounded-xl border border-dashed border-border bg-muted/40 p-4 text-sm leading-6 text-muted-foreground">
             <Lock className="mr-2 inline h-4 w-4" />
-            Payment buttons intentionally remain disabled until gateway SDK, webhook verification, refund handling, and tax invoices are enabled.
+            Browser responses never grant access. Only signed Stripe or Razorpay events can fulfil this order.
           </div>
+          {!isPaid && !isFree ? <CheckoutPaymentActions enabled={payable} orderId={order.id} /> : null}
           <Link className="mt-5 inline-flex w-full justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-foreground" href="/teacher/business/subscription">
             Back to subscription
           </Link>

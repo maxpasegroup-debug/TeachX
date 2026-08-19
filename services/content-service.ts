@@ -30,6 +30,7 @@ export async function getContentStudioOverview(institutionId?: string | null, us
         batch: true,
         createdBy: true,
         analytics: true,
+        storageObject: { select: { id: true, status: true } },
         versions: { orderBy: { version: "desc" }, take: 3 },
         reviews: { include: { reviewer: true }, orderBy: { createdAt: "desc" }, take: 3 },
         approvals: { include: { approver: true }, orderBy: { createdAt: "desc" }, take: 3 }

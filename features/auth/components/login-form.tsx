@@ -29,7 +29,7 @@ export function LoginForm({ callbackUrl, audience = "teachx" }: LoginFormProps) 
 
     const form = new FormData(event.currentTarget);
     const destination = `/entry?mode=login&next=${encodeURIComponent(nextPath)}`;
-    const result = await signIn("credentials", {
+    const result = await signIn("staff-credentials", {
       email: String(form.get("email") ?? "").trim().toLowerCase(),
       password: String(form.get("password") ?? ""),
       redirect: false,

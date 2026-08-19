@@ -1,0 +1,59 @@
+name: Launch quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DATABASE_URL: postgresql://quality:quality@127.0.0.1:5432/teachx_quality
+  AUTH_SECRET: quality-only-secret-that-is-longer-than-thirty-two-characters
+  AUTH_URL: http://127.0.0.1:3100
+  NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+  REDIS_URL: redis://127.0.0.1:6379
+  SETUP_SECRET: quality-only-setup-secret-longer-than-thirty-two-characters
+
+jobs:
+  static-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run prisma:generate
+      - run: npm run launch:gate
+
+  browser-quality:
+    needs: static-quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run prisma:generate
+      - run: npm run build
+      - run: npm run test:browser
+      - run: npm run quality:lighthouse
+      - name: Upload browser reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-quality-reports
+          path: |
+            test-results
+            .lighthouseci
+          if-no-files-found: ignore
+          retention-days: 14
