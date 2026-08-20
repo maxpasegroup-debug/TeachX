@@ -161,8 +161,6 @@ const teacherPhoneSignupSchema = z.object({
   phone: z.string().min(8),
   pin: z.string(),
   confirmPin: z.string(),
-  challengeId: z.string().min(10),
-  verificationToken: z.string().length(64),
   agreement: z.literal("on", { errorMap: () => ({ message: "Please accept the privacy policy and terms." }) })
 }).superRefine((data, context) => {
   const pinError = validatePin(data.pin);
@@ -174,7 +172,7 @@ export async function completeTeacherPhoneSignupAction(_: string | undefined, fo
   const parsed = teacherPhoneSignupSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return parsed.error.issues[0]?.message ?? "Please check your account details.";
   const phoneE164 = normalizePhoneNumber(parsed.data.phone);
-  if (!phoneE164) return "The verified mobile number is invalid.";
+  if (!phoneE164) return "Enter a valid mobile number.";
 
   const role = await prisma.role.findUnique({ where: { key: "ACADEMIC_FACULTY" } });
   if (!role) return "Teacher accounts are not configured yet. Please contact support.";
@@ -183,21 +181,13 @@ export async function completeTeacherPhoneSignupAction(_: string | undefined, fo
   if (existing) return existing.phoneE164 === phoneE164 ? "An account already exists for this mobile number. Please log in." : "This email is already connected to another account.";
 
   const pinHash = await bcrypt.hash(parsed.data.pin, 12);
-  const created = await prisma.$transaction(async (tx) => {
-    const consumed = await consumeVerifiedPhoneChallenge(tx, {
-      challengeId: parsed.data.challengeId,
-      phoneE164,
-      purpose: "TEACHER_SIGNUP",
-      verificationToken: parsed.data.verificationToken
-    });
-    if (!consumed) return null;
+  await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
       data: {
         name: parsed.data.name,
         email,
         userType: "teacher",
         phoneE164,
-        phoneVerifiedAt: new Date(),
         pinHash,
         pinChangedAt: new Date(),
         profile: { create: { phone: phoneE164, title: "Teacher" } },
@@ -211,10 +201,8 @@ export async function completeTeacherPhoneSignupAction(_: string | undefined, fo
         }
       }
     });
-    await tx.auditLog.create({ data: { actorId: user.id, action: "CREATE", entity: "TeacherAccount", entityId: user.id, message: "Teacher created a verified mobile account." } });
-    return user;
+    await tx.auditLog.create({ data: { actorId: user.id, action: "CREATE", entity: "TeacherAccount", entityId: user.id, message: "Teacher created a mobile and PIN account." } });
   }, { isolationLevel: "Serializable" });
-  if (!created) return "Your verification expired. Please request a new code.";
 
   await signIn("teacher-pin", teacherPinFormData(phoneE164, parsed.data.pin, await getAuthRedirect("/entry?mode=signup&next=%2Fteacher")));
 }

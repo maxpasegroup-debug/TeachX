@@ -84,7 +84,7 @@ export const authConfig = {
         if (limited) return null;
 
         const user = await prisma.user.findUnique({ where: { phoneE164 }, include: userRelations });
-        if (!user?.pinHash || !user.phoneVerifiedAt || user.status !== "ACTIVE" || user.userType !== "teacher") return null;
+        if (!user?.pinHash || user.status !== "ACTIVE" || user.userType !== "teacher") return null;
         if (user.pinLockedUntil && user.pinLockedUntil > new Date()) return null;
 
         const validPin = await bcrypt.compare(parsed.data.pin, user.pinHash);
