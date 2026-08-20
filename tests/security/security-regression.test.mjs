@@ -19,7 +19,7 @@ test("first-run setup requires a one-time secret and a database lock", () => {
 test("proxy rejects unauthenticated private APIs and oversized bodies", () => {
   const source = read("proxy.ts");
   assert.match(source, /if \(isApi && !isAuthenticated\)/);
-  assert.ok(source.indexOf("if (publicApi)") < source.indexOf("session = await auth(request)"));
+  assert.ok(source.indexOf("if (publicApi)") < source.indexOf("token = await getToken"));
   assert.match(source, /status: 413/);
   assert.match(source, /catch/);
 });

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 import type { PermissionKey, RoleKey } from "@/lib/constants/roles";
 import { rolePermissions } from "@/lib/constants/roles";
 import { getRoutePermission, isPublicApiRoute, publicRoutes } from "@/lib/constants/route-permissions";
 import { prisma } from "@/lib/db";
-import { auth } from "@/auth";
 
 const MAX_API_BODY_BYTES = 1024 * 1024;
 const WRITE_FREEZE_EXEMPT_PREFIXES = ["/api/auth", "/api/email/webhooks", "/api/payments/webhooks"];
@@ -58,20 +58,30 @@ export default async function proxy(request: NextRequest) {
     return nextResponse(request, requestId);
   }
 
-  let session = null;
+  let token = null;
   try {
-    session = await auth(request);
+    // `getToken` is the Auth.js-supported request reader for Next middleware.
+    // Keep the cookie name identical to auth.ts so Railway's internal HTTP
+    // connection cannot cause the reader to select a different cookie name.
+    token = await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET,
+      cookieName: "authjs.session-token",
+      secureCookie: process.env.NODE_ENV === "production"
+    });
   } catch {
     return isApi ? unauthorizedApi(requestId) : withRequestId(NextResponse.redirect(new URL("/login", nextUrl)), requestId);
   }
 
-  let isAuthenticated = Boolean(session?.user?.id);
-  if (session?.user?.id && typeof session.user.authSessionVersion === "number") {
+  const userId = typeof token?.id === "string" ? token.id : null;
+  const authSessionVersion = typeof token?.authSessionVersion === "number" ? token.authSessionVersion : null;
+  let isAuthenticated = Boolean(userId);
+  if (userId && authSessionVersion !== null) {
     const account = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId },
       select: { authSessionVersion: true, status: true }
     }).catch(() => null);
-    isAuthenticated = account?.status === "ACTIVE" && account.authSessionVersion === session.user.authSessionVersion;
+    isAuthenticated = account?.status === "ACTIVE" && account.authSessionVersion === authSessionVersion;
   }
 
   if (isApi && !isAuthenticated) return unauthorizedApi(requestId);
@@ -87,7 +97,9 @@ export default async function proxy(request: NextRequest) {
   }
 
   const requiredPermission = getRoutePermission(nextUrl.pathname);
-  const roles = session?.user?.roles ?? [];
+  const roles = Array.isArray(token?.roles)
+    ? token.roles.filter((role): role is RoleKey => typeof role === "string")
+    : [];
 
   if (!isApi && requiredPermission && !hasPermission(roles, requiredPermission)) {
     return withRequestId(NextResponse.redirect(new URL("/access-denied", nextUrl)), requestId);
