@@ -19,7 +19,7 @@ export default async function TeacherHomePage() {
       stats={home.stats}
       recentItems={home.preferences.recentItems.map((item) => ({ title: item.title, meta: item.type, href: item.link }))}
       favorites={home.preferences.favoriteItems.map((item) => ({ title: item.title, meta: item.type, href: item.link }))}
-      savedSearches={home.preferences.savedSearches.map((item) => ({ title: item.name, meta: item.query, href: "/teacher/workspace/resources" }))}
+      savedDrafts={home.savedDrafts}
       notifications={home.notifications.map((item) => ({ title: item.title, meta: item.body, href: item.link }))}
       daily={home.daily}
       canAccessInstitution={session?.user.roles.some((role) => ["ADMIN", "DIRECTOR", "ACADEMIC_HEAD"].includes(role)) ?? false}

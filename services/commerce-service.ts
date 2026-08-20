@@ -116,9 +116,9 @@ export async function ensureWallet(userId: string, institutionId?: string | null
 }
 
 export async function getActiveSubscription(userId?: string, institutionId?: string | null, audience?: CommerceAudience) {
-  if (!userId) return null;
+  if (!userId || !institutionId) return null;
   const subscription = await prisma.userSubscription.findFirst({
-    where: { userId, status: "ACTIVE", ...(audience ? { plan: { audience } } : {}) },
+    where: { userId, institutionId, status: "ACTIVE", ...(audience ? { plan: { audience } } : {}) },
     include: { plan: true },
     orderBy: { updatedAt: "desc" }
   });
@@ -145,7 +145,7 @@ export function getNextResetDate(from = new Date()) {
 }
 
 export async function getAICreditSummary(input: { userId?: string; institutionId?: string | null; audience?: CommerceAudience }) {
-  if (!input.userId) {
+  if (!input.userId || !input.institutionId) {
     return { balance: 0, monthlyAllocation: 0, used: 0, remaining: 0, resetDate: getNextResetDate(), history: [], byFeature: [] };
   }
 

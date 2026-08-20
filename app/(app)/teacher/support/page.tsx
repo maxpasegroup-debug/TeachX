@@ -1,12 +1,8 @@
 import { LifeBuoy, MessageSquareText, ShieldCheck, Sparkles } from "lucide-react";
 
-import { submitTeacherSupportAction } from "@/features/launch-intelligence/actions";
+import { TeacherSupportForm } from "@/features/launch-intelligence/components/teacher-support-form";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import type { LucideIcon } from "lucide-react";
 
 export const metadata = {
@@ -34,18 +30,7 @@ export default function TeacherSupportPage() {
             <LifeBuoy className="h-5 w-5 text-sky-700" />
             <h2 className="text-xl font-semibold">Contact support</h2>
           </div>
-          <form action={submitTeacherSupportAction} className="mt-5 grid gap-4">
-            <input name="mode" type="hidden" value="support" />
-            <Input name="title" placeholder="What do you need help with?" required />
-            <Textarea name="description" placeholder="Tell us what you tried, what happened, and what you expected." required />
-            <Select name="severity" defaultValue="Medium">
-              <option>Low</option>
-              <option>Medium</option>
-              <option>High</option>
-              <option>Critical</option>
-            </Select>
-            <Button type="submit">Send Support Request</Button>
-          </form>
+          <TeacherSupportForm />
         </Card>
 
         <div className="grid gap-4">

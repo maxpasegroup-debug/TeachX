@@ -2,6 +2,7 @@ import type { AIConversationScope } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
 import { getUserPreferences } from "@/services/preference-service";
+import { getAICreditSummary } from "@/services/commerce-service";
 import { studioToolConfigs } from "@/features/ai-studio/tool-config";
 
 export type AIStudioTool = {
@@ -18,7 +19,17 @@ export function getAIStudioTool(slug: string) {
 }
 
 export async function getAIStudioHome(userId?: string, institutionId?: string | null) {
-  const [preferences, conversations, usage, templates] = await Promise.all([
+  if (!userId || !institutionId) {
+    return {
+      preferences: null,
+      conversations: [],
+      templates: [],
+      credits: { current: 0, allocation: 0, todayUsage: 0, monthlyUsage: 0, estimatedRemaining: 0 },
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0, generationCount: 0, estimatedCost: 0 }
+    };
+  }
+
+  const [preferences, conversations, usage, templates, credits] = await Promise.all([
     getUserPreferences(userId),
     prisma.aIConversation.findMany({
       where: { userId, scope: "TEACHER" },
@@ -31,10 +42,11 @@ export async function getAIStudioHome(userId?: string, institutionId?: string | 
       _count: true
     }),
     prisma.promptTemplate.findMany({
-      where: { scope: "TEACHER", isActive: true, OR: [{ institutionId: institutionId ?? undefined }, { institutionId: null }] },
+      where: { scope: "TEACHER", isActive: true, OR: [{ institutionId }, { institutionId: null }] },
       orderBy: { createdAt: "desc" },
       take: 8
-    })
+    }),
+    getAICreditSummary({ userId, institutionId, audience: "TEACHER" })
   ]);
 
   const totalTokens = usage._sum.totalTokens ?? 0;
@@ -43,10 +55,11 @@ export async function getAIStudioHome(userId?: string, institutionId?: string | 
     conversations,
     templates,
     credits: {
-      current: 1000,
+      current: credits.balance,
+      allocation: credits.monthlyAllocation,
       todayUsage: totalTokens,
       monthlyUsage: totalTokens,
-      estimatedRemaining: Math.max(0, 1000 - Math.ceil(totalTokens / 100))
+      estimatedRemaining: credits.remaining
     },
     usage: {
       promptTokens: usage._sum.promptTokens ?? 0,
@@ -69,8 +82,9 @@ export async function getAIHistory(userId?: string) {
 }
 
 export async function getPromptLibrary(institutionId?: string | null) {
+  if (!institutionId) return [];
   return prisma.promptTemplate.findMany({
-    where: { scope: "TEACHER", isActive: true, OR: [{ institutionId: institutionId ?? undefined }, { institutionId: null }] },
+    where: { scope: "TEACHER", isActive: true, OR: [{ institutionId }, { institutionId: null }] },
     orderBy: [{ institutionId: "desc" }, { updatedAt: "desc" }],
     take: 50
   });

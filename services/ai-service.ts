@@ -3,6 +3,7 @@ import type { AIConversationScope, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { universalSearch } from "@/services/search-service";
 import { runOpenAICompletion } from "@/services/openai-service";
+import { getAICreditSummary } from "@/services/commerce-service";
 
 const systemPrompts: Record<AIConversationScope, string> = {
   TEACHER: "You help Indian teachers prepare clear lessons, assignments, homework, exams and announcements. Use simple English.",
@@ -15,7 +16,8 @@ const systemPrompts: Record<AIConversationScope, string> = {
 };
 
 export async function getPromptTemplate(institutionId: string | null | undefined, key: string, scope: AIConversationScope) {
-  const template = await prisma.promptTemplate.findFirst({ where: { key, scope, OR: [{ institutionId: institutionId ?? undefined }, { institutionId: null }], isActive: true }, orderBy: { institutionId: "desc" } });
+  const institutionScope = institutionId ? [{ institutionId }, { institutionId: null }] : [{ institutionId: null }];
+  const template = await prisma.promptTemplate.findFirst({ where: { key, scope, OR: institutionScope, isActive: true }, orderBy: { institutionId: "desc" } });
   return template ?? { systemPrompt: systemPrompts[scope], userPrompt: "{{prompt}}", model: process.env.OPENAI_MODEL ?? "gpt-4.1-mini" };
 }
 
@@ -33,6 +35,15 @@ export async function buildAIContext(input: { institutionId?: string | null; use
 }
 
 export async function runAI(input: { institutionId?: string | null; userId?: string; scope: AIConversationScope; feature: string; prompt: string; context?: Prisma.InputJsonValue }) {
+  if (input.scope === "TEACHER") {
+    if (!input.userId || !input.institutionId) {
+      throw new Error("Complete workspace setup before using AI Studio.");
+    }
+    const credits = await getAICreditSummary({ userId: input.userId, institutionId: input.institutionId, audience: "TEACHER" });
+    if (credits.balance <= 0) {
+      throw new Error(credits.monthlyAllocation > 0 ? "Your AI credits are used. Upgrade or wait for the next reset." : "AI access is not active for this workspace. Choose a plan to continue.");
+    }
+  }
   const template = await getPromptTemplate(input.institutionId, input.feature, input.scope);
   const context = input.context ?? await buildAIContext(input);
   const finalPrompt = `${template.userPrompt.replace("{{prompt}}", input.prompt)}\n\nContext:\n${JSON.stringify(context)}`;

@@ -93,5 +93,9 @@ export async function submitLaunchFeedbackAction(formData: FormData) {
 }
 
 export async function submitTeacherSupportAction(formData: FormData) {
-  await submitLaunchFeedbackAction(formData);
+  try {
+    return await submitLaunchFeedbackAction(formData);
+  } catch {
+    return { ok: false, message: "Your request could not be sent. Check your connection and try again." };
+  }
 }

@@ -18,8 +18,8 @@ export function MobileNavigation({ institutionName, roles }: { institutionName: 
         <Menu className="h-5 w-5" />
       </Button>
       {open ? (
-        <div className="fixed inset-0 z-30 bg-background">
-          <div className="flex h-20 items-center justify-between border-b border-border px-6">
+        <div className="fixed inset-0 z-30 flex flex-col bg-background">
+          <div className="flex h-20 shrink-0 items-center justify-between border-b border-border px-6">
             <div>
               <p className="font-semibold">TeachX</p>
               <p className="text-sm text-muted-foreground">Learn • Teach • Earn</p>
@@ -28,7 +28,7 @@ export function MobileNavigation({ institutionName, roles }: { institutionName: 
               <X className="h-5 w-5" />
             </Button>
           </div>
-          <nav className="space-y-2 p-4">
+          <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
             {navigation.items.map((item) => {
               const Icon = item.icon;
 
@@ -40,7 +40,7 @@ export function MobileNavigation({ institutionName, roles }: { institutionName: 
               );
             })}
           </nav>
-          <p className="px-8 pt-2 text-sm text-muted-foreground">{institutionName}</p>
+          <p className="shrink-0 px-8 py-4 text-sm text-muted-foreground">{institutionName}</p>
         </div>
       ) : null}
     </div>

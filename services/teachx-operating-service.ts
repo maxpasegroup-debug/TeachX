@@ -4,6 +4,7 @@ import { getUserPreferences } from "@/services/preference-service";
 import { getRecentNotifications } from "@/services/notification-service";
 import { getTeacherDashboard } from "@/services/classroom-service";
 import { getRecentActivities } from "@/services/activity-service";
+import { getAICreditSummary } from "@/services/commerce-service";
 
 // Shared Platform: profile completion and workspace summary helpers are reused
 // by TeachX Guru today and by future frontends without changing backend models.
@@ -17,6 +18,8 @@ type CompletionInput = {
   subjects?: string[];
   learningGoal?: string | null;
   interests?: string[];
+  location?: string | null;
+  teachingMode?: string | null;
 };
 
 export type ProfileCompletion = {
@@ -45,8 +48,8 @@ export function getTeacherProfileCompletion(input: CompletionInput) {
     { label: "Experience", done: Boolean(input.headline), suggestion: "Write a short experience headline." },
     { label: "Subjects", done: Boolean(input.subjects?.length), suggestion: "Add the subjects you teach." },
     { label: "Bio", done: Boolean(input.bio), suggestion: "Add a short bio that explains your teaching style." },
-    { label: "Location", done: Boolean(input.phone), suggestion: "Add contact/location details for trusted onboarding." },
-    { label: "Teaching mode", done: Boolean(input.interests?.length), suggestion: "Choose Online, Offline, or Hybrid as your teaching mode." }
+    { label: "Location", done: Boolean(input.location), suggestion: "Add your teaching location." },
+    { label: "Teaching mode", done: Boolean(input.teachingMode), suggestion: "Choose Online, Offline, or Hybrid as your teaching mode." }
   ]);
 }
 
@@ -77,19 +80,20 @@ async function getTeachXUser(userId?: string) {
 }
 
 export async function getTeacherOperatingHome(input: { userId?: string; institutionId?: string | null; roles: RoleKey[] }) {
-  const user = await getTeachXUser(input.userId);
-  const [preferences, notifications, resourcesCreated, studentsHelped, downloads, teacherDashboard, recentAI, recentResources, recentActivity, subscription, aiUsage] = await Promise.all([
+  const hasWorkspace = Boolean(input.userId && input.institutionId);
+  const user = hasWorkspace ? await getTeachXUser(input.userId) : null;
+  const [preferences, notifications, resourcesCreated, studentsHelped, downloads, teacherDashboard, recentAI, recentResources, savedDrafts, recentActivity, credits] = await Promise.all([
     getUserPreferences(input.userId),
     getRecentNotifications(input.userId, 12),
-    input.userId ? prisma.contentItem.count({ where: { createdById: input.userId } }) : 0,
-    input.userId ? prisma.batchStudent.count({ where: { batch: { faculty: { some: { facultyId: input.userId } } } } }) : 0,
-    input.userId ? prisma.downloadHistory.count({ where: { item: { createdById: input.userId } } }) : 0,
+    hasWorkspace ? prisma.contentItem.count({ where: { createdById: input.userId!, institutionId: input.institutionId! } }) : 0,
+    hasWorkspace ? prisma.batchStudent.count({ where: { batch: { institutionId: input.institutionId!, faculty: { some: { facultyId: input.userId! } } } } }) : 0,
+    hasWorkspace ? prisma.downloadHistory.count({ where: { item: { createdById: input.userId!, institutionId: input.institutionId! } } }) : 0,
     getTeacherDashboard(input.userId, input.institutionId, input.roles),
-    input.userId ? prisma.aIConversation.findMany({ where: { userId: input.userId, scope: "TEACHER" }, orderBy: { updatedAt: "desc" }, take: 5 }) : [],
-    input.userId ? prisma.contentItem.findMany({ where: { createdById: input.userId }, orderBy: { updatedAt: "desc" }, take: 5 }) : [],
+    hasWorkspace ? prisma.aIConversation.findMany({ where: { userId: input.userId!, institutionId: input.institutionId!, scope: "TEACHER" }, orderBy: { updatedAt: "desc" }, take: 5 }) : [],
+    hasWorkspace ? prisma.contentItem.findMany({ where: { createdById: input.userId!, institutionId: input.institutionId! }, orderBy: { updatedAt: "desc" }, take: 5 }) : [],
+    hasWorkspace ? prisma.contentItem.findMany({ where: { createdById: input.userId!, institutionId: input.institutionId!, status: "DRAFT" }, orderBy: { updatedAt: "desc" }, take: 5 }) : [],
     getRecentActivities(input.institutionId, 8),
-    input.userId ? prisma.userSubscription.findFirst({ where: { userId: input.userId, status: { in: ["ACTIVE", "TRIALING"] } }, include: { plan: true }, orderBy: { updatedAt: "desc" } }) : null,
-    input.userId ? prisma.aIUsage.aggregate({ where: { userId: input.userId }, _sum: { totalTokens: true } }) : { _sum: { totalTokens: 0 } }
+    getAICreditSummary({ userId: input.userId, institutionId: input.institutionId, audience: "TEACHER" })
   ]);
 
   const completion = getTeacherProfileCompletion({
@@ -100,24 +104,21 @@ export async function getTeacherOperatingHome(input: { userId?: string; institut
     bio: user?.teacherProfile?.bio ?? user?.profile?.bio,
     headline: user?.teacherProfile?.headline,
     subjects: user?.teacherProfile?.subjects,
-    interests: []
+    location: user?.teacherProfile?.location,
+    teachingMode: user?.teacherProfile?.teachingMode
   });
-
-  const allocatedCredits = subscription?.plan.aiMonthlyCredits ?? 0;
-  const usedCredits = Math.ceil((aiUsage._sum.totalTokens ?? 0) / 100);
-  const remainingCredits = Math.max(0, allocatedCredits - usedCredits);
 
   return {
     user,
     notifications,
     preferences,
     completion,
-    plan: subscription?.plan.name ?? "No active plan",
-    aiCreditsRemaining: remainingCredits,
+    plan: credits.monthlyAllocation > 0 ? "AI plan active" : "AI access not active",
+    aiCreditsRemaining: credits.remaining,
     stats: {
       resourcesCreated,
       studentsHelped,
-      aiCredits: remainingCredits,
+      aiCredits: credits.remaining,
       downloads
     },
     daily: {
@@ -138,7 +139,8 @@ export async function getTeacherOperatingHome(input: { userId?: string; institut
       recentAI: recentAI.map((item) => ({ title: item.title, meta: item.updatedAt.toLocaleString(), href: "/teacher/workspace/saved-ai" })),
       recentResources: recentResources.map((item) => ({ title: item.title, meta: item.type.replaceAll("_", " "), href: "/teacher/workspace/resources" })),
       activity: recentActivity.map((item) => ({ title: item.title, meta: item.body, href: item.link }))
-    }
+    },
+    savedDrafts: savedDrafts.map((item) => ({ title: item.title, meta: item.type.replaceAll("_", " "), href: "/teacher/workspace/resources" }))
   };
 }
 

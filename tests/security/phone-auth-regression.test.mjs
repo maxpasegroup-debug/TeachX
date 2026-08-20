@@ -40,7 +40,7 @@ test("teacher PIN provider enforces verified teacher accounts and lockouts", () 
 test("legacy teacher signup cannot bypass mobile verification", () => {
   const actions = read("features/auth/actions.ts");
   assert.match(actions, /Teacher accounts must be created with mobile verification/);
-  assert.match(actions, /purpose: "TEACHER_SIGNUP"/);
+  assert.match(actions, /requestPhoneOtp\(formData, "TEACHER_SIGNUP"\)/);
   assert.match(actions, /phoneVerifiedAt: new Date\(\)/);
   assert.match(actions, /category: "POLICY_ACKNOWLEDGEMENT"/);
 });
@@ -49,7 +49,7 @@ test("PIN resets revoke current account session versions", () => {
   const actions = read("features/auth/actions.ts");
   const proxy = read("proxy.ts");
   assert.match(actions, /authSessionVersion: \{ increment: 1 \}/);
-  assert.match(proxy, /account\.authSessionVersion === token\.authSessionVersion/);
+  assert.match(proxy, /account\.authSessionVersion === authSessionVersion/);
 });
 
 test("production SMS authentication fails closed and requires Twilio", () => {

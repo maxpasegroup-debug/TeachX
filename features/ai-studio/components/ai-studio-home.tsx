@@ -13,7 +13,7 @@ import { GlobalCommandBar } from "@/features/workspace/components/global-command
 
 type AIStudioHomeProps = {
   name?: string | null;
-  credits: { current: number; todayUsage: number; monthlyUsage: number; estimatedRemaining: number };
+  credits: { current: number; allocation: number; todayUsage: number; monthlyUsage: number; estimatedRemaining: number };
   usage: { promptTokens: number; completionTokens: number; totalTokens: number; generationCount: number; estimatedCost: number };
   recent: { id: string; title: string; updatedAt: Date }[];
   favoriteCount: number;
@@ -51,8 +51,8 @@ export function AIStudioHome({ name, credits, usage, recent, favoriteCount }: AI
               </div>
               <WalletCards className="h-6 w-6 text-sky-700" />
             </div>
-            <Progress className="mt-5" value={(credits.estimatedRemaining / credits.current) * 100} />
-            <p className="mt-2 text-sm text-muted-foreground">{credits.estimatedRemaining} estimated credits remaining</p>
+            <Progress className="mt-5" value={credits.allocation > 0 ? (credits.estimatedRemaining / credits.allocation) * 100 : 0} />
+            <p className="mt-2 text-sm text-muted-foreground">{credits.allocation > 0 ? `${credits.estimatedRemaining} estimated credits remaining` : "AI access is not active for this workspace."}</p>
           </Card>
         </div>
       </section>

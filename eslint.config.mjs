@@ -1,10 +1,10 @@
 import { defineConfig, globalIgnores } from "eslint/config";
-import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
-import nextTypescript from "eslint-config-next/typescript";
+import { FlatCompat } from "@eslint/eslintrc";
+
+const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
 
 export default defineConfig([
-  ...nextCoreWebVitals,
-  ...nextTypescript,
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
       "@next/next/no-assign-module-variable": "warn",

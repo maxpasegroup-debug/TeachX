@@ -182,7 +182,12 @@ export async function completeTeacherPhoneSignupAction(formData: FormData): Prom
         name: parsed.data.name,
         email,
         userType: "teacher",
+        // A teacher must always enter TeachX through a real tenant. Creating a
+        // personal institution uses the existing tenancy model and prevents
+        // every teacher-facing query from receiving an undefined tenant.
+        institution: { create: { name: `${parsed.data.name}'s TeachX Workspace` } },
         phoneE164,
+        phoneVerifiedAt: new Date(),
         pinHash,
         pinChangedAt: new Date(),
         profile: { create: { phone: phoneE164, title: "Teacher" } },

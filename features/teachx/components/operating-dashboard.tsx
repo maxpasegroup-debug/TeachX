@@ -22,7 +22,7 @@ type DashboardProps = {
   completion: ProfileCompletion;
   recentItems: ListItem[];
   favorites: ListItem[];
-  savedSearches: ListItem[];
+  savedDrafts: ListItem[];
   notifications: ListItem[];
 };
 
@@ -106,7 +106,7 @@ function ProfileCompletionCard({ completion, href }: { completion: ProfileComple
   );
 }
 
-export function TeacherOperatingDashboard({ name, completion, recentItems, favorites, savedSearches, notifications, plan, aiCreditsRemaining, stats, daily, canAccessInstitution }: DashboardProps & {
+export function TeacherOperatingDashboard({ name, completion, recentItems, favorites, savedDrafts, notifications, plan, aiCreditsRemaining, stats, daily, canAccessInstitution }: DashboardProps & {
   plan: string;
   aiCreditsRemaining: number;
   stats: { resourcesCreated: number; studentsHelped: number; aiCredits: number; downloads: number };
@@ -157,7 +157,7 @@ export function TeacherOperatingDashboard({ name, completion, recentItems, favor
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-2xl font-semibold">Start Here</h2>
-            <p className="mt-1 text-sm text-muted-foreground">The five buttons most teachers need on day one.</p>
+            <p className="mt-1 text-sm text-muted-foreground">The six actions most teachers need on day one.</p>
           </div>
           <Link className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2 text-sm font-semibold hover:bg-muted" href="/teacher/ai-studio">
             All AI tools
@@ -200,8 +200,8 @@ export function TeacherOperatingDashboard({ name, completion, recentItems, favor
       <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <div className="grid gap-6 lg:grid-cols-3">
           <ListPanel title="Recent Files" icon={FileText} items={recentItems} emptyTitle="No recent files yet" />
-          <ListPanel title="Saved Drafts" icon={Pin} items={savedSearches} emptyTitle="No saved drafts yet" />
-          <ListPanel title="Recently Opened" icon={History} items={favorites} emptyTitle="No recent activity yet" />
+          <ListPanel title="Saved Drafts" icon={Pin} items={savedDrafts} emptyTitle="No saved drafts yet" />
+          <ListPanel title="Recently Opened" icon={History} items={recentItems} emptyTitle="No recently opened items" />
         </div>
         <GlobalCommandBar />
       </section>

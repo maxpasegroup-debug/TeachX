@@ -12,24 +12,24 @@ function record(value: unknown) {
 }
 
 export async function getTeacherBusinessData(userId?: string, institutionId?: string | null) {
-  if (!userId) return null;
+  if (!userId || !institutionId) return null;
   const [user, portfolio, resources, sales, purchases, downloads, wallet, credits, plans, subscription, invoices, profileViews, followers, activities, courses, subjects] = await Promise.all([
-    prisma.user.findUnique({ where: { id: userId }, include: { profile: true, teacherProfile: true } }),
+    prisma.user.findFirst({ where: { id: userId, institutionId }, include: { profile: true, teacherProfile: true } }),
     prisma.userPreference.findMany({ where: { userId, key: { startsWith: "teacher-portfolio:" } }, orderBy: { updatedAt: "desc" } }),
-    prisma.contentItem.findMany({ where: { createdById: userId }, include: { course: true, subject: true, analytics: true, downloads: true, versions: { orderBy: { version: "desc" } }, reviews: { orderBy: { createdAt: "desc" } } }, orderBy: { updatedAt: "desc" }, take: 150 }),
-    prisma.commerceOrderItem.findMany({ where: { sellerId: userId }, include: { order: { include: { buyer: true, invoices: true } }, resource: true }, orderBy: { createdAt: "desc" }, take: 150 }),
-    prisma.commerceOrder.findMany({ where: { buyerId: userId }, include: { items: { include: { resource: true, plan: true } }, invoices: true }, orderBy: { createdAt: "desc" }, take: 150 }),
-    prisma.downloadHistory.findMany({ where: { userId }, include: { item: { include: { course: true, subject: true } } }, orderBy: { downloadedAt: "desc" }, take: 150 }),
+    prisma.contentItem.findMany({ where: { createdById: userId, institutionId }, include: { course: true, subject: true, analytics: true, downloads: true, versions: { orderBy: { version: "desc" } }, reviews: { orderBy: { createdAt: "desc" } } }, orderBy: { updatedAt: "desc" }, take: 150 }),
+    prisma.commerceOrderItem.findMany({ where: { sellerId: userId, order: { institutionId } }, include: { order: { include: { buyer: true, invoices: true } }, resource: true }, orderBy: { createdAt: "desc" }, take: 150 }),
+    prisma.commerceOrder.findMany({ where: { buyerId: userId, institutionId }, include: { items: { include: { resource: true, plan: true } }, invoices: true }, orderBy: { createdAt: "desc" }, take: 150 }),
+    prisma.downloadHistory.findMany({ where: { userId, item: { institutionId } }, include: { item: { include: { course: true, subject: true } } }, orderBy: { downloadedAt: "desc" }, take: 150 }),
     getWalletSummary(userId, institutionId),
     getAICreditSummary({ userId, institutionId, audience: "TEACHER" }),
     ensureDefaultSubscriptionPlans(institutionId),
     getActiveSubscription(userId, institutionId, "TEACHER"),
-    prisma.commerceInvoice.findMany({ where: { buyerId: userId }, orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.commerceInvoice.findMany({ where: { buyerId: userId, institutionId }, orderBy: { createdAt: "desc" }, take: 100 }),
     prisma.teacherProfile.findUnique({ where: { userId } }).then((profile) => profile ? prisma.recentItem.count({ where: { type: "marketplace-teacher", entityId: profile.id } }) : 0),
     prisma.teacherProfile.findUnique({ where: { userId } }).then((profile) => profile ? prisma.favoriteItem.count({ where: { type: "marketplace-teacher", entityId: profile.id } }) : 0),
-    prisma.activity.findMany({ where: { actorId: userId }, orderBy: { createdAt: "desc" }, take: 100 }),
-    prisma.course.findMany({ where: { institutionId: institutionId ?? undefined }, orderBy: { name: "asc" } }),
-    prisma.subject.findMany({ where: { course: { institutionId: institutionId ?? undefined } }, include: { course: true }, orderBy: { name: "asc" } })
+    prisma.activity.findMany({ where: { actorId: userId, institutionId }, orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.course.findMany({ where: { institutionId }, orderBy: { name: "asc" } }),
+    prisma.subject.findMany({ where: { course: { institutionId } }, include: { course: true }, orderBy: { name: "asc" } })
   ]);
   if (!user) return null;
   const availability = record(user.teacherProfile?.availability);

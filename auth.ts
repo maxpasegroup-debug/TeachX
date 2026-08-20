@@ -87,7 +87,7 @@ export const authConfig = {
         if (limited) return null;
 
         const user = await prisma.user.findUnique({ where: { phoneE164 }, include: userRelations });
-        if (!user?.pinHash || user.status !== "ACTIVE" || user.userType !== "teacher") return null;
+        if (!user?.pinHash || !user.phoneVerifiedAt || user.status !== "ACTIVE" || user.userType !== "teacher") return null;
         if (user.pinLockedUntil && user.pinLockedUntil > new Date()) return null;
 
         const validPin = await bcrypt.compare(parsed.data.pin, user.pinHash);
@@ -103,11 +103,19 @@ export const authConfig = {
           return null;
         }
 
-        await prisma.user.update({
+        const authenticatedUser = await prisma.user.update({
           where: { id: user.id },
-          data: { lastLoginAt: new Date(), pinFailedAttempts: 0, pinLockedUntil: null }
+          // Backfill teachers created before personal workspaces were
+          // introduced. This occurs only after their PIN has been verified.
+          data: {
+            lastLoginAt: new Date(),
+            pinFailedAttempts: 0,
+            pinLockedUntil: null,
+            ...(user.institutionId ? {} : { institution: { create: { name: `${user.name}'s TeachX Workspace` } } })
+          },
+          include: userRelations
         });
-        return sessionUser(user, "phone-pin");
+        return sessionUser(authenticatedUser, "phone-pin");
       }
     }),
     Credentials({
