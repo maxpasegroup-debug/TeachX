@@ -76,12 +76,18 @@ export default async function proxy(request: NextRequest) {
   const userId = typeof token?.id === "string" ? token.id : null;
   const authSessionVersion = typeof token?.authSessionVersion === "number" ? token.authSessionVersion : null;
   let isAuthenticated = Boolean(userId);
+  let roles: RoleKey[] = [];
   if (userId && authSessionVersion !== null) {
     const account = await prisma.user.findUnique({
       where: { id: userId },
-      select: { authSessionVersion: true, status: true }
+      select: {
+        authSessionVersion: true,
+        status: true,
+        roles: { select: { role: { select: { key: true } } } }
+      }
     }).catch(() => null);
     isAuthenticated = account?.status === "ACTIVE" && account.authSessionVersion === authSessionVersion;
+    roles = account?.roles.map(({ role }) => role.key as RoleKey) ?? [];
   }
 
   if (isApi && !isAuthenticated) return unauthorizedApi(requestId);
@@ -97,9 +103,6 @@ export default async function proxy(request: NextRequest) {
   }
 
   const requiredPermission = getRoutePermission(nextUrl.pathname);
-  const roles = Array.isArray(token?.roles)
-    ? token.roles.filter((role): role is RoleKey => typeof role === "string")
-    : [];
 
   if (!isApi && requiredPermission && !hasPermission(roles, requiredPermission)) {
     return withRequestId(NextResponse.redirect(new URL("/access-denied", nextUrl)), requestId);
