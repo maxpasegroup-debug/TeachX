@@ -113,129 +113,27 @@ export function TeacherOperatingDashboard({ name, completion, recentItems, favor
   daily: { todaysClasses: ListItem[]; schedule: ListItem[]; pendingTasks: ListItem[]; recentAI: ListItem[]; recentResources: ListItem[]; activity: ListItem[] };
   canAccessInstitution: boolean;
 }) {
-  const simpleActions = [
-    { title: "Create Lesson", description: "Use AI to prepare a classroom-ready lesson plan.", href: "/teacher/ai-studio/create/lesson-generator", icon: Sparkles },
-    { title: "Create Worksheet", description: "Make a printable practice sheet with answers.", href: "/teacher/ai-studio/create/worksheet-generator", icon: FileText },
-    { title: "Create Quiz", description: "Generate quick questions for revision or assessment.", href: "/teacher/ai-studio/create/quiz-generator", icon: CheckCircle2 },
-    { title: "My Classes", description: "Open attendance, homework, students, and materials.", href: "/teacher/workspace/classrooms", icon: UsersRound },
-    { title: "My Downloads", description: "Find resources you saved, bought, or downloaded.", href: "/teacher/workspace/resources", icon: Download },
-    { title: "Get Help", description: "Ask the launch team for support or report a problem.", href: "/teacher/support", icon: LifeBuoy }
+  const today = new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
+  const quickCreate = [
+    { title: "Lesson", href: "/teacher/ai-studio/create/lesson-generator", icon: BookOpen },
+    { title: "Worksheet", href: "/teacher/ai-studio/create/worksheet-generator", icon: FileText },
+    { title: "Quiz", href: "/teacher/ai-studio/create/quiz-generator", icon: CheckCircle2 },
+    { title: "Question Paper", href: "/teacher/ai-studio/create/question-paper-builder", icon: NotebookPen }
   ];
-
-  const templateActions = [
-    { title: "40 minute lesson", href: "/teacher/ai-studio/create/lesson-generator", meta: "Objective, activities, homework" },
-    { title: "10 question worksheet", href: "/teacher/ai-studio/create/worksheet-generator", meta: "Mixed questions with answer key" },
-    { title: "Parent message", href: "/teacher/ai-studio/create/parent-communication", meta: "Respectful WhatsApp or email draft" },
-    { title: "Homework set", href: "/teacher/ai-studio/create/homework-generator", meta: "Clear tasks and submission notes" }
-  ];
+  const actionItems = [...daily.pendingTasks, ...daily.todaysClasses, ...notifications].slice(0, 5);
+  const unreadNotifications = notifications.slice(0, 4);
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[2rem] border border-border bg-gradient-to-br from-sky-50 via-white to-blue-50 p-5 shadow-soft sm:p-8">
-        <Badge>Teacher Simple Mode</Badge>
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px] lg:items-end">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">Good morning, {firstName(name)}</h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">Start with one useful teaching task. Create, save, and share material without opening the advanced tools first.</p>
-          </div>
-          <Card className="grid gap-4 p-5 shadow-sm sm:grid-cols-2 lg:grid-cols-1">
-            <div>
-              <p className="text-sm text-muted-foreground">Current Plan</p>
-              <p className="mt-1 text-lg font-semibold">{plan}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">AI Credits Remaining</p>
-              <p className="mt-1 text-lg font-semibold">{aiCreditsRemaining}</p>
-            </div>
-          </Card>
-        </div>
+    <div className="space-y-7">
+      <section className="rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-5 shadow-soft sm:p-7">
+        <div className="flex flex-wrap items-start justify-between gap-5"><div><Badge>Teacher Home</Badge><p className="mt-4 text-sm font-medium text-sky-800">{today}</p><h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">Good morning, {firstName(name)}</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">Your teaching day, priorities, and creation tools are ready in one place.</p></div><Card className="min-w-52 p-4 shadow-sm"><p className="text-xs text-muted-foreground">AI workspace</p><p className="mt-1 font-semibold">{plan}</p><p className="mt-3 text-2xl font-semibold">{aiCreditsRemaining}</p><p className="text-xs text-muted-foreground">credits available</p></Card></div>
       </section>
-
-      <ActivationChecklist name={name} profileCompletionPercentage={completion.percentage} role="teacher" />
-
-      <section>
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 className="text-2xl font-semibold">Start Here</h2>
-            <p className="mt-1 text-sm text-muted-foreground">The six actions most teachers need on day one.</p>
-          </div>
-          <Link className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2 text-sm font-semibold hover:bg-muted" href="/teacher/ai-studio">
-            All AI tools
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-          {simpleActions.map((action) => <QuickActionCard {...action} key={action.title} />)}
-        </div>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <Card className="p-5 shadow-soft">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold">Ready Templates</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Fast paths for common classroom work.</p>
-            </div>
-            <Sparkles className="h-5 w-5 text-sky-700" />
-          </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {templateActions.map((item) => (
-              <Link className="rounded-xl border border-border bg-background p-4 hover:border-sky-200 hover:bg-sky-50" href={item.href} key={item.title}>
-                <p className="font-semibold">{item.title}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{item.meta}</p>
-              </Link>
-            ))}
-          </div>
-        </Card>
-        <ProfileCompletionCard completion={completion} href="/profile" />
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Resources Created" value={stats.resourcesCreated.toString()} detail="Lessons, notes, files, and reusable assets" icon={<FolderOpen className="h-5 w-5" />} />
-        <StatCard label="Teaching Reach" value={stats.studentsHelped.toString()} detail="Classroom and booking relationships supported" icon={<UsersRound className="h-5 w-5" />} />
-        <StatCard label="AI Credits" value={stats.aiCredits.toString()} detail="Available for AI Workspace creation" icon={<Sparkles className="h-5 w-5" />} />
-        <StatCard label="Downloads" value={stats.downloads.toString()} detail="Resource download activity" icon={<Download className="h-5 w-5" />} />
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
-        <div className="grid gap-6 lg:grid-cols-3">
-          <ListPanel title="Recent Files" icon={FileText} items={recentItems} emptyTitle="No recent files yet" />
-          <ListPanel title="Saved Drafts" icon={Pin} items={savedDrafts} emptyTitle="No saved drafts yet" />
-          <ListPanel title="Recently Opened" icon={History} items={recentItems} emptyTitle="No recently opened items" />
-        </div>
-        <GlobalCommandBar />
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-2xl font-semibold">Advanced Tools</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {[
-            ["AI Studio", "/teacher/ai-studio"],
-            ["Workspace", "/teacher/workspace/classrooms"],
-            ["Marketplace", "/teacher/business/marketplace"],
-            ["Community", "/teacher/community/home"],
-            ["Institution", canAccessInstitution ? "/institution/dashboard" : "/teacher/workspace/classrooms"],
-            ["Business Dashboard", "/teacher/business/earnings"],
-            ["Recent Files", "/teacher/workspace/resources"],
-            ["Calendar", "/teacher/workspace/planner"],
-            ["Planner", "/teacher/workspace/planner"],
-            ["Notifications", "/teacher/workspace/notifications"],
-            ["Get Help", "/teacher/support"]
-          ].map(([label, href]) => <Link className="rounded-2xl border border-border bg-surface p-4 text-sm font-semibold shadow-sm hover:bg-muted" href={href} key={label}>{label}</Link>)}
-        </div>
-      </section>
-
-      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        <ListPanel title="Today's Schedule" icon={CalendarDays} items={daily.schedule} emptyTitle="No schedule today" />
-        <ListPanel title="Today's Classes" icon={UsersRound} items={daily.todaysClasses} emptyTitle="No classes today" />
-        <ListPanel title="Pending Tasks" icon={Pin} items={daily.pendingTasks} emptyTitle="You're all caught up" />
-        <ListPanel title="Recent AI Activities" icon={Sparkles} items={daily.recentAI} emptyTitle="No recent AI activity" />
-        <ListPanel title="Recent Resources" icon={FolderOpen} items={daily.recentResources} emptyTitle="No recent resources" />
-        <ListPanel title="Notifications" icon={Bell} items={notifications} emptyTitle="No notifications" />
-        <ListPanel title="Continue Working" icon={ArrowRight} items={recentItems} emptyTitle="Nothing in progress" />
-        <ListPanel title="Recently Opened" icon={History} items={recentItems} emptyTitle="No recently opened items" />
-        <ListPanel title="Recent Activity" icon={Lightbulb} items={daily.activity} emptyTitle="No recent workspace activity" />
-      </section>
+      <section className="grid gap-5 lg:grid-cols-[1.35fr_.65fr]"><ListPanel title="Today's actions" icon={CheckCircle2} items={actionItems} emptyTitle="You are all caught up" /><Card className="p-5 shadow-soft"><div className="flex items-center justify-between"><h2 className="text-xl font-semibold">Quick create</h2><Link className="text-sm font-semibold text-sky-700 hover:underline" href="/teacher/ai-studio">AI Studio</Link></div><div className="mt-4 grid grid-cols-2 gap-3">{quickCreate.map(({title,href,icon:Icon})=><Link key={title} href={href} className="rounded-xl border bg-background p-3 text-sm font-semibold hover:border-sky-200 hover:bg-sky-50"><Icon className="mb-2 h-5 w-5 text-sky-700"/>{title}</Link>)}</div></Card></section>
+      <section className="grid gap-5 lg:grid-cols-[1.35fr_.65fr]"><Card className="p-5 shadow-soft"><div className="flex items-center justify-between"><div><h2 className="text-xl font-semibold">AI daily assistant</h2><p className="mt-1 text-sm text-muted-foreground">Choose the next useful teaching task.</p></div><Sparkles className="h-5 w-5 text-sky-700"/></div><div className="mt-4 grid gap-2 sm:grid-cols-2">{[["Prepare today’s lesson","/teacher/ai-studio/create/lesson-generator"],["Create a class activity","/teacher/ai-studio/create/classroom-activity-generator"],["Generate homework","/teacher/ai-studio/create/homework-generator"],["Write a parent message","/teacher/ai-studio/create/parent-communication"]].map(([label,href])=><Link key={label} href={href} className="rounded-xl border px-4 py-3 text-sm font-medium hover:bg-sky-50">{label}<ArrowRight className="float-right h-4 w-4"/></Link>)}</div></Card>{completion.percentage < 100 ? <ProfileCompletionCard completion={completion} href="/teacher/business/profile" /> : <ListPanel title="Important notifications" icon={Bell} items={unreadNotifications} emptyTitle="No important notifications" />}</section>
+      <section><div className="mb-4 flex items-center justify-between"><div><h2 className="text-2xl font-semibold">Teaching snapshot</h2><p className="mt-1 text-sm text-muted-foreground">What is active in your teaching workspace.</p></div><Link href="/teacher/workspace/classrooms" className="text-sm font-semibold text-sky-700 hover:underline">Open Teaching</Link></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Active classes" value={daily.schedule.length.toString()} detail="Scheduled teaching sessions" icon={<CalendarDays className="h-5 w-5"/>}/><StatCard label="Students" value={stats.studentsHelped.toString()} detail="Across your class relationships" icon={<UsersRound className="h-5 w-5"/>}/><StatCard label="Resources" value={stats.resourcesCreated.toString()} detail="Created in your workspace" icon={<FolderOpen className="h-5 w-5"/>}/><StatCard label="Pending work" value={daily.pendingTasks.length.toString()} detail="Attendance and review actions" icon={<Pin className="h-5 w-5"/>}/></div></section>
+      <section className="grid gap-5 xl:grid-cols-3"><ListPanel title="Recent AI creations" icon={Sparkles} items={daily.recentAI} emptyTitle="No AI creations yet" /><ListPanel title="Recent resources" icon={FolderOpen} items={daily.recentResources} emptyTitle="No resources yet" /><ListPanel title="Recently opened" icon={History} items={recentItems} emptyTitle="No recently opened items" /></section>
+      <section className="grid gap-5 lg:grid-cols-[1.35fr_.65fr]"><div className="grid gap-5 sm:grid-cols-2"><ListPanel title="Saved drafts" icon={Pin} items={savedDrafts} emptyTitle="No saved drafts yet" /><ListPanel title="Saved resources" icon={Bookmark} items={favorites} emptyTitle="No saved resources yet" /></div><Card className="p-5 shadow-soft"><p className="text-sm text-muted-foreground">Teaching business</p><h2 className="mt-2 text-xl font-semibold">Keep your professional work growing.</h2><p className="mt-3 text-sm text-muted-foreground">{stats.downloads} resource downloads are recorded in this workspace.</p><Link href="/teacher/business/profile" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-sky-700 hover:underline">Open Business <ArrowRight className="h-4 w-4"/></Link></Card></section>
+      <section className="grid gap-5 lg:grid-cols-[1fr_360px]"><ListPanel title="Notification preview" icon={Bell} items={unreadNotifications} emptyTitle="No notifications" /><div className="space-y-4"><GlobalCommandBar /><Link className="block rounded-2xl border bg-surface p-4 text-sm font-semibold hover:bg-muted" href={canAccessInstitution ? "/institution/dashboard" : "/teacher/support"}>{canAccessInstitution ? "Open institution workspace" : "Need a hand? Open help"}</Link></div></section>
     </div>
   );
 }
