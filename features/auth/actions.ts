@@ -48,14 +48,6 @@ function credentialsFormData(email: string, password: string, redirectTo: string
   return data;
 }
 
-function teacherPinFormData(phone: string, pin: string, redirectTo: string) {
-  const data = new FormData();
-  data.set("phone", phone);
-  data.set("pin", pin);
-  data.set("redirectTo", redirectTo);
-  return data;
-}
-
 export async function loginAction(previousState: string | undefined, formData: FormData) {
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -169,17 +161,19 @@ const teacherPhoneSignupSchema = z.object({
   if (data.pin !== data.confirmPin) context.addIssue({ code: z.ZodIssueCode.custom, message: "PINs do not match.", path: ["confirmPin"] });
 });
 
-export async function completeTeacherPhoneSignupAction(_: string | undefined, formData: FormData) {
+export type TeacherSignupResult = { ok: boolean; message?: string };
+
+export async function completeTeacherPhoneSignupAction(formData: FormData): Promise<TeacherSignupResult> {
   const parsed = teacherPhoneSignupSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return parsed.error.issues[0]?.message ?? "Please check your account details.";
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Please check your account details." };
   const phoneE164 = normalizePhoneNumber(parsed.data.phone, parsed.data.country);
-  if (!phoneE164) return "Enter a valid mobile number.";
+  if (!phoneE164) return { ok: false, message: "Enter a valid mobile number." };
 
   const role = await prisma.role.findUnique({ where: { key: "ACADEMIC_FACULTY" } });
-  if (!role) return "Teacher accounts are not configured yet. Please contact support.";
+  if (!role) return { ok: false, message: "Teacher accounts are not configured yet. Please contact support." };
   const email = parsed.data.email?.trim().toLowerCase() || `mobile-${phoneE164.slice(1)}-${crypto.randomBytes(5).toString("hex")}@accounts.teachx.invalid`;
   const existing = await prisma.user.findFirst({ where: { OR: [{ phoneE164 }, { email }] }, select: { phoneE164: true } });
-  if (existing) return existing.phoneE164 === phoneE164 ? "An account already exists for this mobile number. Please log in." : "This email is already connected to another account.";
+  if (existing) return { ok: false, message: existing.phoneE164 === phoneE164 ? "An account already exists for this mobile number. Please log in." : "This email is already connected to another account." };
 
   const pinHash = await bcrypt.hash(parsed.data.pin, 12);
   await prisma.$transaction(async (tx) => {
@@ -205,7 +199,10 @@ export async function completeTeacherPhoneSignupAction(_: string | undefined, fo
     await tx.auditLog.create({ data: { actorId: user.id, action: "CREATE", entity: "TeacherAccount", entityId: user.id, message: "Teacher created a mobile and PIN account." } });
   }, { isolationLevel: "Serializable" });
 
-  await signIn("teacher-pin", teacherPinFormData(phoneE164, parsed.data.pin, await getAuthRedirect("/entry?mode=signup&next=%2Fteacher")));
+  // The browser performs the sign-in after this action completes. Keeping
+  // account creation and credential sign-in separate avoids an Auth.js server
+  // action callback mismatch on Railway's multi-domain proxy.
+  return { ok: true };
 }
 
 const completePinResetSchema = z.object({

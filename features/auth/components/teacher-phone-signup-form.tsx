@@ -1,7 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
 import { CheckCircle2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,10 +15,47 @@ import { PhoneNumberFields } from "@/features/auth/components/phone-number-field
 
 /** Teacher signup uses a mobile number and PIN. OTP is reserved for PIN recovery. */
 export function TeacherPhoneSignupForm() {
-  const [error, action, pending] = useActionState(completeTeacherPhoneSignupAction, undefined);
+  const router = useRouter();
+  const [error, setError] = useState<string>();
+  const [pending, startTransition] = useTransition();
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(undefined);
+    const form = new FormData(event.currentTarget);
+    const country = String(form.get("country") || "IN") as CountryCode;
+    const phone = parsePhoneNumberFromString(String(form.get("phone") || ""), country);
+    if (!phone?.isValid()) {
+      setError("Enter a valid mobile number.");
+      return;
+    }
+
+    startTransition(async () => {
+      const created = await completeTeacherPhoneSignupAction(form);
+      if (!created.ok) {
+        setError(created.message ?? "Your account could not be created.");
+        return;
+      }
+
+      const destination = "/entry?mode=signup&next=%2Fteacher";
+      const result = await signIn("teacher-pin", {
+        phone: phone.number,
+        pin: String(form.get("pin") || ""),
+        redirect: false,
+        callbackUrl: destination
+      });
+      if (!result?.ok) {
+        setError("Your account was created, but automatic sign-in failed. Please log in with your mobile number and PIN.");
+        return;
+      }
+
+      router.replace(destination);
+      router.refresh();
+    });
+  }
 
   return (
-    <form action={action} className="space-y-5">
+    <form className="space-y-5" onSubmit={submit}>
       <div className="space-y-2"><Label htmlFor="name">Full name</Label><Input autoComplete="name" id="name" name="name" placeholder="Anika Rao" required /></div>
       <div className="space-y-2"><Label htmlFor="email">Email <span className="font-normal text-muted-foreground">(optional)</span></Label><Input autoComplete="email" id="email" name="email" placeholder="teacher@example.com" type="email" /></div>
       <PhoneNumberFields disabled={pending} />

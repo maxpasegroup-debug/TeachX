@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
 import { LogIn } from "lucide-react";
@@ -13,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { PhoneNumberFields } from "@/features/auth/components/phone-number-fields";
 
 export function TeacherPinLoginForm({ callbackUrl }: { callbackUrl?: string }) {
-  const router = useRouter();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
   const nextPath = callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : "/teacher";
@@ -36,8 +34,7 @@ export function TeacherPinLoginForm({ callbackUrl }: { callbackUrl?: string }) {
       setError("Mobile number or PIN is incorrect. A temporarily locked account can be recovered by resetting the PIN.");
       return;
     }
-    router.replace(destination);
-    router.refresh();
+    window.location.assign(destination);
   }
 
   return (
