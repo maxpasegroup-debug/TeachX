@@ -63,7 +63,7 @@ export default async function proxy(request: NextRequest) {
     token = await getToken({
       req: request,
       secret: process.env.AUTH_SECRET,
-      cookieName: process.env.NODE_ENV === "production" ? "__Secure-authjs.session-token" : "authjs.session-token"
+      cookieName: "authjs.session-token"
     });
   } catch {
     return isApi ? unauthorizedApi(requestId) : withRequestId(NextResponse.redirect(new URL("/login", nextUrl)), requestId);

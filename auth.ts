@@ -57,7 +57,10 @@ export const authConfig = {
   },
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === "production" ? "__Secure-authjs.session-token" : "authjs.session-token",
+      // Railway terminates HTTPS before the Next.js container. A stable name
+      // prevents Auth.js and the request proxy from selecting different cookie
+      // names when the container itself sees an internal HTTP URL.
+      name: "authjs.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
