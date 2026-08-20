@@ -158,6 +158,7 @@ export async function verifyPinResetOtpAction(formData: FormData) {
 const teacherPhoneSignupSchema = z.object({
   name: z.string().trim().min(2, "Enter your full name.").max(100),
   email: z.union([z.literal(""), z.string().email("Enter a valid email or leave it blank.")]).optional(),
+  country: z.string().length(2).default("IN"),
   phone: z.string().min(8),
   pin: z.string(),
   confirmPin: z.string(),
@@ -171,7 +172,7 @@ const teacherPhoneSignupSchema = z.object({
 export async function completeTeacherPhoneSignupAction(_: string | undefined, formData: FormData) {
   const parsed = teacherPhoneSignupSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return parsed.error.issues[0]?.message ?? "Please check your account details.";
-  const phoneE164 = normalizePhoneNumber(parsed.data.phone);
+  const phoneE164 = normalizePhoneNumber(parsed.data.phone, parsed.data.country);
   if (!phoneE164) return "Enter a valid mobile number.";
 
   const role = await prisma.role.findUnique({ where: { key: "ACADEMIC_FACULTY" } });
