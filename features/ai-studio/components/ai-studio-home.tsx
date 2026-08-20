@@ -13,15 +13,22 @@ import { GlobalCommandBar } from "@/features/workspace/components/global-command
 
 type AIStudioHomeProps = {
   name?: string | null;
-  credits: { current: number; allocation: number; todayUsage: number; monthlyUsage: number; estimatedRemaining: number };
+  credits: { current: number; used: number; allocation: number; todayUsage: number; monthlyUsage: number; estimatedRemaining: number };
   usage: { promptTokens: number; completionTokens: number; totalTokens: number; generationCount: number; estimatedCost: number };
   recent: { id: string; title: string; updatedAt: Date }[];
   favoriteCount: number;
 };
 
+const studioGroups: Record<string, string[]> = {
+  Teach: ["lesson-generator", "classroom-activity-generator", "homework-generator"],
+  Assess: ["quiz-generator", "question-paper-builder", "assessment-builder", "rubric-generator", "report-card-comments"],
+  Create: ["worksheet-generator", "presentation-generator", "certificate-generator"],
+  Communicate: ["parent-communication"]
+};
+
 function groupedTools() {
-  return aiStudioTools.reduce<Record<string, AIStudioTool[]>>((groups, tool) => {
-    groups[tool.category] = [...(groups[tool.category] ?? []), tool];
+  return Object.entries(studioGroups).reduce<Record<string, AIStudioTool[]>>((groups, [label, slugs]) => {
+    groups[label] = slugs.flatMap((slug) => aiStudioTools.filter((tool) => tool.slug === slug));
     return groups;
   }, {});
 }
@@ -46,13 +53,17 @@ export function AIStudioHome({ name, credits, usage, recent, favoriteCount }: AI
           <Card className="p-5 shadow-sm">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Current Credits</p>
+                <p className="text-sm text-muted-foreground">Available AI credits</p>
                 <p className="mt-1 text-2xl font-semibold">{credits.current}</p>
               </div>
               <WalletCards className="h-6 w-6 text-sky-700" />
             </div>
             <Progress className="mt-5" value={credits.allocation > 0 ? (credits.estimatedRemaining / credits.allocation) * 100 : 0} />
-            <p className="mt-2 text-sm text-muted-foreground">{credits.allocation > 0 ? `${credits.estimatedRemaining} estimated credits remaining` : "AI access is not active for this workspace."}</p>
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+              <span>Used: {credits.used}</span>
+              <span>Plan allocation: {credits.allocation}</span>
+            </div>
+            {credits.allocation > 0 ? <p className="mt-2 text-sm text-muted-foreground">{credits.estimatedRemaining} credits remaining in your current entitlement.</p> : <Link className="mt-3 inline-flex text-sm font-semibold text-sky-700 underline-offset-4 hover:underline" href="/teacher/business/subscription">AI access is not active. Review your subscription.</Link>}
           </Card>
         </div>
       </section>

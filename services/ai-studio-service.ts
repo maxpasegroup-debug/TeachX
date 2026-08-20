@@ -24,7 +24,7 @@ export async function getAIStudioHome(userId?: string, institutionId?: string | 
       preferences: null,
       conversations: [],
       templates: [],
-      credits: { current: 0, allocation: 0, todayUsage: 0, monthlyUsage: 0, estimatedRemaining: 0 },
+      credits: { current: 0, used: 0, allocation: 0, todayUsage: 0, monthlyUsage: 0, estimatedRemaining: 0 },
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0, generationCount: 0, estimatedCost: 0 }
     };
   }
@@ -56,6 +56,7 @@ export async function getAIStudioHome(userId?: string, institutionId?: string | 
     templates,
     credits: {
       current: credits.balance,
+      used: credits.used,
       allocation: credits.monthlyAllocation,
       todayUsage: totalTokens,
       monthlyUsage: totalTokens,

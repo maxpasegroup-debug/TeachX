@@ -68,6 +68,37 @@ export async function generateAIStudioContent(_: AIStudioGenerationState, formDa
   return { text: result.text, conversationId: result.conversationId };
 }
 
+export async function generateTeacherAIChat(_: AIStudioGenerationState, formData: FormData): Promise<AIStudioGenerationState> {
+  const session = await auth();
+  if (!session?.user?.institutionId) return { error: "Complete workspace setup before using AI Studio." };
+
+  const question = value(formData, "question");
+  if (!question) return { error: "Write a question or teaching task first." };
+  if (question.length > 6000) return { error: "Keep your request under 6,000 characters." };
+
+  try {
+    const result = await runAI({
+      institutionId: session.user.institutionId,
+      userId: session.user.id,
+      scope: "TEACHER",
+      feature: "teacher-ai-chat",
+      prompt: [
+        "You are TeachX AI, a practical co-worker for a teacher.",
+        "Give a clear, age-appropriate, classroom-ready response. Do not invent student, institution, or personal data.",
+        "Teacher request:",
+        question
+      ].join("\n\n"),
+      context: { entryPoint: "teacher-ai-chat", question }
+    });
+    revalidatePath("/teacher/ai-studio");
+    revalidatePath("/teacher/ai-studio/chat");
+    revalidatePath("/teacher/ai-studio/history");
+    return { text: result.text, conversationId: result.conversationId };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "We could not answer that request. Please try again." };
+  }
+}
+
 export async function improveAIStudioContentAction(formData: FormData): Promise<AIStudioGenerationState> {
   const session = await auth();
   if (!session?.user?.institutionId) return { error: "Complete workspace setup before using AI Studio." };
