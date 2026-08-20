@@ -1,4 +1,4 @@
-const CACHE_NAME = "teachx-offline-v3";
+const CACHE_NAME = "teachx-offline-v4";
 const OFFLINE_URL = "/offline";
 const APP_SHELL = [OFFLINE_URL, "/manifest.webmanifest", "/icons/icon-192.png"];
 const PUBLIC_PAGES = new Set(["/pricing", "/trust", "/teachers", "/students", "/privacy", "/terms", "/security", "/cookies", "/refund-policy", "/contact"]);
@@ -10,7 +10,11 @@ async function trim(cache) {
 }
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => Promise.all(APP_SHELL.map((url) => cache.add(url).catch(() => undefined)))));
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => Promise.all(APP_SHELL.map((url) => cache.add(url).catch(() => undefined))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", (event) => {
