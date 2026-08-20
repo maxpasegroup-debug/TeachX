@@ -11,6 +11,11 @@ import type { RoleKey } from "@/lib/constants/roles";
 export function MobileNavigation({ institutionName, roles }: { institutionName: string; roles: RoleKey[] }) {
   const [open, setOpen] = useState(false);
   const navigation = getNavigationForRoles(roles);
+  const groupedItems = navigation.items.reduce<Record<string, typeof navigation.items>>((groups, item) => {
+    const group = item.group ?? "Workspace";
+    groups[group] = [...(groups[group] ?? []), item];
+    return groups;
+  }, {});
 
   return (
     <div className="md:hidden">
@@ -28,8 +33,10 @@ export function MobileNavigation({ institutionName, roles }: { institutionName: 
               <X className="h-5 w-5" />
             </Button>
           </div>
-          <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
-            {navigation.items.map((item) => {
+          <nav aria-label="Workspace navigation" className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
+            {Object.entries(groupedItems).map(([group, items]) => <section key={group}>
+              {navigation.workspace === "teacher" ? <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{group}</p> : null}
+              {items.map((item) => {
               const Icon = item.icon;
 
               return (
@@ -38,7 +45,8 @@ export function MobileNavigation({ institutionName, roles }: { institutionName: 
                   {item.label}
                 </Link>
               );
-            })}
+              })}
+            </section>)}
           </nav>
           <p className="shrink-0 px-8 py-4 text-sm text-muted-foreground">{institutionName}</p>
         </div>

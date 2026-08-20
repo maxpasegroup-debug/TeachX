@@ -34,6 +34,7 @@ export type NavigationItem = {
   label: string;
   href: string;
   icon: LucideIcon;
+  group?: string;
 };
 
 export type NavigationWorkspace = "teacher" | "student" | "parent" | "director" | "campus" | "admin";
@@ -42,37 +43,16 @@ export type NavigationWorkspace = "teacher" | "student" | "parent" | "director" 
 // frontends reuse the same auth, RBAC, and shell primitives.
 export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
   teacher: [
-    { label: "Home", href: "/teacher", icon: LayoutDashboard },
-    { label: "My Classroom", href: "/teacher/workspace/classrooms", icon: UsersRound },
-    { label: "Lessons", href: "/teacher/workspace/lessons", icon: BookOpen },
-    { label: "Resources", href: "/teacher/workspace/resources", icon: LibraryBig },
-    { label: "Planner", href: "/teacher/workspace/planner", icon: CalendarDays },
-    { label: "Notes", href: "/teacher/workspace/notes", icon: NotebookPen },
-    { label: "Saved AI", href: "/teacher/workspace/saved-ai", icon: Sparkles },
-    { label: "Activity", href: "/teacher/workspace/activity", icon: History },
-    { label: "Notifications", href: "/teacher/workspace/notifications", icon: Bell },
-    { label: "Search", href: "/teacher/workspace/search", icon: Search },
-    { label: "Help", href: "/teacher/support", icon: LifeBuoy },
-    { label: "AI Studio", href: "/teacher/ai-studio", icon: Sparkles },
-    { label: "AI Chat", href: "/teacher/ai-studio/chat", icon: Bot },
-    { label: "AI History", href: "/teacher/ai-studio/history", icon: Search },
-    { label: "Business Profile", href: "/teacher/business/profile", icon: Store },
-    { label: "Portfolio", href: "/teacher/business/portfolio", icon: BookOpen },
-    { label: "Publishing", href: "/teacher/business/publishing", icon: LibraryBig },
-    { label: "Marketplace", href: "/teacher/business/marketplace", icon: Store },
-    { label: "Earnings", href: "/teacher/business/earnings", icon: WalletCards },
-    { label: "Orders", href: "/teacher/business/orders", icon: LibraryBig },
-    { label: "Analytics", href: "/teacher/business/analytics", icon: Search },
-    { label: "Community", href: "/teacher/community/home", icon: MessageCircle },
-    { label: "Discussions", href: "/teacher/community/discussions", icon: MessageCircle },
-    { label: "Teacher Groups", href: "/teacher/community/groups", icon: UsersRound },
-    { label: "Network", href: "/teacher/community/network", icon: UsersRound },
-    { label: "Messages", href: "/teacher/community/messages", icon: MessageCircle },
-    { label: "Collaboration", href: "/teacher/community/collaboration", icon: LibraryBig },
-    { label: "Wallet", href: "/teacher/business/wallet", icon: WalletCards },
-    { label: "Subscription", href: "/teacher/business/subscription", icon: WalletCards },
-    { label: "Settings", href: "/settings", icon: Settings },
-    { label: "Privacy", href: "/privacy-center", icon: ShieldCheck }
+    { label: "Home", href: "/teacher", icon: LayoutDashboard, group: "Home" },
+    { label: "Teaching", href: "/teacher/workspace/classrooms", icon: UsersRound, group: "Teach" },
+    { label: "AI Studio", href: "/teacher/ai-studio", icon: Sparkles, group: "Create" },
+    { label: "Resources", href: "/teacher/resources", icon: LibraryBig, group: "Create" },
+    { label: "Planner", href: "/teacher/workspace/planner", icon: CalendarDays, group: "Plan" },
+    { label: "Community", href: "/teacher/community/home", icon: MessageCircle, group: "Connect" },
+    { label: "Notifications", href: "/teacher/workspace/notifications", icon: Bell, group: "Connect" },
+    { label: "Business", href: "/teacher/business/profile", icon: Store, group: "Grow" },
+    { label: "Help", href: "/teacher/support", icon: LifeBuoy, group: "Support" },
+    { label: "Settings", href: "/teacher/settings", icon: Settings, group: "Support" }
   ],
   student: [
     { label: "Home", href: "/student", icon: LayoutDashboard },

@@ -16,6 +16,11 @@ export function Sidebar({ institutionName, logoUrl, roles }: { institutionName: 
   const [collapsed, setCollapsed] = useState(false);
   const navigation = getNavigationForRoles(roles);
   const isStudent = navigation.workspace === "student";
+  const groupedItems = navigation.items.reduce<Record<string, typeof navigation.items>>((groups, item) => {
+    const group = item.group ?? "Workspace";
+    groups[group] = [...(groups[group] ?? []), item];
+    return groups;
+  }, {});
 
   return (
     <aside className={cn("hidden min-h-screen border-r border-border bg-surface/95 shadow-soft transition-all duration-200 md:flex md:flex-col", collapsed ? "w-20" : "w-72")}>
@@ -28,8 +33,10 @@ export function Sidebar({ institutionName, logoUrl, roles }: { institutionName: 
           </div>
         ) : null}
       </div>
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {navigation.items.map((item) => {
+      <nav aria-label={`${isStudent ? "Student" : "Teacher"} workspace navigation`} className="flex-1 overflow-y-auto px-3 py-4">
+        {Object.entries(groupedItems).map(([group, items]) => <div className="mb-5 space-y-1" key={group}>
+          {!collapsed && navigation.workspace === "teacher" ? <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{group}</p> : null}
+          {items.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -47,7 +54,8 @@ export function Sidebar({ institutionName, logoUrl, roles }: { institutionName: 
               {!collapsed ? <span>{item.label}</span> : null}
             </Link>
           );
-        })}
+          })}
+        </div>)}
       </nav>
       <div className="border-t border-border p-3">
         {!collapsed ? <p className="mb-3 truncate px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">{isStudent ? "Student workspace" : institutionName}</p> : null}

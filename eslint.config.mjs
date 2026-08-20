@@ -9,12 +9,7 @@ export default defineConfig([
     rules: {
       "@next/next/no-assign-module-variable": "warn",
       "@next/next/no-html-link-for-pages": "warn",
-      "@next/next/no-location-assign-relative-destination": "warn",
       "prefer-const": "warn",
-      "react-hooks/preserve-manual-memoization": "warn",
-      "react-hooks/purity": "warn",
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/static-components": "warn",
       "react/no-unescaped-entities": "warn"
     }
   },

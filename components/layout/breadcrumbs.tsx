@@ -12,7 +12,7 @@ export function Breadcrumbs() {
       {segments.map((segment) => (
         <span className="flex items-center gap-2 capitalize" key={segment}>
           <span>/</span>
-          <span>{segment.replaceAll("-", " ")}</span>
+          <span>{({ teacher: "TeachX", workspace: "Teaching", "ai-studio": "AI Studio", business: "Business", community: "Community" }[segment] ?? segment.replaceAll("-", " "))}</span>
         </span>
       ))}
     </div>

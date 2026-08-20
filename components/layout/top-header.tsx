@@ -24,7 +24,7 @@ export async function TopHeader({ institutionName, roles }: { institutionName: s
       </div>
       <div className="flex items-center gap-3">
         <NotificationMenu notifications={notifications} />
-        <ProfileMenu email={session?.user.email} name={session?.user.name} />
+        <ProfileMenu email={session?.user.email} name={session?.user.name} teacher={roles.some((role) => ["ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR", "ACADEMIC_HEAD"].includes(role))} />
       </div>
     </header>
   );

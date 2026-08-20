@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOut, UserRound } from "lucide-react";
+import { CircleHelp, LogOut, Settings, Store, UserRound } from "lucide-react";
 
 import { logoutAction } from "@/features/auth/actions";
 import { getInitials } from "@/lib/utils";
@@ -7,9 +7,10 @@ import { getInitials } from "@/lib/utils";
 type ProfileMenuProps = {
   name?: string | null;
   email?: string | null;
+  teacher?: boolean;
 };
 
-export function ProfileMenu({ name, email }: ProfileMenuProps) {
+export function ProfileMenu({ name, email, teacher = false }: ProfileMenuProps) {
   return (
     <div className="group relative">
       <button className="flex h-11 items-center gap-3 rounded-lg border border-border bg-surface px-2 pr-3 text-left" type="button">
@@ -24,6 +25,11 @@ export function ProfileMenu({ name, email }: ProfileMenuProps) {
           <UserRound className="h-4 w-4" />
           Profile
         </Link>
+        {teacher ? <>
+          <Link className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted" href="/teacher/business/profile"><Store className="h-4 w-4" />Professional Profile</Link>
+          <Link className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted" href="/teacher/settings"><Settings className="h-4 w-4" />Settings</Link>
+          <Link className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted" href="/teacher/support"><CircleHelp className="h-4 w-4" />Help</Link>
+        </> : null}
         <form action={logoutAction}>
           <button className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-red-600 hover:bg-red-50" type="submit">
             <LogOut className="h-4 w-4" />
