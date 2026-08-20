@@ -177,6 +177,7 @@ export const authConfig = {
         session.user.id = token.id;
         session.user.institutionId = token.institutionId;
         session.user.roles = token.roles;
+        session.user.authSessionVersion = token.authSessionVersion;
       }
 
       return session;

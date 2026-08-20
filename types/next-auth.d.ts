@@ -15,6 +15,7 @@ declare module "next-auth" {
       id: string;
       institutionId?: string | null;
       roles: RoleKey[];
+      authSessionVersion: number;
     } & DefaultSession["user"];
   }
 }

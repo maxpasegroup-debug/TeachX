@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
 
 import type { PermissionKey, RoleKey } from "@/lib/constants/roles";
 import { rolePermissions } from "@/lib/constants/roles";
 import { getRoutePermission, isPublicApiRoute, publicRoutes } from "@/lib/constants/route-permissions";
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
 
 const MAX_API_BODY_BYTES = 1024 * 1024;
 const WRITE_FREEZE_EXEMPT_PREFIXES = ["/api/auth", "/api/email/webhooks", "/api/payments/webhooks"];
@@ -58,24 +58,20 @@ export default async function proxy(request: NextRequest) {
     return nextResponse(request, requestId);
   }
 
-  let token = null;
+  let session = null;
   try {
-    token = await getToken({
-      req: request,
-      secret: process.env.AUTH_SECRET,
-      cookieName: "authjs.session-token"
-    });
+    session = await auth(request);
   } catch {
     return isApi ? unauthorizedApi(requestId) : withRequestId(NextResponse.redirect(new URL("/login", nextUrl)), requestId);
   }
 
-  let isAuthenticated = Boolean(token);
-  if (token?.id && typeof token.authSessionVersion === "number") {
+  let isAuthenticated = Boolean(session?.user?.id);
+  if (session?.user?.id && typeof session.user.authSessionVersion === "number") {
     const account = await prisma.user.findUnique({
-      where: { id: token.id as string },
+      where: { id: session.user.id },
       select: { authSessionVersion: true, status: true }
     }).catch(() => null);
-    isAuthenticated = account?.status === "ACTIVE" && account.authSessionVersion === token.authSessionVersion;
+    isAuthenticated = account?.status === "ACTIVE" && account.authSessionVersion === session.user.authSessionVersion;
   }
 
   if (isApi && !isAuthenticated) return unauthorizedApi(requestId);
@@ -91,7 +87,7 @@ export default async function proxy(request: NextRequest) {
   }
 
   const requiredPermission = getRoutePermission(nextUrl.pathname);
-  const roles = (token?.roles ?? []) as RoleKey[];
+  const roles = session?.user?.roles ?? [];
 
   if (!isApi && requiredPermission && !hasPermission(roles, requiredPermission)) {
     return withRequestId(NextResponse.redirect(new URL("/access-denied", nextUrl)), requestId);
