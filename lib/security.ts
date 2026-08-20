@@ -49,10 +49,6 @@ function rateLimitResponse(retryAfterSeconds: number, limit: number) {
   );
 }
 
-function unavailableResponse() {
-  return NextResponse.json({ error: "Request protection is temporarily unavailable." }, { status: 503, headers: { "Retry-After": "5" } });
-}
-
 function memoryRateLimit(key: string, limit: number, windowMs: number) {
   const now = Date.now();
   if (buckets.size > 5_000) {
@@ -75,7 +71,10 @@ function memoryRateLimit(key: string, limit: number, windowMs: number) {
 export async function rateLimit(key: string, limit = 30, windowMs = 60_000) {
   const redis = getRedis();
   if (!redis) {
-    return process.env.NODE_ENV === "production" ? unavailableResponse() : memoryRateLimit(hashedKey(key), limit, windowMs);
+    // A missing optional Redis service must not turn every authenticated action
+    // into a rejected request. Use a bounded, per-container fallback until Redis
+    // is available; Redis remains the shared limiter when REDIS_URL is set.
+    return memoryRateLimit(hashedKey(key), limit, windowMs);
   }
 
   try {
@@ -88,7 +87,7 @@ export async function rateLimit(key: string, limit = 30, windowMs = 60_000) {
     }
     return null;
   } catch {
-    return process.env.NODE_ENV === "production" ? unavailableResponse() : memoryRateLimit(hashedKey(key), limit, windowMs);
+    return memoryRateLimit(hashedKey(key), limit, windowMs);
   }
 }
 
