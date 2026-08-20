@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Archive, Bookmark, BookOpenCheck, Copy, Download, Eye, FileText, Filter, Layers3, Lock, Search, Share2, Sparkles, Trash2, UploadCloud } from "lucide-react";
+import { Bookmark, BookOpenCheck, Download, Eye, FileText, Filter, Lock, Search, Share2, Sparkles, UploadCloud } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,15 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { createResourcePurchaseOrderAction } from "@/features/commerce/actions";
 import {
   bookmarkLearningResourceAction,
-  deleteLearningResourceAction,
   downloadLearningResourceAction,
-  duplicateLearningResourceAction,
   publishLearningResourceAction,
   saveAIConversationAsResourceAction,
-  updateResourceStatusAction,
   wishlistLearningResourceAction
 } from "@/features/learning-marketplace/actions";
 import { getInitials } from "@/lib/utils";
+import { TeacherResourceStudio, type TeacherResourceRow } from "@/features/learning-marketplace/components/teacher-resource-studio";
 import type { getLearningMarketplaceFacets, getLearningMarketplaceHome, getRelatedLearningResources, getStudentResourceDashboard, getTeacherResourceLibrary, LearningResource } from "@/services/learning-marketplace-service";
 import { getResourceMetadata, learningResourceTypes } from "@/services/learning-marketplace-service";
 
@@ -233,24 +231,34 @@ function StatMini({ label, value }: { label: string; value: string }) {
 }
 
 export function TeacherResourceLibrary({ data }: { data: TeacherLibrary }) {
+  const toRows = (items: (typeof data.resources) | (typeof data.savedResources)) => items.map((resource): TeacherResourceRow => {
+    const metadata = getResourceMetadata(resource);
+    return { id: resource.id, title: resource.title, status: resource.status, type: resource.type.replaceAll("_", " "), category: metadata.category ?? "", subject: resource.subject?.name ?? resource.course.name, grade: metadata.className ?? "", language: metadata.language ?? "", tags: metadata.tags ?? [], views: resource.analytics?.views ?? 0, downloads: resource.downloads.length, updatedAt: resource.updatedAt.toISOString(), fileUrl: resource.fileUrl, externalUrl: resource.externalUrl };
+  });
+  const downloadRows = data.downloads.map((download): TeacherResourceRow => {
+    const metadata = getResourceMetadata(download.item);
+    return { id: download.item.id, title: download.item.title, status: download.item.status, type: download.item.type.replaceAll("_", " "), category: metadata.category ?? "", subject: download.item.subject?.name ?? download.item.course.name, grade: metadata.className ?? "", language: metadata.language ?? "", tags: metadata.tags ?? [], views: download.item.analytics?.views ?? 0, downloads: 1, updatedAt: download.downloadedAt.toISOString(), fileUrl: download.item.fileUrl, externalUrl: download.item.externalUrl };
+  });
   return (
     <div className="space-y-8">
       <section className="rounded-[2rem] border border-border bg-gradient-to-br from-sky-50 via-white to-blue-50 p-6 shadow-soft sm:p-8">
         <Badge>Teacher Resources</Badge>
-        <h1 className="mt-6 text-4xl font-semibold tracking-tight">Publish your knowledge marketplace library.</h1>
-        <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">Create, draft, publish, archive, duplicate, and track resources. Payments and commission stay locked for Phase 7.</p>
+        <h1 className="mt-6 text-4xl font-semibold tracking-tight">One home for your teaching content.</h1>
+        <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">Create, securely upload, organize, use in teaching, publish, and track your existing resources.</p>
+        <div className="mt-6 flex flex-wrap gap-3"><a className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground" href="#create-resource">Create Resource</a><a className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium" href="#upload-resource">Upload Resource</a><Link className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium" href="/teacher/ai-studio">Open AI Studio</Link></div>
       </section>
       <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
         <StatMini label="Published" value={data.stats.published.toString()} />
         <StatMini label="Drafts" value={data.stats.drafts.toString()} />
         <StatMini label="Archived" value={data.stats.archived.toString()} />
         <StatMini label="Downloads" value={data.stats.downloads.toString()} />
-        <StatMini label="Bookmarks" value={data.stats.bookmarks.toString()} />
+        <StatMini label="Saved" value={data.stats.saved.toString()} />
         <StatMini label="Views" value={data.stats.views.toString()} />
       </div>
-      <ResourcePublisher data={data} />
+      <div id="create-resource"><ResourcePublisher data={data} /></div>
       <AIToResourceForm data={data} />
-      <TeacherResourceTable resources={data.resources} />
+      <section id="upload-resource" className="rounded-2xl border border-border bg-surface p-5 shadow-soft"><div className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-xl font-semibold">Secure file upload</h2><p className="mt-2 max-w-2xl text-sm text-muted-foreground">Use the existing private upload workflow for files. It verifies the file and keeps storage in the shared document system.</p></div><Link className="rounded-xl border border-border px-4 py-2 text-sm font-medium hover:bg-sky-50" href="/content-studio">Open secure upload</Link></div></section>
+      <TeacherResourceStudio downloads={downloadRows} resources={toRows(data.resources)} savedResources={toRows(data.savedResources)} />
     </div>
   );
 }
@@ -300,48 +308,6 @@ function AIToResourceForm({ data }: { data: TeacherLibrary }) {
         <Button className="md:col-span-4" type="submit" variant="secondary">Save as Draft</Button>
       </form>
     </Card>
-  );
-}
-
-function TeacherResourceTable({ resources }: { resources: TeacherLibrary["resources"] }) {
-  return (
-    <Card className="p-5 shadow-soft">
-      <h2 className="text-xl font-semibold">My Resources</h2>
-      <div className="mt-5 space-y-3">
-        {resources.length ? resources.map((resource) => {
-          const metadata = getResourceMetadata(resource);
-          return (
-            <div className="grid gap-4 rounded-2xl border border-border bg-background p-4 lg:grid-cols-[1fr_auto] lg:items-center" key={resource.id}>
-              <div>
-                <div className="flex flex-wrap items-center gap-2"><Badge>{resource.status}</Badge><span className="text-sm text-muted-foreground">{metadata.category ?? resource.type.replaceAll("_", " ")}</span></div>
-                <h3 className="mt-2 font-semibold">{resource.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{resource.downloads.length} downloads, {resource.analytics?.views ?? 0} views</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {resource.status !== "PUBLISHED" ? <ResourceStatusButton resourceId={resource.id} intent="publish" label="Publish" /> : <ResourceStatusButton resourceId={resource.id} intent="archive" label="Archive" icon={<Archive className="h-4 w-4" />} />}
-                <IconAction action={duplicateLearningResourceAction} resourceId={resource.id} label="Duplicate" icon={<Copy className="h-4 w-4" />} />
-                {resource.status !== "PUBLISHED" ? <IconAction action={deleteLearningResourceAction} resourceId={resource.id} label="Delete" icon={<Trash2 className="h-4 w-4" />} /> : null}
-                {resource.status === "PUBLISHED" ? <Link className="rounded-xl border border-border px-3 py-2 text-sm" href={`/resources/${resource.id}`}>Preview</Link> : null}
-              </div>
-            </div>
-          );
-        }) : <EmptyState icon={<Layers3 className="h-5 w-5" />} title="No resources yet" description="Publish your first resource or save an AI Studio output as a draft." />}
-      </div>
-    </Card>
-  );
-}
-
-function ResourceStatusButton({ resourceId, intent, label, icon }: { resourceId: string; intent: string; label: string; icon?: React.ReactNode }) {
-  return <IconAction action={updateResourceStatusAction} extra={{ intent }} resourceId={resourceId} label={label} icon={icon} />;
-}
-
-function IconAction({ action, resourceId, label, icon, extra }: { action: (formData: FormData) => void | Promise<void>; resourceId: string; label: string; icon?: React.ReactNode; extra?: Record<string, string> }) {
-  return (
-    <form action={action}>
-      <input name="resourceId" type="hidden" value={resourceId} />
-      {extra ? Object.entries(extra).map(([key, item]) => <input key={key} name={key} type="hidden" value={item} />) : null}
-      <button className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-3 text-sm transition hover:bg-sky-50" type="submit">{icon}{label}</button>
-    </form>
   );
 }
 

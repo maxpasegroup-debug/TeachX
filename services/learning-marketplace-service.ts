@@ -204,9 +204,9 @@ export async function getLearningMarketplaceFacets(institutionId?: string | null
 }
 
 export async function getTeacherResourceLibrary(userId?: string, institutionId?: string | null) {
-  if (!userId || !institutionId) return { resources: [], courses: [], subjects: [], stats: { published: 0, drafts: 0, archived: 0, downloads: 0, bookmarks: 0, views: 0 }, aiGenerations: [] };
+  if (!userId || !institutionId) return { resources: [], courses: [], subjects: [], savedResources: [], downloads: [], stats: { published: 0, drafts: 0, archived: 0, downloads: 0, bookmarks: 0, saved: 0, views: 0 }, aiGenerations: [] };
 
-  const [resources, courses, subjects, aiGenerations] = await Promise.all([
+  const [resources, courses, subjects, aiGenerations, favorites, downloads] = await Promise.all([
     prisma.contentItem.findMany({
       where: { institutionId, createdById: userId },
       include: { course: true, subject: true, createdBy: { include: { profile: true, teacherProfile: true } }, analytics: true, downloads: true },
@@ -215,16 +215,27 @@ export async function getTeacherResourceLibrary(userId?: string, institutionId?:
     }),
     prisma.course.findMany({ where: { institutionId }, orderBy: { name: "asc" }, take: 100 }),
     prisma.subject.findMany({ where: { course: { institutionId } }, orderBy: [{ courseId: "asc" }, { order: "asc" }], take: 100 }),
-    prisma.aIConversation.findMany({ where: { userId, scope: "TEACHER" }, orderBy: { updatedAt: "desc" }, take: 12 })
+    prisma.aIConversation.findMany({ where: { userId, institutionId, scope: "TEACHER" }, orderBy: { updatedAt: "desc" }, take: 12 }),
+    prisma.favoriteItem.findMany({ where: { userId, type: "learning-resource" }, orderBy: { createdAt: "desc" }, take: 30 }),
+    prisma.downloadHistory.findMany({ where: { userId, item: { institutionId } }, include: { item: { include: { course: true, subject: true, analytics: true } } }, orderBy: { downloadedAt: "desc" }, take: 30 })
   ]);
 
   const ids = resources.map((item) => item.id);
   const bookmarks = ids.length ? await prisma.favoriteItem.count({ where: { type: "learning-resource", entityId: { in: ids } } }) : 0;
+  const savedIds = favorites.map((item) => item.entityId);
+  const savedResources = savedIds.length ? await prisma.contentItem.findMany({
+    where: { id: { in: savedIds }, institutionId, OR: [{ createdById: userId }, { status: "PUBLISHED", visibility: "PUBLIC" }] },
+    include: { course: true, subject: true, analytics: true, downloads: true },
+    orderBy: { updatedAt: "desc" },
+    take: 30
+  }) : [];
 
   return {
     resources,
     courses,
     subjects,
+    savedResources,
+    downloads,
     aiGenerations,
     stats: {
       published: resources.filter((item) => item.status === "PUBLISHED").length,
@@ -232,6 +243,7 @@ export async function getTeacherResourceLibrary(userId?: string, institutionId?:
       archived: resources.filter((item) => item.status === "ARCHIVED").length,
       downloads: resources.reduce((total, item) => total + item.downloads.length, 0),
       bookmarks,
+      saved: savedResources.length,
       views: resources.reduce((total, item) => total + (item.analytics?.views ?? 0), 0)
     }
   };

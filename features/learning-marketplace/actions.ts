@@ -100,6 +100,7 @@ export async function publishLearningResourceAction(formData: FormData) {
   }
 
   revalidatePath("/teacher/workspace/resources");
+  revalidatePath("/teacher/resources");
   revalidatePath("/resources");
 }
 
@@ -119,6 +120,7 @@ export async function updateResourceStatusAction(formData: FormData) {
 
   await prisma.contentItem.updateMany({ where: { id: resourceId, createdById: session.user.id, institutionId }, data });
   revalidatePath("/teacher/workspace/resources");
+  revalidatePath("/teacher/resources");
   revalidatePath("/resources");
 }
 
@@ -149,6 +151,7 @@ export async function duplicateLearningResourceAction(formData: FormData) {
   });
 
   revalidatePath("/teacher/workspace/resources");
+  revalidatePath("/teacher/resources");
 }
 
 export async function deleteLearningResourceAction(formData: FormData) {
@@ -158,6 +161,7 @@ export async function deleteLearningResourceAction(formData: FormData) {
   if (!resourceId) return;
   await prisma.contentItem.deleteMany({ where: { id: resourceId, createdById: session.user.id, institutionId, status: { not: "PUBLISHED" } } });
   revalidatePath("/teacher/workspace/resources");
+  revalidatePath("/teacher/resources");
 }
 
 export async function bookmarkLearningResourceAction(formData: FormData) {
@@ -247,4 +251,5 @@ export async function saveAIConversationAsResourceAction(formData: FormData) {
   });
 
   revalidatePath("/teacher/workspace/resources");
+  revalidatePath("/teacher/resources");
 }
