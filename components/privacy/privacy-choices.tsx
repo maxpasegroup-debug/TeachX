@@ -31,13 +31,20 @@ export function PrivacyChoices({ hasChoice }: { hasChoice: boolean }) {
     setBusy(true); setError("");
     const globalPrivacyControl = Boolean((navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl);
     const safe = globalPrivacyControl ? { ...next, analytics: false, marketing: false } : next;
+    const secure = location.protocol === "https:" ? "; Secure" : "";
+
+    // A choice must close the banner immediately. The audit request is useful
+    // for consent records, but it must not trap the visitor behind the banner.
+    document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(safe))}; Path=/; Max-Age=15552000; SameSite=Lax${secure}`;
+    setVisible(false);
+
     try {
       const response = await fetch("/api/privacy/consent", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ anonymousId: anonymousId(), ...safe, globalPrivacyControl }) });
       if (!response.ok) throw new Error("Privacy choices could not be saved. Please try again.");
-      const secure = location.protocol === "https:" ? "; Secure" : "";
-      document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(safe))}; Path=/; Max-Age=15552000; SameSite=Lax${secure}`;
-      setVisible(false);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Privacy choices could not be saved."); setBusy(false); }
+    } catch {
+      // The browser cookie remains the visitor's recorded choice. The next
+      // page visit will not show the banner again if audit persistence fails.
+    }
   };
 
   return (

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { auth } from "@/auth";
-import { getPublicBaseUrl } from "@/lib/env";
 import { getClientKey, rateLimit } from "@/lib/security";
 import { getUserPrivacyCenter, recordPrivacyConsent } from "@/services/privacy-service";
 
@@ -16,7 +15,9 @@ export async function POST(request: Request) {
   const limited = await rateLimit(`privacy-consent:${getClientKey(request, "anonymous")}`, 12, 60_000);
   if (limited) return limited;
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(getPublicBaseUrl()).origin) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+  // The shared app is served from TeachX and LearnX. Validate the request
+  // against its own host instead of a single configured public URL.
+  if (origin && origin !== new URL(request.url).origin) return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
   try {
     const session = await auth();
     const result = await recordPrivacyConsent(await request.json(), session?.user.id);
