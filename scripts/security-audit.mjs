@@ -56,7 +56,7 @@ const securitySource = readFileSync(join(root, "lib", "security.ts"), "utf8");
 const nextConfig = readFileSync(join(root, "next.config.ts"), "utf8");
 
 checks.push(result("proxy:private-api", proxySource.includes("if (isApi && !isAuthenticated)"), "private APIs fail before route execution"));
-checks.push(result("proxy:public-api", proxySource.indexOf("if (publicApi)") < proxySource.indexOf("token = await getToken"), "public probes do not depend on session decoding"));
+checks.push(result("proxy:public-api", proxySource.indexOf("if (publicApi)") < proxySource.indexOf("session = await auth(request)"), "public probes do not depend on session decoding"));
 checks.push(result("proxy:token-errors", proxySource.includes("catch") && /unauthorizedApi\s*\(/.test(proxySource), "malformed tokens fail closed"));
 checks.push(result("proxy:body-limit", proxySource.includes("MAX_API_BODY_BYTES") && proxySource.includes("413"), "API request size limited"));
 checks.push(result("setup:secret", setupSource.includes("secureSecretMatch") && setupSource.includes("SETUP_SECRET"), "first-run setup requires secret"));
