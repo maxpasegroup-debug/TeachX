@@ -13,7 +13,7 @@ test("service worker excludes APIs and private navigation from runtime caches", 
 
 test("service worker cache is versioned, bounded, and user-updatable", () => {
   const worker = read("public/sw.js");
-  assert.match(worker, /teachx-offline-v3/);
+  assert.match(worker, /teachx-offline-v4/);
   assert.match(worker, /MAX_RUNTIME_ENTRIES = 80/);
   assert.match(worker, /SKIP_WAITING/);
 });
