@@ -8,6 +8,7 @@ import { userHasPermission } from "@/lib/rbac";
 import { userOwnsResource } from "@/services/commerce-service";
 import { createModuleNotification } from "@/services/notification-aggregation-service";
 import { getLearningResource, getResourceMetadata, mapResourceTypeToContentType } from "@/services/learning-marketplace-service";
+import { saveAIContentToTeacherLibrary } from "@/services/teacher-integration-service";
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -26,11 +27,19 @@ async function requireTeacherSession() {
   const teacherRoles = ["ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR", "ACADEMIC_HEAD"];
   const isTeacher = session.user.roles.some((role) => teacherRoles.includes(role));
   if (!isTeacher && !userHasPermission(session.user.roles, "content.manage")) throw new Error("You do not have access to publish resources.");
+  const member = await prisma.user.findFirst({
+    where: { id: session.user.id, institutionId: session.user.institutionId, status: "ACTIVE" },
+    select: { id: true }
+  });
+  if (!member) throw new Error("You do not have access to publish resources.");
   return session;
 }
 
 async function resolveCourseId(institutionId: string, courseId?: string) {
-  if (courseId) return courseId;
+  if (courseId) {
+    const course = await prisma.course.findFirst({ where: { id: courseId, institutionId }, select: { id: true } });
+    return course?.id;
+  }
   const course = await prisma.course.findFirst({ where: { institutionId }, orderBy: { createdAt: "asc" } });
   return course?.id;
 }
@@ -227,27 +236,16 @@ export async function saveAIConversationAsResourceAction(formData: FormData) {
   const institutionId = session.user.institutionId!;
   const conversationId = value(formData, "conversationId");
   const courseId = await resolveCourseId(institutionId, value(formData, "courseId"));
-  const conversation = conversationId ? await prisma.aIConversation.findFirst({ where: { id: conversationId, userId: session.user.id, scope: "TEACHER" } }) : null;
-  if (!conversation || !courseId) return;
-
-  await prisma.contentItem.create({
-    data: {
-      institutionId,
-      createdById: session.user.id,
-      courseId,
-      title: value(formData, "title") || conversation.title,
-      description: "Saved from TeachX AI Studio.",
-      type: mapResourceTypeToContentType(value(formData, "resourceType")),
-      status: "DRAFT",
-      visibility: "TEACHERS",
-      aiReadyNotes: {
-        ...resourceMetadata(formData, "ai-studio"),
-        conversationId: conversation.id,
-        preview: JSON.stringify(conversation.messages).slice(0, 1200)
-      },
-      versions: { create: { version: 1, title: value(formData, "title") || conversation.title, updatedById: session.user.id, changeNote: "Saved from AI Studio generation" } },
-      analytics: { create: {} }
-    }
+  if (!conversationId || !courseId) return;
+  await saveAIContentToTeacherLibrary({
+    userId: session.user.id,
+    institutionId,
+    conversationId,
+    courseId,
+    title: value(formData, "title"),
+    contentType: mapResourceTypeToContentType(value(formData, "resourceType")),
+    saveKind: "resource",
+    metadata: resourceMetadata(formData, "ai-studio")
   });
 
   revalidatePath("/teacher/workspace/resources");

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Bookmark, Copy, History, Languages, LibraryBig, RefreshCw, Save, Share2, Sparkles } from "lucide-react";
 
@@ -54,6 +55,7 @@ export function GenerationWorkflow({ tool, courses }: { tool: AIStudioTool; cour
   const [state, action, pending] = useActionState(generateAIStudioContent, initialState);
   const [output, setOutput] = useState("");
   const [notice, setNotice] = useState("");
+  const [savedDestination, setSavedDestination] = useState<{ href: string; label: string } | null>(null);
   const [activeConversationId, setActiveConversationId] = useState("");
   const [selectedCourse, setSelectedCourse] = useState(courses[0]?.id ?? "");
   const [outputLanguage, setOutputLanguage] = useState("English");
@@ -87,8 +89,17 @@ export function GenerationWorkflow({ tool, courses }: { tool: AIStudioTool; cour
         data.set("saveKind", kind);
         data.set("outputLanguage", outputLanguage);
         data.set("curriculumBoard", curriculumBoard);
-        await saveAIOutputToTeacherLibraryAction(data);
-        setNotice(kind === "lesson" ? "Saved to Lesson Library." : "Saved to Resource Library.");
+        const result = await saveAIOutputToTeacherLibraryAction(data);
+        if (!result) {
+          setNotice("This item could not be saved. Check the selected course and try again.");
+          return;
+        }
+        setSavedDestination({ href: result.href, label: kind === "lesson" ? "Open Lesson Library" : "Open Resource Studio" });
+        setNotice(result.created
+          ? (kind === "lesson" ? "Saved to Lesson Library." : "Saved to Resource Library.")
+          : result.updated
+            ? (kind === "lesson" ? "Updated the existing Lesson Library item." : "Updated the existing Resource Library item.")
+            : "This AI result is already published. Open the existing item to manage it.");
       } else if (kind === "duplicate") {
         await duplicateAIConversationAction(data);
         setNotice("Duplicate added to history.");
@@ -203,7 +214,7 @@ export function GenerationWorkflow({ tool, courses }: { tool: AIStudioTool; cour
             <Button disabled={!activeConversationId || working} onClick={() => runItemAction("duplicate")} type="button" variant="secondary"><Copy className="mr-2 h-4 w-4" />Duplicate</Button>
             <Button disabled={!activeConversationId || working} onClick={() => runItemAction("favorite")} type="button" variant="secondary"><Bookmark className="mr-2 h-4 w-4" />Favorite</Button>
           </div>
-          {notice ? <p className="mt-3 text-sm font-medium text-emerald-700" aria-live="polite">{notice}</p> : null}
+          {notice ? <div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-medium text-emerald-700" aria-live="polite"><span>{notice}</span>{savedDestination ? <Link className="underline underline-offset-4" href={savedDestination.href}>{savedDestination.label}</Link> : null}</div> : null}
           <div className="mt-5 rounded-2xl border border-border bg-background p-4">
             <div className="flex items-center gap-2">
               <LibraryBig className="h-4 w-4 text-sky-700" />

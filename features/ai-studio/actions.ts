@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { runAI } from "@/services/ai-service";
 import { getAIStudioTool } from "@/services/ai-studio-service";
+import { saveAIContentToTeacherLibrary } from "@/services/teacher-integration-service";
 import { prisma } from "@/lib/db";
 import { getStudioToolConfig } from "@/features/ai-studio/tool-config";
 
@@ -145,14 +146,6 @@ export async function improveAIStudioContentAction(formData: FormData): Promise<
   return { text: result.text, conversationId: result.conversationId };
 }
 
-function contentTypeForSave(kind: string, toolSlug: string) {
-  if (kind === "lesson") return "NOTES" as const;
-  if (toolSlug.includes("worksheet") || toolSlug.includes("homework")) return "WORKSHEET" as const;
-  if (toolSlug.includes("question-paper")) return "QUESTION_PAPER" as const;
-  if (toolSlug.includes("presentation")) return "PPT" as const;
-  return "DOCUMENT" as const;
-}
-
 export async function saveAIOutputToTeacherLibraryAction(formData: FormData) {
   const session = await auth();
   const id = value(formData, "conversationId");
@@ -161,51 +154,25 @@ export async function saveAIOutputToTeacherLibraryAction(formData: FormData) {
   const saveKind = value(formData, "saveKind") || "resource";
   if (!session?.user.id || !session.user.institutionId || !id || !content || !courseId) return;
 
-  const [conversation, course] = await Promise.all([
-    prisma.aIConversation.findFirst({ where: { id, userId: session.user.id, scope: "TEACHER" } }),
-    prisma.course.findFirst({ where: { id: courseId, institutionId: session.user.institutionId } })
-  ]);
-  if (!conversation || !course) return;
-
-  const context = conversation.context && typeof conversation.context === "object" && !Array.isArray(conversation.context)
-    ? conversation.context as Record<string, unknown>
-    : {};
-  const toolSlug = String(context.toolSlug ?? "ai-studio");
-  const title = value(formData, "title") || conversation.title;
-
-  await prisma.contentItem.create({
-    data: {
-      institutionId: session.user.institutionId,
-      createdById: session.user.id,
-      courseId,
-      title,
-      description: content,
-      type: contentTypeForSave(saveKind, toolSlug),
-      status: "DRAFT",
-      visibility: saveKind === "lesson" ? "PRIVATE" : "TEACHERS",
-      aiReadyNotes: {
-        source: "ai-studio",
-        conversationId: conversation.id,
-        toolSlug,
-        saveKind,
-        outputLanguage: value(formData, "outputLanguage") || "English",
-        curriculumBoard: value(formData, "curriculumBoard") || "Teacher's local curriculum"
-      },
-      versions: {
-        create: {
-          version: 1,
-          title,
-          updatedById: session.user.id,
-          changeNote: saveKind === "lesson" ? "Saved from AI Studio to Lesson Library" : "Saved from AI Studio to Resource Library"
-        }
-      },
-      analytics: { create: {} }
+  const result = await saveAIContentToTeacherLibrary({
+    userId: session.user.id,
+    institutionId: session.user.institutionId,
+    conversationId: id,
+    courseId,
+    title: value(formData, "title"),
+    content,
+    saveKind: saveKind === "lesson" ? "lesson" : "resource",
+    metadata: {
+      outputLanguage: value(formData, "outputLanguage") || "English",
+      curriculumBoard: value(formData, "curriculumBoard") || "Teacher's local curriculum"
     }
   });
 
   revalidatePath("/teacher");
   revalidatePath("/teacher/workspace/lessons");
   revalidatePath("/teacher/workspace/resources");
+  revalidatePath("/teacher/resources");
+  return result;
 }
 
 export async function saveAIConversationContentAction(formData: FormData) {

@@ -6,7 +6,8 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { universalSearch, type UniversalSearchResult } from "@/services/search-service";
+import type { UniversalSearchResult } from "@/services/search-service";
+import { searchTeacherOS } from "@/services/teacher-integration-service";
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -16,7 +17,12 @@ async function teacherSession() {
   const session = await auth();
   if (!session?.user.id || !session.user.institutionId) throw new Error("Teacher workspace access is required.");
   const member = await prisma.user.findFirst({
-    where: { id: session.user.id, institutionId: session.user.institutionId, status: "ACTIVE" },
+    where: {
+      id: session.user.id,
+      institutionId: session.user.institutionId,
+      status: "ACTIVE",
+      roles: { some: { role: { key: { in: ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"] } } } }
+    },
     select: { id: true }
   });
   if (!member) throw new Error("Teacher workspace access is required.");
@@ -55,38 +61,43 @@ export async function createTeacherContentAction(formData: FormData) {
 export async function updateTeacherContentAction(formData: FormData) {
   const session = await teacherSession();
   const id = value(formData, "id");
-  const item = await prisma.contentItem.findFirst({ where: { id, createdById: session.user.id } });
+  const institutionId = session.user.institutionId!;
+  const item = await prisma.contentItem.findFirst({ where: { id, createdById: session.user.id, institutionId } });
   if (!item) return;
   const title = value(formData, "title") || item.title;
   const nextVersion = item.version + 1;
-  await prisma.contentItem.update({
-    where: { id },
-    data: {
-      title,
-      description: value(formData, "description"),
-      externalUrl: value(formData, "externalUrl") || undefined,
-      version: nextVersion,
-      versions: { create: { version: nextVersion, title, externalUrl: value(formData, "externalUrl") || undefined, updatedById: session.user.id, changeNote: "Edited in Teacher Workspace" } }
-    }
-  });
+  await prisma.$transaction([
+    prisma.contentItem.updateMany({
+      where: { id, createdById: session.user.id, institutionId },
+      data: {
+        title,
+        description: value(formData, "description"),
+        externalUrl: value(formData, "externalUrl") || undefined,
+        version: nextVersion
+      }
+    }),
+    prisma.contentVersion.create({
+      data: { itemId: id, version: nextVersion, title, externalUrl: value(formData, "externalUrl") || undefined, updatedById: session.user.id, changeNote: "Edited in Teacher Workspace" }
+    })
+  ]);
   refresh();
 }
 
 export async function archiveTeacherContentAction(formData: FormData) {
   const session = await teacherSession();
-  await prisma.contentItem.updateMany({ where: { id: value(formData, "id"), createdById: session.user.id }, data: { status: "ARCHIVED" } });
+  await prisma.contentItem.updateMany({ where: { id: value(formData, "id"), createdById: session.user.id, institutionId: session.user.institutionId! }, data: { status: "ARCHIVED" } });
   refresh();
 }
 
 export async function restoreTeacherContentAction(formData: FormData) {
   const session = await teacherSession();
-  await prisma.contentItem.updateMany({ where: { id: value(formData, "id"), createdById: session.user.id }, data: { status: "DRAFT" } });
+  await prisma.contentItem.updateMany({ where: { id: value(formData, "id"), createdById: session.user.id, institutionId: session.user.institutionId! }, data: { status: "DRAFT" } });
   refresh();
 }
 
 export async function duplicateTeacherContentAction(formData: FormData) {
   const session = await teacherSession();
-  const source = await prisma.contentItem.findFirst({ where: { id: value(formData, "id"), createdById: session.user.id } });
+  const source = await prisma.contentItem.findFirst({ where: { id: value(formData, "id"), createdById: session.user.id, institutionId: session.user.institutionId! } });
   if (!source) return;
   await prisma.contentItem.create({
     data: {
@@ -104,7 +115,7 @@ export async function duplicateTeacherContentAction(formData: FormData) {
 
 export async function deleteTeacherContentAction(formData: FormData) {
   const session = await teacherSession();
-  await prisma.contentItem.deleteMany({ where: { id: value(formData, "id"), createdById: session.user.id } });
+  await prisma.contentItem.deleteMany({ where: { id: value(formData, "id"), createdById: session.user.id, institutionId: session.user.institutionId! } });
   refresh();
 }
 
@@ -270,13 +281,5 @@ export async function teacherWorkspaceSearchAction(_: TeacherSearchState, formDa
   const session = await teacherSession();
   const query = value(formData, "query");
   if (!query) return { results: [], error: "Enter a search term." };
-  const platform = await universalSearch(session.user.institutionId!, query, session.user.id);
-  return {
-    query,
-    results: platform
-      .filter((item) => !["Student", "Support Ticket", "Audit Log", "Feature Flag", "Order"].includes(item.type))
-      .map((item) => item.type === "Institution" && !session.user.roles.some((role) => ["ADMIN", "DIRECTOR", "ACADEMIC_HEAD"].includes(role))
-        ? { ...item, href: "/teacher/workspace/classrooms" }
-        : item)
-  };
+  return { query, results: await searchTeacherOS(session.user.id, session.user.institutionId!, query) };
 }
