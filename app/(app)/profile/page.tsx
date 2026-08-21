@@ -74,6 +74,7 @@ export default async function ProfilePage() {
     : null;
   const isStudent = user?.roles.some(({ role }) => role.key === "STUDENT") ?? false;
   const canAccessInstitution = user?.roles.some(({ role }) => ["ADMIN", "DIRECTOR", "ACADEMIC_HEAD"].includes(role.key)) ?? false;
+  const displayEmail = user?.email.endsWith("@accounts.teachx.invalid") ? null : user?.email;
   const teacherStrength: StrengthItem[] = [
     { label: "Profile Photo", done: Boolean(user?.profile?.avatarUrl) },
     { label: "Name", done: Boolean(user?.name) },
@@ -133,7 +134,7 @@ export default async function ProfilePage() {
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-100 text-xl font-semibold text-sky-800">{getInitials(user?.name)}</div>
               <div>
                 <p className="font-semibold">{user?.name ?? "User"}</p>
-                <p className="text-sm text-muted-foreground">{user?.email}</p>
+                <p className="text-sm text-muted-foreground">{displayEmail ?? "Email not added"}</p>
               </div>
             </div>
             <Progress className="mt-5" value={completion.percentage} />

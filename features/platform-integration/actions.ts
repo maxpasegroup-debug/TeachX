@@ -2,6 +2,7 @@
 
 import type { ActivityType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
@@ -9,7 +10,8 @@ import { CONTRAST_COOKIE, LOCALE_COOKIE, MOTION_COOKIE, resolveLocale, resolveTi
 
 const value=(fd:FormData,key:string)=>String(fd.get(key)??"").trim();
 export async function saveUnifiedTeacherSettingsAction(fd:FormData){
-  const session=await auth(); if(!session?.user.id) throw new Error("Sign in to update settings.");
+  const session=await auth(); if(!session?.user.id || !session.user.institutionId || !session.user.roles.some((role)=>["ACADEMIC_HEAD","ACADEMIC_FACULTY","PHYSICAL_TRAINER","PART_TIME_TUTOR"].includes(role))) throw new Error("Teacher access required.");
+  const teacher=await prisma.user.count({where:{id:session.user.id,institutionId:session.user.institutionId,status:"ACTIVE"}}); if(!teacher) throw new Error("Teacher account unavailable.");
   const locale=resolveLocale(value(fd,"locale"));
   const timeZone=resolveTimeZone(value(fd,"timeZone"));
   const reducedMotion=fd.get("reducedMotion")==="on";
@@ -30,4 +32,5 @@ export async function saveUnifiedTeacherSettingsAction(fd:FormData){
   await prisma.$transaction((["SYSTEM","CONTENT","ANNOUNCEMENT","ASSIGNMENT","PLANNER"] as ActivityType[]).map(type=>prisma.notificationPreference.upsert({where:{userId_type:{userId:session.user.id,type}},create:{userId:session.user.id,type,enabled:types.includes(type),channels:{inApp:true}},update:{enabled:types.includes(type),channels:{inApp:true}}})));
   revalidatePath("/teacher/settings");
   revalidatePath("/", "layout");
+  redirect("/teacher/settings?saved=1");
 }

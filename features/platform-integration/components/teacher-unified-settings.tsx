@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, Bot, Languages, Lock, Palette, Shield, Store, UserRound, WifiOff } from "lucide-react";
+import { Bell, Bot, CheckCircle2, CircleHelp, CreditCard, Languages, Lock, Palette, Shield, UserRound } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,47 +7,56 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { saveUnifiedTeacherSettingsAction } from "@/features/platform-integration/actions";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatNumber } from "@/lib/format";
 import { localeFromLegacyLanguage, supportedLocales, supportedTimeZones } from "@/lib/i18n/config";
 import type { getTeacherSettings } from "@/services/teacher-settings-service";
 
 type Data = NonNullable<Awaited<ReturnType<typeof getTeacherSettings>>>;
 const text = (value: unknown, fallback: string) => typeof value === "string" ? value : fallback;
 
-export function TeacherUnifiedSettings({ data }: { data: Data }) {
-  const enabled = new Set(data.notifications.filter((item) => item.enabled).map((item) => item.type));
+export function TeacherUnifiedSettings({ data, saved = false }: { data: Data; saved?: boolean }) {
+  const notificationEnabled = (type: string) => data.notifications.find((item) => item.type === type)?.enabled ?? true;
   const locale = localeFromLegacyLanguage(text(data.settings.locale, text(data.settings.language, "en-IN")));
   const requestedTimeZone = text(data.settings.timeZone, "Asia/Kolkata");
   const timeZone = supportedTimeZones.find((item) => item === requestedTimeZone) ?? "Asia/Kolkata";
+  const profileHref = "/teacher/business/profile";
+  const publicHref = data.user.teacherProfile?.id ? `/marketplace/teachers/${data.user.teacherProfile.id}` : profileHref;
 
-  return (
-    <div className="space-y-8">
-      <section className="border bg-sky-50 p-6 shadow-soft sm:p-8">
-        <Badge>Unified Teacher Settings</Badge>
-        <h1 className="mt-5 text-4xl font-semibold">Settings</h1>
-        <p className="mt-3 max-w-3xl text-lg text-muted-foreground">Account, appearance, notifications, privacy, security, region, subscription, AI, marketplace, and offline preferences in one place.</p>
-      </section>
+  return <div className="space-y-6">
+    <section className="border bg-sky-50 p-5 sm:p-7"><Badge>Teacher settings</Badge><h1 className="mt-4 text-3xl font-semibold sm:text-4xl">Account & Settings</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">Manage your account, teaching preferences, privacy, security, notifications, language, and subscription from one place.</p></section>
+    {saved ? <div className="flex items-center gap-2 border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800" role="status"><CheckCircle2 className="h-5 w-5"/>Your settings were saved.</div> : null}
+    <nav aria-label="Settings sections" className="flex gap-2 overflow-x-auto pb-2">{[["Account","account"],["Preferences","preferences"],["Privacy & Security","privacy"],["Billing","billing"],["Support","support"]].map(([label,id])=><a className="min-h-11 shrink-0 rounded-md border bg-surface px-4 py-3 text-sm font-medium" href={`#${id}`} key={id}>{label}</a>)}</nav>
 
-      <form action={saveUnifiedTeacherSettingsAction} className="grid gap-5 lg:grid-cols-2">
-        <Card className="p-5"><Heading icon={UserRound} title="Account" /><p className="mt-4 font-medium">{data.user.name}</p><p className="text-sm text-muted-foreground">{data.user.email}</p><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/profile">Open unified profile</Link></Card>
-        <Card className="p-5"><Heading icon={Palette} title="Appearance" /><Label htmlFor="appearance">Theme</Label><Select defaultValue={text(data.settings.appearance, "system")} id="appearance" name="appearance"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option><option value="high-contrast">High contrast</option></Select><Check name="reducedMotion" defaultChecked={data.settings.reducedMotion === true}>Reduce interface motion</Check><Check name="highContrast" defaultChecked={data.settings.highContrast === true}>Use high contrast</Check></Card>
-        <Card className="p-5"><Heading icon={Bell} title="Notifications" /><div className="mt-4 grid gap-3">{[["SYSTEM", "System and subscription"], ["CONTENT", "AI, resources, and marketplace"], ["ANNOUNCEMENT", "Institution and community"], ["ASSIGNMENT", "Assignments and orders"], ["PLANNER", "Calendar and planner"]].map(([type, label]) => <Check defaultChecked={enabled.has(type as never)} key={type} name="notificationTypes" value={type}>{label}</Check>)}</div></Card>
-        <Card className="p-5"><Heading icon={Shield} title="Privacy and security" /><Label htmlFor="privacy">Profile visibility</Label><Select defaultValue={text(data.settings.privacy, "professional")} id="privacy" name="privacy"><option value="professional">Professional community</option><option value="marketplace">Marketplace public</option><option value="private">Private</option></Select><Check defaultChecked={data.settings.securityAlerts !== false} name="securityAlerts">Security and login alerts</Check></Card>
-        <Card className="p-5"><Heading icon={Languages} title="Language and region" /><Label htmlFor="locale">Formatting locale</Label><Select defaultValue={locale} id="locale" name="locale">{supportedLocales.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}</Select><Label className="mt-4" htmlFor="timeZone">Time zone</Label><Select defaultValue={timeZone} id="timeZone" name="timeZone">{supportedTimeZones.map((zone) => <option key={zone} value={zone}>{zone.replaceAll("_", " ")}</option>)}</Select><p className="mt-3 text-xs leading-5 text-muted-foreground">Regional formatting and right-to-left layout apply after saving. Interface translations are released only after human review.</p></Card>
-        <Card className="p-5"><Heading icon={Bot} title="AI preferences" /><Label htmlFor="aiStyle">Response style</Label><Select defaultValue={text(data.settings.aiStyle, "balanced")} id="aiStyle" name="aiStyle"><option value="balanced">Balanced</option><option value="concise">Concise</option><option value="detailed">Detailed</option><option value="activity-first">Activity first</option></Select></Card>
-        <Card className="p-5"><Heading icon={Store} title="Marketplace and community" /><Check defaultChecked={data.settings.marketplaceEmails !== false} name="marketplaceEmails">Marketplace, order, and resource updates</Check><Check defaultChecked={data.settings.communityDiscovery !== false} name="communityDiscovery">Professional discovery and collaboration</Check></Card>
-        <Card className="p-5"><Heading icon={Lock} title="Subscription" /><p className="mt-4 font-semibold">{data.subscription?.plan.name ?? "No active plan"}</p><p className="text-sm text-muted-foreground">{data.subscription ? `${data.subscription.status} - renews ${data.subscription.currentPeriodEnd ? formatDate(data.subscription.currentPeriodEnd, { locale, timeZone }) : "on plan schedule"}` : "Choose a plan to unlock subscription features."}</p><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/business/subscription">Manage subscription</Link></Card>
-        <Card className="p-5 lg:col-span-2"><Heading icon={WifiOff} title="Offline experience" /><Check defaultChecked={data.settings.offlineHints !== false} name="offlineHints">Show offline-friendly guidance when files or live data are unavailable</Check></Card>
-        <Button className="lg:col-span-2 lg:w-fit" type="submit">Save unified settings</Button>
-      </form>
-    </div>
-  );
+    <section className="scroll-mt-24 space-y-4" id="account"><SectionTitle icon={UserRound} title="Account"/><div className="grid gap-4 lg:grid-cols-2">
+      <Card className="p-5"><h3 className="font-semibold">Account details</h3><dl className="mt-4 grid gap-3 text-sm"><Row label="Name" value={data.user.name}/><Row label="Email" value={data.user.email ?? "Email not added"}/><Row label="Phone" value={data.user.phoneE164 ?? data.user.profile?.phone ?? "Phone not added"}/><Row label="Workspace" value={data.user.institution?.name ?? "Workspace unavailable"}/><Row label="Account status" value={data.user.status}/></dl><div className="mt-5 flex flex-wrap gap-2"><ActionLink href={profileHref}>Edit profile</ActionLink><ActionLink href={publicHref}>Public preview</ActionLink></div></Card>
+      <Card className="p-5"><h3 className="font-semibold">Profile</h3><p className="mt-3 text-3xl font-semibold">{data.profileCompletion}%</p><p className="mt-1 text-sm text-muted-foreground">Professional profile complete</p><dl className="mt-5 grid gap-3 text-sm"><Row label="Subjects" value={data.user.teacherProfile?.subjects.join(", ") || "Not added"}/><Row label="Teaching mode" value={data.user.teacherProfile?.teachingMode ?? "Not added"}/><Row label="Languages" value={data.user.teacherProfile?.languages.join(", ") || "Not added"}/><Row label="Availability" value={data.user.teacherProfile?.availability ? "Added" : "Not added"}/></dl></Card>
+    </div></section>
+
+    <form action={saveUnifiedTeacherSettingsAction} className="space-y-6">
+      <section className="scroll-mt-24 space-y-4" id="preferences"><SectionTitle icon={Palette} title="Preferences"/><div className="grid gap-4 lg:grid-cols-2">
+        <Card className="p-5"><Subhead icon={Bell} title="Notifications"/><div className="grid gap-2">{[["SYSTEM","System and security"],["CONTENT","AI, resources, and marketplace"],["ANNOUNCEMENT","Institution and community"],["ASSIGNMENT","Students, assignments, and orders"],["PLANNER","Teaching and planner"]].map(([type,label])=><Check defaultChecked={notificationEnabled(type)} key={type} name="notificationTypes" value={type}>{label}</Check>)}</div><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/workspace/notifications">Open Notification Center</Link></Card>
+        <Card className="p-5"><Subhead icon={Bot} title="AI"/><Label htmlFor="aiStyle">Response preference</Label><Select defaultValue={text(data.settings.aiStyle,"balanced")} id="aiStyle" name="aiStyle"><option value="balanced">Balanced</option><option value="concise">Concise</option><option value="detailed">Detailed</option><option value="activity-first">Activity first</option></Select><p className="mt-3 text-sm text-muted-foreground">AI language follows your interface language. AI history remains in the existing AI Studio.</p><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/ai-studio/history">Open AI history</Link></Card>
+        <Card className="p-5"><Subhead icon={Palette} title="Appearance & accessibility"/><Label htmlFor="appearance">Theme</Label><Select defaultValue={text(data.settings.appearance,"system")} id="appearance" name="appearance"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option><option value="high-contrast">High contrast</option></Select><Check defaultChecked={data.settings.reducedMotion === true} name="reducedMotion">Reduce interface motion</Check><Check defaultChecked={data.settings.highContrast === true} name="highContrast">Use high contrast</Check><Check defaultChecked={data.settings.offlineHints !== false} name="offlineHints">Show offline-friendly guidance</Check></Card>
+        <Card className="p-5"><Subhead icon={Languages} title="Language & region"/><Label htmlFor="locale">Language and formatting</Label><Select defaultValue={locale} id="locale" name="locale">{supportedLocales.map((item)=><option key={item.code} value={item.code}>{item.label}</option>)}</Select><Label className="mt-4" htmlFor="timeZone">Time zone</Label><Select defaultValue={timeZone} id="timeZone" name="timeZone">{supportedTimeZones.map((zone)=><option key={zone} value={zone}>{zone.replaceAll("_"," ")}</option>)}</Select></Card>
+      </div></section>
+
+      <section className="scroll-mt-24 space-y-4" id="privacy"><SectionTitle icon={Shield} title="Privacy & Security"/><div className="grid gap-4 lg:grid-cols-2">
+        <Card className="p-5"><Subhead icon={Shield} title="Privacy"/><Label htmlFor="privacyMode">Professional profile visibility</Label><Select defaultValue={text(data.settings.privacy,"professional")} id="privacyMode" name="privacy"><option value="professional">Professional community</option><option value="marketplace">Marketplace public</option><option value="private">Private</option></Select><Check defaultChecked={data.settings.communityDiscovery !== false} name="communityDiscovery">Allow professional discovery</Check><Check defaultChecked={data.settings.marketplaceEmails !== false} name="marketplaceEmails">Marketplace and order updates</Check><p className="mt-4 text-sm text-muted-foreground">Resource visibility is controlled when each resource is published. Messaging follows existing community permissions.</p><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/privacy-center">Open Privacy Center</Link></Card>
+        <Card className="p-5"><Subhead icon={Lock} title="Security"/><dl className="grid gap-3 text-sm"><Row label="Sign-in" value={data.security.authMethod}/><Row label="Phone verification" value={data.security.phoneVerified ? "Verified" : "Not verified"}/><Row label="Email verification" value={data.user.email ? (data.security.emailVerified ? "Verified" : "Not verified") : "Email not added"}/><Row label="Last login" value={data.security.lastLoginAt ? formatDate(data.security.lastLoginAt,{locale,timeZone}) : "No login recorded"}/><Row label="Current session" value="This signed-in device"/></dl><Check defaultChecked={data.settings.securityAlerts !== false} name="securityAlerts">Security and login alerts</Check><p className="mt-4 text-sm text-muted-foreground">TeachX uses secure HTTP-only JWT sessions. Individual device names are not recorded by the current authentication system.</p><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/forgot-password">Reset sign-in credential</Link></Card>
+      </div></section>
+      <Button type="submit">Save preferences</Button>
+    </form>
+
+    <section className="scroll-mt-24 space-y-4" id="billing"><SectionTitle icon={CreditCard} title="Billing"/><Card className="p-5"><div className="grid gap-5 md:grid-cols-3"><Metric label="Current plan" value={data.subscription?.plan.name ?? "No active plan"}/><Metric label="AI entitlement" value={data.subscription?.plan.aiMonthlyCredits ? `${formatNumber(data.subscription.plan.aiMonthlyCredits,{locale,timeZone})} monthly credits` : "Not included"}/><Metric label="AI usage" value={`${formatNumber(data.credits.used,{locale,timeZone})} used / ${formatNumber(data.credits.remaining,{locale,timeZone})} remaining`}/></div><p className="mt-4 text-sm text-muted-foreground">{data.subscription?.currentPeriodEnd ? `${data.subscription.cancelAtPeriodEnd ? "Ends" : "Renews"} ${formatDate(data.subscription.currentPeriodEnd,{locale,timeZone})}` : "Renewal information is not available for this account."}</p><div className="mt-5 flex flex-wrap gap-2"><ActionLink href="/teacher/business/subscription">Subscription & upgrades</ActionLink><ActionLink href="/teacher/business/orders">Billing & invoices</ActionLink></div></Card></section>
+
+    <section className="scroll-mt-24 space-y-4" id="support"><SectionTitle icon={CircleHelp} title="Support"/><div className="grid gap-3 sm:grid-cols-3"><SupportLink href="/teacher/support?view=help" title="Help Center" body="Search teacher guides and FAQs."/><SupportLink href="/teacher/support?view=requests" title="Support requests" body="Submit, track, and reply to requests."/><SupportLink href="/teacher/support?view=feedback" title="Feedback" body="Rate your experience or report a problem."/></div></section>
+  </div>;
 }
 
-function Heading({ icon: Icon, title }: { icon: typeof UserRound; title: string }) {
-  return <div className="mb-4 flex items-center gap-3"><span className="bg-sky-50 p-2 text-sky-700"><Icon className="h-5 w-5" /></span><h2 className="text-xl font-semibold">{title}</h2></div>;
-}
-
-function Check({ children, defaultChecked, name, value }: { children: React.ReactNode; defaultChecked: boolean; name: string; value?: string }) {
-  return <label className="mt-3 flex items-center gap-3 text-sm"><input defaultChecked={defaultChecked} name={name} type="checkbox" value={value} />{children}</label>;
-}
+function SectionTitle({icon:Icon,title}:{icon:typeof UserRound;title:string}){return <div className="flex items-center gap-3"><Icon className="h-5 w-5 text-sky-700"/><h2 className="text-2xl font-semibold">{title}</h2></div>}
+function Subhead({icon:Icon,title}:{icon:typeof UserRound;title:string}){return <div className="mb-4 flex items-center gap-2"><Icon className="h-5 w-5 text-sky-700"/><h3 className="font-semibold">{title}</h3></div>}
+function Row({label,value}:{label:string;value:string}){return <div className="flex items-start justify-between gap-4 border-b pb-2 last:border-0"><dt className="text-muted-foreground">{label}</dt><dd className="max-w-[65%] break-words text-right font-medium">{value}</dd></div>}
+function Metric({label,value}:{label:string;value:string}){return <div className="border-l-2 border-sky-600 pl-4"><p className="text-xs font-medium uppercase text-muted-foreground">{label}</p><p className="mt-1 font-semibold">{value}</p></div>}
+function ActionLink({href,children}:{href:string;children:React.ReactNode}){return <Link className="inline-flex min-h-11 items-center rounded-md border bg-surface px-4 text-sm font-medium" href={href}>{children}</Link>}
+function SupportLink({href,title,body}:{href:string;title:string;body:string}){return <Link className="min-h-24 border bg-surface p-4 hover:bg-muted" href={href}><h3 className="font-semibold">{title}</h3><p className="mt-2 text-sm text-muted-foreground">{body}</p></Link>}
+function Check({children,defaultChecked,name,value}:{children:React.ReactNode;defaultChecked:boolean;name:string;value?:string}){return <label className="mt-3 flex min-h-11 items-center gap-3 text-sm"><input defaultChecked={defaultChecked} name={name} type="checkbox" value={value}/><span>{children}</span></label>}

@@ -18,7 +18,8 @@ const launchFeedbackSchema = z.object({
   description: z.string().max(3000).optional(),
   severity: z.enum(["Low", "Medium", "High", "Critical"]).optional(),
   route: z.string().max(240).optional(),
-  browser: z.string().max(800).optional()
+  browser: z.string().max(800).optional(),
+  category: z.enum(["Getting Started", "Teaching", "AI Studio", "Resources", "Planner", "Community", "Business", "Account", "Bug", "Broken page", "Incorrect data", "AI problem", "Payment problem", "Marketplace problem", "Other issue"]).optional()
 });
 
 function priorityFromSeverity(severity?: string) {
@@ -59,17 +60,24 @@ export async function submitLaunchFeedbackAction(formData: FormData) {
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Please check your feedback." };
 
   const input = parsed.data;
+  if (input.mode === "support") {
+    const teacherRole = session.user.roles.some((role) => ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"].includes(role));
+    if (!teacherRole || !session.user.institutionId) return { ok: false, message: "An active teacher workspace is required for teacher support." };
+    const activeTeacher = await prisma.user.count({ where: { id: session.user.id, institutionId: session.user.institutionId, status: "ACTIVE" } });
+    if (!activeTeacher) return { ok: false, message: "Your teacher account is not available for support requests." };
+  }
   const ticket = await prisma.supportTicket.create({
     data: {
       institutionId: session.user.institutionId,
       requesterId: session.user.id,
-      type: input.mode === "bug" ? "BUG" : input.mode === "support" ? "SUPPORT" : "FEEDBACK",
+      type: input.mode === "bug" || ["Bug", "Broken page"].includes(input.category ?? "") ? "BUG" : input.mode === "support" ? "SUPPORT" : "FEEDBACK",
       priority: priorityFromSeverity(input.severity),
       subject: subjectFor(input),
       body: bodyFor(input),
-      source: "launch-feedback-widget",
+      source: input.mode === "support" ? "teacher-support" : "launch-feedback-widget",
       metadata: {
-        launchPhase: 5,
+        launchPhase: 9,
+        category: input.category,
         route: input.route,
         browser: input.browser,
         rating: input.rating,
@@ -89,6 +97,7 @@ export async function submitLaunchFeedbackAction(formData: FormData) {
 
   revalidatePath("/admin/support");
   revalidatePath("/admin/launch");
+  revalidatePath("/teacher/support");
   return { ok: true, message: "Thanks. Your feedback was sent to the TeachX launch team.", ticketId: ticket.id };
 }
 
