@@ -1,18 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 
 import "./globals.css";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { PrivacyChoices } from "@/components/privacy/privacy-choices";
 import { getPublicBaseUrl } from "@/lib/env";
-import { cn } from "@/lib/utils";
 import { CONTRAST_COOKIE, LOCALE_COOKIE, MOTION_COOKIE, resolveLocale, resolveTimeZone, TIME_ZONE_COOKIE } from "@/lib/i18n/config";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap"
-});
 
 const appTitle = process.env.NEXT_PUBLIC_APP_TITLE ?? "TeachX Guru";
 const appDescription = process.env.NEXT_PUBLIC_APP_DESCRIPTION ?? "TeachX Guru is the professional AI workspace for teachers to create lessons, manage resources, build their teaching profile, and grow their teaching business.";
@@ -65,7 +58,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
   return (
     <html data-contrast={contrast} data-motion={motion} data-time-zone={timeZone} dir={locale.direction} lang={locale.code}>
-      <body className={cn(inter.className, "antialiased")}>
+      <body className="font-sans antialiased">
         <a className="skip-link" href="#main-content">Skip to main content</a>
         <div id="main-content" tabIndex={-1}>{children}</div>
         <PwaInstallPrompt />

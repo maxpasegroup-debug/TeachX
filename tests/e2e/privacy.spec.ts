@@ -4,9 +4,10 @@ test("first visit offers granular privacy choices", async ({ page }) => {
   await page.goto("/privacy");
   const dialog = page.getByRole("dialog", { name: "Privacy choices" });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByText("Essential")).toBeHidden();
+  await expect(dialog.getByLabel("Essential", { exact: true })).toHaveCount(0);
+  await expect(dialog.getByLabel(/analytics/i)).toHaveCount(0);
   await dialog.getByRole("button", { name: "Customize" }).click();
-  await expect(dialog.getByText("Essential")).toBeVisible();
+  await expect(dialog.getByLabel("Essential", { exact: true })).toBeChecked();
   await expect(dialog.getByLabel(/analytics/i)).not.toBeChecked();
   await expect(dialog.getByLabel(/marketing/i)).not.toBeChecked();
 });

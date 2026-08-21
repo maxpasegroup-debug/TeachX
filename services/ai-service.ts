@@ -35,6 +35,17 @@ export async function buildAIContext(input: { institutionId?: string | null; use
 }
 
 export async function runAI(input: { institutionId?: string | null; userId?: string; scope: AIConversationScope; feature: string; prompt: string; context?: Prisma.InputJsonValue; conversationId?: string; title?: string; messagePrompt?: string }) {
+  if (input.scope !== "TEACHER" && input.userId && input.institutionId) {
+    const teacher = await prisma.user.count({
+      where: {
+        id: input.userId,
+        institutionId: input.institutionId,
+        status: "ACTIVE",
+        roles: { some: { role: { key: { in: ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"] } } } }
+      }
+    });
+    if (teacher) throw new Error("AI_SCOPE_FORBIDDEN");
+  }
   if (input.scope === "TEACHER") {
     if (!input.userId || !input.institutionId) {
       throw new Error("Complete workspace setup before using AI Studio.");

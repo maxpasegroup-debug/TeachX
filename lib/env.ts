@@ -1,5 +1,6 @@
 const requiredProductionVariables = [
-  "DATABASE_URL", "AUTH_SECRET", "AUTH_URL", "REDIS_URL", "SETUP_SECRET", "SENTRY_DSN", "NEXT_PUBLIC_SENTRY_DSN",
+  "DATABASE_URL", "AUTH_SECRET", "AUTH_URL", "NEXT_PUBLIC_APP_URL", "REDIS_URL", "SETUP_SECRET", "SENTRY_DSN", "NEXT_PUBLIC_SENTRY_DSN",
+  "OPENAI_API_KEY",
   "SMS_PROVIDER", "SMS_LIVE", "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN",
   "BACKUP_PROVIDER", "BACKUP_S3_ENDPOINT", "BACKUP_S3_REGION", "BACKUP_S3_BUCKET", "BACKUP_S3_ACCESS_KEY_ID",
   "BACKUP_S3_SECRET_ACCESS_KEY", "BACKUP_S3_PREFIX", "BACKUP_PITR_ENABLED", "BACKUP_VOLUME_SCHEDULE",
@@ -63,7 +64,7 @@ export function getRuntimeCheck(): RuntimeCheck {
       observability: Boolean(process.env.SENTRY_DSN && process.env.NEXT_PUBLIC_SENTRY_DSN),
       recovery: Boolean(process.env.BACKUP_S3_BUCKET && process.env.BACKUP_PITR_ENABLED === "true")
     },
-    launchMode: missing.length ? "configuration_incomplete" : process.env.OPENAI_API_KEY ? "ready" : "core_ready"
+    launchMode: missing.length ? "configuration_incomplete" : "ready"
   };
 }
 

@@ -54,6 +54,7 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "TARA", href: "/tara", icon: Bot, group: "TARA" },
     { label: "Notifications", href: "/teacher/workspace/notifications", icon: Bell, group: "Account" },
     { label: "Profile", href: "/teacher/business/profile", icon: UsersRound, group: "Account" },
+    { label: "Support", href: "/teacher/support", icon: LifeBuoy, group: "Support" },
     { label: "Settings", href: "/teacher/settings", icon: Settings, group: "Support" }
   ],
   student: [

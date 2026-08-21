@@ -92,7 +92,10 @@ export default async function proxy(request: NextRequest) {
 
   if (isApi && !isAuthenticated) return unauthorizedApi(requestId);
 
+  const requiredPermission = getRoutePermission(nextUrl.pathname);
+
   if (!isApi && !isAuthenticated && !isPublicRoute) {
+    if (!requiredPermission) return nextResponse(request, requestId);
     const loginUrl = new URL("/login", nextUrl);
     loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);
     return withRequestId(NextResponse.redirect(loginUrl), requestId);
@@ -101,8 +104,6 @@ export default async function proxy(request: NextRequest) {
   if (!isApi && isAuthenticated && ["/login", "/forgot-password"].includes(nextUrl.pathname)) {
     return withRequestId(NextResponse.redirect(new URL("/dashboard", nextUrl)), requestId);
   }
-
-  const requiredPermission = getRoutePermission(nextUrl.pathname);
 
   if (!isApi && requiredPermission && !hasPermission(roles, requiredPermission)) {
     return withRequestId(NextResponse.redirect(new URL("/access-denied", nextUrl)), requestId);

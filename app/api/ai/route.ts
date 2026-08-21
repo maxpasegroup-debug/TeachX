@@ -20,24 +20,38 @@ export async function POST(request: Request) {
   if (limited) return limited;
   const access = await requireApiSession("dashboard.view");
   if ("response" in access) return access.response;
-  const parsed = aiRequestSchema.safeParse(await request.json());
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid AI request." }, { status: 400 });
+  }
+  const parsed = aiRequestSchema.safeParse(payload);
   if (!parsed.success) return NextResponse.json({ error: "Invalid AI request." }, { status: 400 });
   const body = parsed.data;
+  const teacherRoles = ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"];
+  const teacher = access.session.user.roles.some((role) => teacherRoles.includes(role));
+  const scope = body.scope ?? (teacher ? "TEACHER" : "SYSTEM");
+  if (teacher && scope !== "TEACHER") return NextResponse.json({ error: "This AI scope is not available for a teacher account." }, { status: 403 });
   const requestId = await getRequestId();
   try {
     const result = await runAI({
       institutionId: access.session.user.institutionId,
       userId: access.session.user.id,
-      scope: body.scope ?? "SYSTEM",
+      scope,
       feature: body.feature ?? "general",
       prompt: body.prompt,
       context: body.context as Prisma.InputJsonValue | undefined
     });
     return NextResponse.json(result);
   } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message === "AI_SCOPE_FORBIDDEN") return NextResponse.json({ error: "This AI scope is not available for a teacher account." }, { status: 403 });
+    if (message === "Complete workspace setup before using AI Studio.") return NextResponse.json({ error: message }, { status: 403 });
+    if (message.startsWith("Your AI credits are used") || message.startsWith("AI access is not active")) return NextResponse.json({ error: message }, { status: 402 });
     captureOperationalError(error, "ai.request.failed", {
       requestId,
-      scope: body.scope ?? "SYSTEM",
+      scope,
       feature: body.feature ?? "general"
     });
     return NextResponse.json({ error: "AI service is temporarily unavailable.", requestId }, { status: 502 });
