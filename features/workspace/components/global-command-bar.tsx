@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 
 const quickLinks = [
   { label: "Teacher Home", href: "/teacher", group: "Pages", keywords: "teacher dashboard home", icon: Sparkles },
+  { label: "TARA", href: "/tara", group: "Tools", keywords: "ai partner co-worker co-teacher co-author planning business learning", icon: Bot },
   { label: "AI Studio", href: "/teacher/ai-studio", group: "Pages", keywords: "ai studio teacher generate", icon: Sparkles },
   { label: "AI Chat", href: "/teacher/ai-studio/chat", group: "Tools", keywords: "chat assistant conversation", icon: Bot },
   { label: "AI History", href: "/teacher/ai-studio/history", group: "Resources", keywords: "history generations recent", icon: FileText },

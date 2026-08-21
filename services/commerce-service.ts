@@ -152,10 +152,10 @@ export async function getAICreditSummary(input: { userId?: string; institutionId
   const subscription = await getActiveSubscription(input.userId, input.institutionId, input.audience);
   const start = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   const [usage, byFeature, history, creditTransactions] = await Promise.all([
-    prisma.aIUsage.aggregate({ where: { userId: input.userId, createdAt: { gte: start } }, _sum: { totalTokens: true }, _count: true }),
-    prisma.aIUsage.groupBy({ by: ["feature"], where: { userId: input.userId, createdAt: { gte: start } }, _sum: { totalTokens: true }, _count: true }),
-    prisma.aIUsage.findMany({ where: { userId: input.userId }, orderBy: { createdAt: "desc" }, take: 12 }),
-    prisma.walletTransaction.findMany({ where: { userId: input.userId, pending: false, metadata: { path: ["creditType"], equals: "AI" } }, orderBy: { createdAt: "desc" }, take: 50 })
+    prisma.aIUsage.aggregate({ where: { userId: input.userId, institutionId: input.institutionId, createdAt: { gte: start } }, _sum: { totalTokens: true }, _count: true }),
+    prisma.aIUsage.groupBy({ by: ["feature"], where: { userId: input.userId, institutionId: input.institutionId, createdAt: { gte: start } }, _sum: { totalTokens: true }, _count: true }),
+    prisma.aIUsage.findMany({ where: { userId: input.userId, institutionId: input.institutionId }, orderBy: { createdAt: "desc" }, take: 12 }),
+    prisma.walletTransaction.findMany({ where: { userId: input.userId, institutionId: input.institutionId, pending: false, metadata: { path: ["creditType"], equals: "AI" } }, orderBy: { createdAt: "desc" }, take: 50 })
   ]);
 
   const monthlyAllocation = subscription?.plan.aiMonthlyCredits ?? 0;

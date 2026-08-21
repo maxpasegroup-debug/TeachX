@@ -23,6 +23,7 @@
     "settings:test": "node --test tests/security/teacher-settings-support-isolation.test.mjs",
     "integration:test": "node --test tests/security/teacher-os-integration.test.mjs",
     "facilities:test": "node --test tests/security/teacher-life-os-facilities.test.mjs",
+    "tara:test": "node --test tests/security/tara-intelligence-experience.test.mjs",
     "security:audit": "npm audit --omit=dev --audit-level=high",
     "observability:audit": "node scripts/observability-audit.mjs",
     "observability:test": "node --test tests/observability/observability-regression.test.mjs",

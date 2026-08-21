@@ -14,7 +14,6 @@ import {
   History,
   FileText,
   Map,
-  NotebookPen,
   LucideIcon,
   MessageCircle,
   PanelTop,
@@ -44,6 +43,7 @@ export type NavigationWorkspace = "teacher" | "student" | "parent" | "director" 
 export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
   teacher: [
     { label: "Home", href: "/teacher", icon: LayoutDashboard, group: "Home" },
+    { label: "TARA", href: "/tara", icon: Bot, group: "Home" },
     { label: "Teaching", href: "/teacher/workspace/classrooms", icon: UsersRound, group: "Teach" },
     { label: "AI Studio", href: "/teacher/ai-studio", icon: Sparkles, group: "Create" },
     { label: "Resources", href: "/teacher/resources", icon: LibraryBig, group: "Create" },
