@@ -18,7 +18,8 @@ test("teacher business data blocks missing tenants and scopes institution-owned 
   assert.match(service, /if \(!userId \|\| !institutionId\) return null/);
   assert.match(service, /createdById: userId, institutionId/);
   assert.match(service, /buyerId: userId, institutionId/);
-  assert.match(service, /course: \{ institutionId \}/);
+  assert.match(service, /where: \{ createdById: userId, institutionId \}/);
+  assert.match(service, /item: \{ institutionId \}/);
   assert.doesNotMatch(service, /institutionId:\s*institutionId \?\? undefined/);
 });
 

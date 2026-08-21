@@ -8,6 +8,7 @@ export async function getMarketplaceTeachers(input?: { query?: string; subject?:
   return prisma.teacherProfile.findMany({
     where: {
       isMarketplaceListed: true,
+      user: { status: "ACTIVE" },
       ...(contains ? { OR: [{ user: { name: contains } }, { headline: contains }, { bio: contains }, { location: contains }] } : {}),
       ...(input?.subject ? { subjects: { has: input.subject } } : {}),
       ...(input?.mode ? { teachingMode: input.mode } : {}),
@@ -16,22 +17,16 @@ export async function getMarketplaceTeachers(input?: { query?: string; subject?:
       ...(input?.className ? { classes: { has: input.className } } : {}),
       ...(input?.location ? { location: { contains: input.location, mode: "insensitive" } } : {})
     },
-    include: {
-      user: { include: { profile: true } },
-      bookingRequests: true
-    },
+    include: { user: { include: { profile: true } } },
     orderBy: { updatedAt: "desc" },
     take: 48
   });
 }
 
 export async function getMarketplaceTeacher(id: string) {
-  return prisma.teacherProfile.findUnique({
-    where: { id },
-    include: {
-      user: { include: { profile: true } },
-      bookingRequests: { orderBy: { createdAt: "desc" }, take: 10 }
-    }
+  return prisma.teacherProfile.findFirst({
+    where: { id, isMarketplaceListed: true, user: { status: "ACTIVE" } },
+    include: { user: { include: { profile: true } } }
   });
 }
 
