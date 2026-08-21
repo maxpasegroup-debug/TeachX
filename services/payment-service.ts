@@ -128,7 +128,7 @@ async function fulfil(tx: Prisma.TransactionClient, order: OrderForPayment, sign
   const subscriptionItem = order.items.find((item) => item.itemType === "SUBSCRIPTION" && item.planId && item.plan);
   if (subscriptionItem?.planId && subscriptionItem.plan) {
     await tx.userSubscription.updateMany({
-      where: { userId: order.buyerId, status: "ACTIVE", plan: { audience: subscriptionItem.plan.audience } },
+      where: { userId: order.buyerId, institutionId: order.institutionId, status: { in: ["ACTIVE", "TRIALING"] }, plan: { audience: subscriptionItem.plan.audience } },
       data: { status: "EXPIRED" }
     });
     await tx.userSubscription.upsert({

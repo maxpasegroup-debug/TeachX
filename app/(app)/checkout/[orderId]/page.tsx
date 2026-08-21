@@ -19,7 +19,7 @@ function providerState() {
   return { razorpayReady: config.razorpay, stripeReady: config.stripe, live: config.live };
 }
 
-export default async function CheckoutPage({ params }: { params: Promise<{ orderId: string }> }) {
+export default async function CheckoutPage({ params, searchParams }: { params: Promise<{ orderId: string }>; searchParams: Promise<{ payment?: string }> }) {
   const session = await auth();
   if (!session?.user.id) redirect("/login");
 
@@ -33,15 +33,17 @@ export default async function CheckoutPage({ params }: { params: Promise<{ order
         ...(canReviewInstitutionOrders ? [{ institutionId: session.user.institutionId }] : [])
       ]
     },
-    include: { buyer: true, items: { include: { plan: true } }, invoices: true }
+    include: { buyer: true, items: { include: { plan: true } }, invoices: true, paymentEvents: { orderBy: { receivedAt: "desc" }, take: 5 } }
   });
   if (!order) notFound();
 
+  const paymentQuery = (await searchParams).payment;
   const state = providerState();
   const isPaid = ["PAID", "FULFILLED"].includes(order.status);
   const isFree = Number(order.total) === 0;
   const providerReady = order.currency === "INR" ? state.razorpayReady : state.stripeReady;
   const payable = state.live && providerReady && order.status === "PENDING_PAYMENT" && !isFree;
+  const hasFailedPayment = order.paymentEvents.some((event) => event.status === "FAILED");
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -52,6 +54,10 @@ export default async function CheckoutPage({ params }: { params: Promise<{ order
           Pay through the provider selected for your billing currency. Access activates only after TeachX verifies the provider&apos;s signed payment event.
         </p>
       </section>
+
+      {paymentQuery === "cancelled" ? <Card className="border-amber-300 bg-amber-50 p-4 text-sm text-amber-950" role="status">Payment was cancelled. No payment was taken and your plan was not changed. You can retry when ready.</Card> : null}
+      {paymentQuery === "processing" && !isPaid ? <Card className="border-sky-300 bg-sky-50 p-4 text-sm text-sky-950" role="status">Your provider response is being verified. Access changes only after TeachX receives a valid signed payment event.</Card> : null}
+      {hasFailedPayment && !isPaid ? <Card className="border-red-300 bg-red-50 p-4 text-sm text-red-950" role="alert">This payment could not be verified, so your plan was not changed. Check the payment details or retry securely.</Card> : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <Card className="p-5 shadow-soft">

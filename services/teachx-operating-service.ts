@@ -113,7 +113,9 @@ export async function getTeacherOperatingHome(input: { userId?: string; institut
     notifications,
     preferences,
     completion,
-    plan: credits.monthlyAllocation > 0 ? "AI plan active" : "AI access not active",
+    plan: credits.subscription?.status === "TRIALING"
+      ? `7-day trial · ${Math.max(0, Math.ceil(((credits.subscription.periodEnd?.getTime() ?? Date.now()) - Date.now()) / 86_400_000))} days left`
+      : credits.subscription?.name ?? (credits.monthlyAllocation > 0 ? "AI plan active" : "AI access not active"),
     aiCreditsRemaining: credits.remaining,
     stats: {
       resourcesCreated,

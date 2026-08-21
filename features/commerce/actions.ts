@@ -102,13 +102,32 @@ export async function createResourcePurchaseOrderAction(formData: FormData) {
 export async function changeSubscriptionAction(formData: FormData) {
   const session = await auth();
   const planId = value(formData, "planId");
-  if (!session?.user.id || !planId) return;
+  const teacherRoles = ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"];
+  if (!session?.user.id || !session.user.institutionId || !session.user.roles.some((role) => teacherRoles.includes(role)) || !planId) return;
 
-  const plan = await prisma.subscriptionPlan.findFirst({ where: { id: planId, isActive: true } });
+  const plan = await prisma.subscriptionPlan.findFirst({
+    where: {
+      id: planId,
+      isActive: true,
+      audience: "TEACHER",
+      OR: [{ institutionId: session.user.institutionId }, { institutionId: null }]
+    }
+  });
   if (!plan) return;
 
   const amount = Number(plan.price);
   if (amount > 0) {
+    const existingOrder = await prisma.commerceOrder.findFirst({
+      where: {
+        buyerId: session.user.id,
+        institutionId: session.user.institutionId,
+        status: "PENDING_PAYMENT",
+        items: { some: { planId: plan.id, itemType: "SUBSCRIPTION" } }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+    if (existingOrder) redirect(`/checkout/${existingOrder.id}`);
+
     const order = await createCommerceOrder({
       buyerId: session.user.id,
       institutionId: session.user.institutionId,
@@ -152,7 +171,10 @@ export async function changeSubscriptionAction(formData: FormData) {
     redirect(`/checkout/${order.id}`);
   }
 
-  await prisma.userSubscription.updateMany({ where: { userId: session.user.id, status: "ACTIVE", plan: { audience: plan.audience } }, data: { status: "EXPIRED" } });
+  await prisma.userSubscription.updateMany({
+    where: { userId: session.user.id, institutionId: session.user.institutionId, status: { in: ["ACTIVE", "TRIALING"] }, plan: { audience: plan.audience } },
+    data: { status: "EXPIRED" }
+  });
   await prisma.userSubscription.create({
     data: {
       userId: session.user.id,

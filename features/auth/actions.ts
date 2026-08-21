@@ -17,6 +17,7 @@ import type { RoleKey } from "@/lib/constants/roles";
 import { consumeEmailVerification, issueEmailVerification, sendPasswordResetEmail } from "@/services/transactional-email-service";
 import { maskPhoneNumber, normalizePhoneNumber, validatePin } from "@/lib/auth/phone";
 import { consumeVerifiedPhoneChallenge, issuePhoneOtp, verifyPhoneOtp } from "@/services/phone-auth-service";
+import { defaultSubscriptionPlans, getTrialEndDate } from "@/services/commerce-service";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address."),
@@ -199,6 +200,47 @@ export async function completeTeacherPhoneSignupAction(formData: FormData): Prom
             { category: "POLICY_ACKNOWLEDGEMENT", granted: true, policyVersion: "2026-08-20", source: "teacher_phone_signup" }
           ]
         }
+      }
+    });
+    if (!user.institutionId) throw new Error("Teacher workspace creation did not return a tenant.");
+
+    const launchPlan = defaultSubscriptionPlans.find((plan) => plan.key === "teacher-basic");
+    if (!launchPlan) throw new Error("TeachX Basic is not configured.");
+    const plan = await tx.subscriptionPlan.create({
+      data: {
+        institutionId: user.institutionId,
+        key: launchPlan.key,
+        name: launchPlan.name,
+        audience: launchPlan.audience,
+        price: launchPlan.price,
+        currency: "INR",
+        aiMonthlyCredits: launchPlan.aiMonthlyCredits,
+        marketplaceAccess: launchPlan.marketplaceAccess,
+        resourceLimit: launchPlan.resourceLimit,
+        storageLimitMb: launchPlan.storageLimitMb,
+        featureFlags: launchPlan.featureFlags
+      }
+    });
+    const trialStartedAt = new Date();
+    const trialEndsAt = getTrialEndDate(trialStartedAt);
+    await tx.userSubscription.create({
+      data: {
+        userId: user.id,
+        institutionId: user.institutionId,
+        planId: plan.id,
+        status: "TRIALING",
+        currentPeriodStart: trialStartedAt,
+        currentPeriodEnd: trialEndsAt,
+        metadata: { source: "teacher_phone_signup", trial: true, trialDays: 7 }
+      }
+    });
+    await tx.notification.create({
+      data: {
+        userId: user.id,
+        institutionId: user.institutionId,
+        title: "Your 7-day TeachX trial is active",
+        body: "Explore the four teacher worlds and use your included AI credits before choosing a plan.",
+        link: "/teacher/business/subscription"
       }
     });
     await tx.auditLog.create({ data: { actorId: user.id, action: "CREATE", entity: "TeacherAccount", entityId: user.id, message: "Teacher created a mobile and PIN account." } });

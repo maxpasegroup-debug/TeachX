@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { ensureDefaultSubscriptionPlans, ensureWallet, getAICreditSummary, getActiveSubscription } from "@/services/commerce-service";
+import { ensureDefaultSubscriptionPlans, ensureWallet, getAICreditSummary, getActiveSubscription, getDaysRemaining } from "@/services/commerce-service";
 import { getResourceMetadata } from "@/services/learning-marketplace-service";
 
 export const teacherBusinessModules = [
@@ -31,12 +31,13 @@ export async function getTeacherBusinessData(userId?: string, institutionId?: st
 
   const currency = supportedCurrencies.has(institution.currency.toUpperCase()) ? institution.currency.toUpperCase() : "INR";
   await ensureWallet(userId, institutionId, currency);
+  const subscription = await getActiveSubscription(userId, institutionId, "TEACHER");
   const activitySince = new Date();
   activitySince.setDate(activitySince.getDate() - 90);
   const trendSince = new Date();
   trendSince.setDate(1); trendSince.setHours(0, 0, 0, 0); trendSince.setMonth(trendSince.getMonth() - 5);
 
-  const [portfolio, happyNotes, resources, sales, purchases, ownDownloads, wallets, earningTransactions, credits, plans, subscription, invoices, profileViews, followers, activities] = await Promise.all([
+  const [portfolio, happyNotes, resources, sales, purchases, ownDownloads, wallets, earningTransactions, credits, plans, invoices, profileViews, followers, activities, trialSubscription] = await Promise.all([
     prisma.userPreference.findMany({ where: { userId, key: { startsWith: "teacher-portfolio:" } }, orderBy: { updatedAt: "desc" }, take: 100 }),
     prisma.userPreference.findMany({ where: { userId, key: { startsWith: "happy-notes-submission:" } }, orderBy: { updatedAt: "desc" }, take: 50 }),
     prisma.contentItem.findMany({
@@ -73,11 +74,15 @@ export async function getTeacherBusinessData(userId?: string, institutionId?: st
     prisma.walletTransaction.findMany({ where: { userId, institutionId, type: "EARNING", createdAt: { gte: trendSince } }, orderBy: { createdAt: "desc" }, take: 500 }),
     getAICreditSummary({ userId, institutionId, audience: "TEACHER" }),
     ensureDefaultSubscriptionPlans(institutionId),
-    getActiveSubscription(userId, institutionId, "TEACHER"),
     prisma.commerceInvoice.findMany({ where: { buyerId: userId, institutionId }, include: { order: { select: { currency: true } } }, orderBy: { createdAt: "desc" }, take: 50 }),
     user.teacherProfile ? prisma.recentItem.count({ where: { type: "marketplace-teacher", entityId: user.teacherProfile.id } }) : Promise.resolve(0),
     user.teacherProfile ? prisma.favoriteItem.count({ where: { type: "marketplace-teacher", entityId: user.teacherProfile.id } }) : Promise.resolve(0),
-    prisma.activity.findMany({ where: { actorId: userId, institutionId, createdAt: { gte: activitySince } }, orderBy: { createdAt: "desc" }, take: 50 })
+    prisma.activity.findMany({ where: { actorId: userId, institutionId, createdAt: { gte: activitySince } }, orderBy: { createdAt: "desc" }, take: 50 }),
+    prisma.userSubscription.findFirst({
+      where: { userId, institutionId, plan: { audience: "TEACHER" }, metadata: { path: ["trial"], equals: true } },
+      include: { plan: true },
+      orderBy: { createdAt: "desc" }
+    })
   ]);
 
   const availability = record(user.teacherProfile?.availability);
@@ -191,8 +196,16 @@ export async function getTeacherBusinessData(userId?: string, institutionId?: st
       orders: sales.length, profileViews, resourceViews: resources.reduce((sum, item) => sum + (item.analytics?.views ?? 0), 0),
       recentActivity: activities.slice(0, 6).map((item) => ({ id: item.id, title: item.title, link: item.link, createdAt: item.createdAt.toISOString() }))
     },
-    plans: plans.filter((plan) => plan.audience === "TEACHER" && plan.isActive).map((plan) => ({ id: plan.id, name: plan.name, price: Number(plan.price), currency: plan.currency, interval: plan.interval, credits: plan.aiMonthlyCredits, marketplaceAccess: plan.marketplaceAccess, resourceLimit: plan.resourceLimit, storageLimitMb: plan.storageLimitMb })),
-    subscription: subscription ? { id: subscription.id, planId: subscription.planId, name: subscription.plan.name, status: subscription.status, renewsAt: subscription.currentPeriodEnd?.toISOString(), cancelAtPeriodEnd: subscription.cancelAtPeriodEnd, marketplaceAccess: subscription.plan.marketplaceAccess, resourceLimit: subscription.plan.resourceLimit, storageLimitMb: subscription.plan.storageLimitMb } : null,
+    plans: plans.filter((plan) => plan.audience === "TEACHER" && plan.isActive && ["teacher-free", "teacher-basic", "teacher-pro"].includes(plan.key)).map((plan) => ({ id: plan.id, key: plan.key, name: plan.name, price: Number(plan.price), currency: plan.currency, interval: plan.interval, credits: plan.aiMonthlyCredits, marketplaceAccess: plan.marketplaceAccess, resourceLimit: plan.resourceLimit, storageLimitMb: plan.storageLimitMb, featureFlags: record(plan.featureFlags) })),
+    subscription: subscription ? { id: subscription.id, planId: subscription.planId, key: subscription.plan.key, name: subscription.plan.name, status: subscription.status, price: Number(subscription.plan.price), currency: subscription.plan.currency, interval: subscription.plan.interval, periodEndsAt: subscription.currentPeriodEnd?.toISOString(), cancelAtPeriodEnd: subscription.cancelAtPeriodEnd, prepaid: record(subscription.metadata).prepaidPeriod === true, marketplaceAccess: subscription.plan.marketplaceAccess, resourceLimit: subscription.plan.resourceLimit, storageLimitMb: subscription.plan.storageLimitMb } : null,
+    trial: trialSubscription ? {
+      status: trialSubscription.status,
+      planName: trialSubscription.plan.name,
+      startedAt: trialSubscription.currentPeriodStart.toISOString(),
+      endsAt: trialSubscription.currentPeriodEnd?.toISOString() ?? null,
+      daysRemaining: getDaysRemaining(trialSubscription.currentPeriodEnd),
+      active: trialSubscription.status === "TRIALING" && getDaysRemaining(trialSubscription.currentPeriodEnd) > 0
+    } : null,
     invoices: invoices.map((item) => ({ id: item.id, number: item.invoiceNumber, total: Number(item.total), currency: item.order?.currency ?? currency, status: item.status, createdAt: item.createdAt.toISOString() }))
   };
 }

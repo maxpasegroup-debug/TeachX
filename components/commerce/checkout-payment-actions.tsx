@@ -57,7 +57,7 @@ export function CheckoutPaymentActions({ orderId, enabled }: { orderId: string; 
           order_id: String(result.providerOrderId),
           prefill: result.prefill as { name: string; email: string },
           handler: () => { setMessage("Payment received. Verifying securely..."); window.setTimeout(() => window.location.reload(), 1500); },
-          modal: { ondismiss: () => setBusy(false) }
+          modal: { ondismiss: () => { setMessage("Payment was cancelled. No payment was taken and your plan was not changed."); setBusy(false); } }
         });
         checkout.open();
         return;

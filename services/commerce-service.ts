@@ -6,9 +6,8 @@ import { getResourceMetadata } from "@/services/learning-marketplace-service";
 
 export const defaultSubscriptionPlans = [
   { key: "teacher-free", name: "Teacher Free", audience: "TEACHER" as const, price: 0, globalPrice: 0, aiMonthlyCredits: 100, marketplaceAccess: true, resourceLimit: 10, storageLimitMb: 250, featureFlags: { aiStudio: true, marketplace: true, exports: "basic", launchPlan: true } },
-  { key: "teacher-rural-starter", name: "Rural Starter", audience: "TEACHER" as const, price: 149, globalPrice: 3, aiMonthlyCredits: 500, marketplaceAccess: true, resourceLimit: 40, storageLimitMb: 1024, featureFlags: { aiStudio: true, marketplace: true, exports: "standard", whatsappSharing: true, launchPlan: true } },
-  { key: "teacher-plus", name: "Teacher Plus", audience: "TEACHER" as const, price: 299, globalPrice: 7, aiMonthlyCredits: 1500, marketplaceAccess: true, resourceLimit: 150, storageLimitMb: 3072, featureFlags: { aiStudio: true, marketplace: true, premiumResources: true, exports: "standard", launchPlan: true } },
-  { key: "teacher-pro", name: "Teacher Pro", audience: "TEACHER" as const, price: 799, globalPrice: 15, aiMonthlyCredits: 5000, marketplaceAccess: true, resourceLimit: 500, storageLimitMb: 10240, featureFlags: { aiStudio: true, marketplace: true, premiumResources: true, analytics: true, exports: "advanced", launchPlan: true } },
+  { key: "teacher-basic", name: "TeachX Basic", audience: "TEACHER" as const, price: 199, globalPrice: 3, aiMonthlyCredits: 500, marketplaceAccess: true, resourceLimit: 40, storageLimitMb: 1024, featureFlags: { aiStudio: true, tara: true, saveTime: true, planner: true, resources: true, community: true, learnMore: "essential", exports: "standard", launchPlan: true } },
+  { key: "teacher-pro", name: "TeachX Pro", audience: "TEACHER" as const, price: 499, globalPrice: 15, aiMonthlyCredits: 5000, marketplaceAccess: true, resourceLimit: 500, storageLimitMb: 10240, featureFlags: { aiStudio: true, tara: true, saveTime: true, earnMore: true, business: true, planner: true, resources: true, community: true, learnMore: "enhanced", premiumResources: true, analytics: true, exports: "advanced", launchPlan: true } },
   { key: "teacher-institution", name: "Institution", audience: "TEACHER" as const, price: 0, globalPrice: 0, aiMonthlyCredits: 25000, marketplaceAccess: true, resourceLimit: 5000, storageLimitMb: 102400, featureFlags: { placeholder: true, teams: true, adminControls: true, customPricing: true, launchPlan: true } },
   { key: "student-free", name: "Student Free", audience: "STUDENT" as const, price: 0, globalPrice: 0, aiMonthlyCredits: 80, marketplaceAccess: true, resourceLimit: 25, storageLimitMb: 250, featureFlags: { aiTutor: true, freeResources: true } },
   { key: "student-premium", name: "Student Premium", audience: "STUDENT" as const, price: 299, globalPrice: 7, aiMonthlyCredits: 1200, marketplaceAccess: true, resourceLimit: 250, storageLimitMb: 2048, featureFlags: { aiTutor: true, premiumResources: true, practice: true, downloads: "expanded" } }
@@ -25,40 +24,22 @@ export const teacherLaunchPricing = [
     highlights: ["100 AI credits/month", "10 saved resources", "Basic export", "Teacher profile draft"]
   },
   {
-    key: "teacher-rural-starter",
-    name: "Rural Starter",
-    audience: "Mobile-first and rural teachers",
-    indiaPrice: "INR 149/mo",
-    globalPrice: "$3/mo",
-    description: "Low-cost plan for regular lesson, worksheet, and WhatsApp sharing use.",
-    highlights: ["500 AI credits/month", "40 saved resources", "WhatsApp-ready output", "PDF/Word/handout export"]
-  },
-  {
-    key: "teacher-plus",
-    name: "Teacher Plus",
-    audience: "Active tutors and school teachers",
-    indiaPrice: "INR 299/mo",
-    globalPrice: "$7/mo",
-    description: "More AI creation and resource management for weekly teaching work.",
-    highlights: ["1,500 AI credits/month", "150 saved resources", "Marketplace presence", "Standard exports"]
+    key: "teacher-basic",
+    name: "TeachX Basic",
+    audience: "Teachers building a simpler daily workflow",
+    indiaPrice: "INR 199/mo + applicable taxes",
+    globalPrice: "Available where billing is configured",
+    description: "Core teaching, planning, resources, community, and essential AI access.",
+    highlights: ["500 AI credits/month", "40 saved resources", "Core Save Time tools", "Essential Learn More access"]
   },
   {
     key: "teacher-pro",
-    name: "Teacher Pro",
-    audience: "Professional creators and coaching teachers",
-    indiaPrice: "INR 799/mo",
-    globalPrice: "$15/mo",
-    description: "Advanced capacity for creators who publish, sell, and track performance.",
-    highlights: ["5,000 AI credits/month", "500 saved resources", "Advanced analytics", "Premium publishing tools"]
-  },
-  {
-    key: "teacher-institution",
-    name: "Institution",
-    audience: "Schools, coaching centers, and teams",
-    indiaPrice: "Custom",
-    globalPrice: "Custom",
-    description: "Team controls, larger limits, institution branding, and onboarding support.",
-    highlights: ["25,000+ AI credits/month", "Teacher teams", "Admin controls", "Custom storage and support"]
+    name: "TeachX Pro",
+    audience: "Teachers growing a professional practice",
+    indiaPrice: "INR 499/mo + applicable taxes",
+    globalPrice: "Available where billing is configured",
+    description: "Higher AI allowance plus the complete professional Teacher Life OS experience.",
+    highlights: ["5,000 AI credits/month", "500 saved resources", "Earn More and business tools", "Enhanced learning access"]
   }
 ];
 
@@ -101,6 +82,15 @@ export async function ensureDefaultSubscriptionPlans(institutionId?: string | nu
     }
   }
 
+  await prisma.subscriptionPlan.updateMany({
+    where: {
+      institutionId: institutionId ?? null,
+      key: { in: ["teacher-rural-starter", "teacher-plus"] },
+      isActive: true
+    },
+    data: { isActive: false }
+  });
+
   return prisma.subscriptionPlan.findMany({
     where: { OR: [{ institutionId: institutionId ?? undefined }, { institutionId: null }] },
     orderBy: [{ audience: "asc" }, { price: "asc" }]
@@ -117,15 +107,23 @@ export async function ensureWallet(userId: string, institutionId?: string | null
 
 export async function getActiveSubscription(userId?: string, institutionId?: string | null, audience?: CommerceAudience) {
   if (!userId || !institutionId) return null;
+  const now = new Date();
   const subscription = await prisma.userSubscription.findFirst({
-    where: { userId, institutionId, status: "ACTIVE", ...(audience ? { plan: { audience } } : {}) },
+    where: { userId, institutionId, status: { in: ["ACTIVE", "TRIALING"] }, ...(audience ? { plan: { audience } } : {}) },
     include: { plan: true },
     orderBy: { updatedAt: "desc" }
   });
-  if (subscription) return subscription;
+  if (subscription && (!subscription.currentPeriodEnd || subscription.currentPeriodEnd > now)) return subscription;
+  if (subscription) {
+    await prisma.userSubscription.updateMany({
+      where: { id: subscription.id, userId, institutionId, status: { in: ["ACTIVE", "TRIALING"] } },
+      data: { status: "EXPIRED", currentPeriodEnd: subscription.currentPeriodEnd ?? now }
+    });
+  }
 
   const plans = await ensureDefaultSubscriptionPlans(institutionId);
-  const freePlan = plans.find((plan) => plan.audience === audience && Number(plan.price) === 0) ?? plans.find((plan) => Number(plan.price) === 0);
+  const freePlan = plans.find((plan) => plan.key === (audience === "STUDENT" ? "student-free" : "teacher-free"))
+    ?? plans.find((plan) => plan.audience === audience && Number(plan.price) === 0);
   if (!freePlan) return null;
 
   return prisma.userSubscription.create({
@@ -140,13 +138,22 @@ export async function getActiveSubscription(userId?: string, institutionId?: str
   });
 }
 
+export function getTrialEndDate(from = new Date()) {
+  return new Date(from.getTime() + 7 * 24 * 60 * 60 * 1000);
+}
+
+export function getDaysRemaining(end: Date | string | null | undefined, from = new Date()) {
+  if (!end) return 0;
+  return Math.max(0, Math.ceil((new Date(end).getTime() - from.getTime()) / (24 * 60 * 60 * 1000)));
+}
+
 export function getNextResetDate(from = new Date()) {
   return new Date(from.getFullYear(), from.getMonth() + 1, 1);
 }
 
 export async function getAICreditSummary(input: { userId?: string; institutionId?: string | null; audience?: CommerceAudience }) {
   if (!input.userId || !input.institutionId) {
-    return { balance: 0, monthlyAllocation: 0, used: 0, remaining: 0, resetDate: getNextResetDate(), history: [], byFeature: [] };
+    return { balance: 0, monthlyAllocation: 0, used: 0, remaining: 0, resetDate: getNextResetDate(), subscription: null, history: [], byFeature: [] };
   }
 
   const subscription = await getActiveSubscription(input.userId, input.institutionId, input.audience);
@@ -169,6 +176,14 @@ export async function getAICreditSummary(input: { userId?: string; institutionId
     used,
     remaining: balance,
     resetDate: subscription?.currentPeriodEnd ?? getNextResetDate(),
+    subscription: subscription ? {
+      id: subscription.id,
+      planId: subscription.planId,
+      name: subscription.plan.name,
+      status: subscription.status,
+      periodEnd: subscription.currentPeriodEnd,
+      cancelAtPeriodEnd: subscription.cancelAtPeriodEnd
+    } : null,
     history,
     byFeature: byFeature.map((item) => ({ feature: item.feature, credits: Math.ceil((item._sum.totalTokens ?? 0) / 100), generations: item._count }))
   };

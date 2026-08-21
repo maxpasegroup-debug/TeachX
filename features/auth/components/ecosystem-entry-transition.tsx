@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
-import { BadgeCheck, BookOpen, Bot, CheckCircle2, GraduationCap, Sparkles, UsersRound } from "lucide-react";
+import { ArrowRight, BadgeCheck, BookOpen, Bot, Brain, CheckCircle2, Clock3, GraduationCap, Heart, Sparkles, UsersRound, WalletCards } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand/brand-logo";
 
@@ -35,14 +36,56 @@ const statusByJourney = {
 
 const icons = [UsersRound, Bot, BookOpen, GraduationCap];
 
+const teacherFirstSteps = [
+  { title: "Save Time", description: "Plan, create, teach, and organize.", href: "/teacher/life/save-time", icon: Clock3 },
+  { title: "Earn More", description: "Build your profile and publish your knowledge.", href: "/teacher/life/earn-more", icon: WalletCards },
+  { title: "Learn More", description: "Grow your AI and professional skills.", href: "/teacher/life/learn-more", icon: Brain },
+  { title: "Enjoy More", description: "See what is coming beyond the classroom.", href: "/teacher/life/enjoy-more", icon: Heart },
+  { title: "Ask TARA", description: "Start with your AI partner inside TeachX.", href: "/tara", icon: Bot }
+];
+
 export function EcosystemEntryTransition({ name, mode = "login", journey = "dashboard", nextPath }: EcosystemEntryTransitionProps) {
+  const showTeacherWelcome = mode === "signup" && journey === "teacher";
+
   useEffect(() => {
+    if (showTeacherWelcome) return;
     const timeout = window.setTimeout(() => {
       window.location.replace(nextPath);
     }, 950);
 
     return () => window.clearTimeout(timeout);
-  }, [nextPath]);
+  }, [nextPath, showTeacherWelcome]);
+
+  if (showTeacherWelcome) {
+    return (
+      <main className="min-h-screen bg-surface px-4 py-8 text-foreground sm:px-6 sm:py-12">
+        <section className="mx-auto w-full max-w-4xl">
+          <div className="flex justify-center"><BrandLogo markClassName="h-12 w-12" /></div>
+          <div className="mx-auto mt-7 max-w-2xl text-center">
+            <div className="inline-flex min-h-10 items-center gap-2 rounded-full border bg-background px-4 text-sm font-semibold text-brand-blue">
+              <CheckCircle2 className="h-4 w-4" /> Your 7-day trial is active
+            </div>
+            <h1 className="mt-5 text-3xl font-semibold sm:text-4xl">Welcome{name ? `, ${name}` : ""}</h1>
+            <p className="mt-3 text-base leading-7 text-muted-foreground">What would you like to do first?</p>
+          </div>
+
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            {teacherFirstSteps.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link className="group flex min-h-28 items-center gap-4 rounded-lg border bg-background p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue" href={item.href} key={item.title}>
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-blue-soft text-brand-blue"><Icon className="h-5 w-5" /></span>
+                  <span className="min-w-0 flex-1 text-left"><strong className="block text-base">{item.title}</strong><span className="mt-1 block text-sm leading-5 text-muted-foreground">{item.description}</span></span>
+                  <ArrowRight aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-brand-blue" />
+                </Link>
+              );
+            })}
+            <Link className="flex min-h-12 items-center justify-center rounded-lg border bg-background px-4 text-sm font-semibold hover:border-brand-blue/40 sm:col-span-2" href="/teacher">Go to Teacher Home</Link>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   const headline = mode === "signup" ? "Welcome to TeachX Guru" : "Welcome Back";
   const statusItems = statusByJourney[journey];

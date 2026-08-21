@@ -254,7 +254,86 @@ function Analytics({ data }: { data: Data }) {
 function Subscription({ data }: { data: Data }) {
   const subscription = data.subscription;
   const currentPrice = data.plans.find((plan) => plan.id === subscription?.planId)?.price ?? 0;
-  return <div className="space-y-6">{subscription ? <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Metric label="Current plan" value={subscription.name} /><Metric label="Status" value={subscription.status} /><Metric label="AI usage" value={`${data.credits.used}/${data.credits.allocation}`} /><Metric label="AI balance" value={data.credits.balance} /><Metric label="Resources" value={`${data.resources.length}/${subscription.resourceLimit}`} /><Metric label="Storage limit" value={`${subscription.storageLimitMb} MB`} /><Metric label="Marketplace" value={subscription.marketplaceAccess ? "Included" : "Not included"} /><Metric label="Renewal" value={when(subscription.renewsAt)} /></section> : <EmptyAction action="Choose a plan" description="Activate an existing teacher plan to manage entitlements and usage." href="/teacher/business/subscription" icon={<Star className="h-5 w-5" />} title="No active subscription" />}<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{data.plans.map((plan) => <Card className="p-5" key={plan.id}><Badge>{subscription?.planId === plan.id ? "CURRENT" : "AVAILABLE"}</Badge><h2 className="mt-3 text-lg font-semibold">{plan.name}</h2><p className="mt-2 text-2xl font-semibold">{money(plan.price, plan.currency)}</p><p className="mt-2 text-sm text-muted-foreground">{plan.credits} AI credits | {plan.resourceLimit} resources | {plan.storageLimitMb} MB</p>{subscription?.planId !== plan.id ? <form action={changeSubscriptionAction} className="mt-4"><input name="planId" type="hidden" value={plan.id} /><Button className="w-full" type="submit">{plan.price === 0 ? "Choose Free" : plan.price > currentPrice ? "Upgrade" : "Change Plan"}</Button></form> : null}</Card>)}</div>{subscription ? <form action={setSubscriptionRenewalAction}><input name="id" type="hidden" value={subscription.id} /><input name="cancel" type="hidden" value={String(!subscription.cancelAtPeriodEnd)} /><Button type="submit" variant="secondary">{subscription.cancelAtPeriodEnd ? "Resume Renewal" : "Cancel at Period End"}</Button></form> : null}<Card className="p-5"><h2 className="font-semibold">Billing information</h2><div className="mt-3 space-y-2">{data.invoices.length ? data.invoices.map((invoice) => <div className="flex flex-col justify-between gap-2 border-b py-3 text-sm sm:flex-row" key={invoice.id}><span>{invoice.number} | {invoice.status} | {when(invoice.createdAt)}</span><b>{money(invoice.total, invoice.currency)}</b></div>) : <p className="text-sm text-muted-foreground">No billing invoices are recorded.</p>}</div></Card></div>;
+  const recurringSubscription = subscription?.status === "ACTIVE" && subscription.price > 0 && !subscription.prepaid;
+  const planDescription = (key: string) => key === "teacher-pro"
+    ? "Higher AI allowance, the full Save Time experience, Earn More and business tools, plus enhanced learning access."
+    : key === "teacher-basic"
+      ? "Core teaching, planning, resources, community, essential AI, and appropriate Learn More access."
+      : "Your account and saved data remain available with a small essential allowance.";
+
+  return (
+    <div className="space-y-6">
+      {data.trial?.active ? (
+        <section className="rounded-lg border border-sky-200 bg-sky-50 p-5 text-sky-950" aria-label="Trial status">
+          <Badge>TRIAL ACTIVE</Badge>
+          <h2 className="mt-3 text-xl font-semibold">{data.trial.daysRemaining} days remaining</h2>
+          <p className="mt-2 text-sm leading-6">Your 7-day {data.trial.planName} trial ends on {when(data.trial.endsAt)}. Your saved work will not be deleted when the trial ends.</p>
+        </section>
+      ) : data.trial?.status === "EXPIRED" ? (
+        <section className="rounded-lg border bg-muted/40 p-5" aria-label="Trial status">
+          <Badge>TRIAL ENDED</Badge>
+          <h2 className="mt-3 text-xl font-semibold">Continue with the plan that fits your work</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">Your account, profile, and saved content remain available. Paid plan allowances require a verified subscription payment.</p>
+        </section>
+      ) : null}
+
+      {subscription ? (
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Metric label="Current plan" value={subscription.name} />
+          <Metric label="Status" value={subscription.status === "TRIALING" ? "Trial active" : subscription.status} />
+          <Metric label="AI usage" value={`${data.credits.used}/${data.credits.allocation}`} />
+          <Metric label="AI balance" value={data.credits.balance} />
+          <Metric label="Resources" value={`${data.resources.length}/${subscription.resourceLimit}`} />
+          <Metric label="Storage limit" value={`${subscription.storageLimitMb} MB`} />
+          <Metric label="Marketplace" value={subscription.marketplaceAccess ? "Included" : "Not included"} />
+          <Metric label={subscription.status === "TRIALING" ? "Trial ends" : subscription.prepaid ? "Access through" : "Renews"} value={when(subscription.periodEndsAt)} />
+        </section>
+      ) : (
+        <EmptyAction action="Choose a plan" description="Activate an existing teacher plan to manage entitlements and usage." href="/teacher/business/subscription" icon={<Star className="h-5 w-5" />} title="No active subscription" />
+      )}
+
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4">
+        <div><h2 className="font-semibold">Monthly plans</h2><p className="mt-1 text-sm text-muted-foreground">Prices exclude applicable taxes. Annual billing is not configured yet.</p></div>
+        <Badge>MONTHLY</Badge>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {data.plans.map((plan) => {
+          const current = subscription?.planId === plan.id;
+          const canChoose = !current && !(data.trial?.active && plan.price === 0);
+          return (
+            <Card className="p-5" key={plan.id}>
+              <Badge>{current ? "CURRENT" : "AVAILABLE"}</Badge>
+              <h2 className="mt-3 text-lg font-semibold">{plan.name}</h2>
+              <p className="mt-2 text-2xl font-semibold">{money(plan.price, plan.currency)}<span className="text-sm font-normal text-muted-foreground"> / month</span></p>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">{planDescription(plan.key)}</p>
+              <p className="mt-3 text-sm text-muted-foreground">{plan.credits.toLocaleString()} AI credits | {plan.resourceLimit} resources | {plan.storageLimitMb} MB</p>
+              {canChoose ? (
+                <form action={changeSubscriptionAction} className="mt-4">
+                  <input name="planId" type="hidden" value={plan.id} />
+                  <Button className="w-full" type="submit">{plan.price === 0 ? "Use Free Access" : plan.price > currentPrice ? "Choose Plan" : "Change Plan"}</Button>
+                </form>
+              ) : null}
+            </Card>
+          );
+        })}
+      </div>
+
+      {recurringSubscription ? (
+        <form action={setSubscriptionRenewalAction}>
+          <input name="id" type="hidden" value={subscription.id} />
+          <input name="cancel" type="hidden" value={String(!subscription.cancelAtPeriodEnd)} />
+          <Button type="submit" variant="secondary">{subscription.cancelAtPeriodEnd ? "Resume Renewal" : "Cancel at Period End"}</Button>
+        </form>
+      ) : null}
+
+      <Card className="p-5">
+        <h2 className="font-semibold">Billing information</h2>
+        <p className="mt-2 text-sm text-muted-foreground">A plan changes only after TeachX verifies payment with the configured provider.</p>
+        <div className="mt-3 space-y-2">{data.invoices.length ? data.invoices.map((invoice) => <div className="flex flex-col justify-between gap-2 border-b py-3 text-sm sm:flex-row" key={invoice.id}><span>{invoice.number} | {invoice.status} | {when(invoice.createdAt)}</span><b>{money(invoice.total, invoice.currency)}</b></div>) : <p className="text-sm text-muted-foreground">No billing invoices are recorded.</p>}</div>
+      </Card>
+    </div>
+  );
 }
 
 function Downloads({ data }: { data: Data }) {
