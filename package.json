@@ -25,6 +25,7 @@
     "facilities:test": "node --test tests/security/teacher-life-os-facilities.test.mjs",
     "tara:test": "node --test tests/security/tara-intelligence-experience.test.mjs",
     "p13:test": "node --test tests/security/four-pillar-teacher-life-os.test.mjs",
+    "p14:test": "node --test tests/security/premium-public-website.test.mjs",
     "security:audit": "npm audit --omit=dev --audit-level=high",
     "observability:audit": "node scripts/observability-audit.mjs",
     "observability:test": "node --test tests/observability/observability-regression.test.mjs",
