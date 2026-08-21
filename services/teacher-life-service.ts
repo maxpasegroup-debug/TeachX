@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { getActiveSubscription } from "@/services/commerce-service";
+import { getUserPreferences } from "@/services/preference-service";
 
 export const teacherLifePillars = ["save-time", "earn-more", "learn-more", "enjoy-more"] as const;
 export type TeacherLifePillar = (typeof teacherLifePillars)[number];
@@ -21,7 +22,7 @@ export async function getTeacherLifeData(userId?: string, institutionId?: string
   const now = new Date();
   const historyStart = new Date(now); historyStart.setMonth(historyStart.getMonth() - 6);
   const futureEnd = new Date(now); futureEnd.setFullYear(futureEnd.getFullYear() + 1);
-  const [learningItems, webinars, subscription] = await Promise.all([
+  const [learningItems, webinars, subscription, preferences] = await Promise.all([
     prisma.contentItem.findMany({
       where: {
         institutionId,
@@ -55,7 +56,8 @@ export async function getTeacherLifeData(userId?: string, institutionId?: string
       orderBy: { startsAt: "asc" },
       take: 30
     }),
-    getActiveSubscription(userId, institutionId, "TEACHER")
+    getActiveSubscription(userId, institutionId, "TEACHER"),
+    getUserPreferences(userId)
   ]);
 
   return {
@@ -65,6 +67,10 @@ export async function getTeacherLifeData(userId?: string, institutionId?: string
       oneToOneActive: teacher.teacherProfile?.onboardingStep === "one-to-one-active" && Boolean(teacher.teacherProfile?.isMarketplaceListed)
     },
     subscription: subscription ? { name: subscription.plan.name, active: subscription.status === "ACTIVE" } : null,
+    recentItems: preferences.recentItems
+      .filter((item) => Boolean(item.link?.startsWith("/teacher") || item.link?.startsWith("/tara")))
+      .slice(0, 4)
+      .map((item) => ({ id: item.id, title: item.title, type: item.type, href: item.link! })),
     learning: learningItems.map((item) => {
       const details = metadata(item.aiReadyNotes);
       const access = details.teacherLearningAccess === "PREMIUM" ? "PREMIUM" : details.teacherLearningAccess === "FREE" ? "FREE" : "PUBLISHER_DEFINED";
