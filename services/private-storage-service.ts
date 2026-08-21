@@ -343,6 +343,20 @@ export async function authorizePrivateDownload(input: { objectId: string; userId
   return url;
 }
 
+export async function authorizePublicProfilePhoto(objectId: string) {
+  const object = await prisma.storageObject.findFirst({
+    where: { id: objectId, status: "ACTIVE" },
+    select: { id: true, ownerId: true, key: true, originalName: true, mimeType: true, metadata: true }
+  });
+  const metadata = object?.metadata as StoredMetadata | null | undefined;
+  if (!object || metadata?.purpose !== "PROFILE_PHOTO" || !object.mimeType.startsWith("image/")) throw new Error("DOWNLOAD_NOT_FOUND");
+  const visible = await prisma.teacherProfile.count({
+    where: { userId: object.ownerId, isMarketplaceListed: true, user: { status: "ACTIVE" } }
+  });
+  if (visible !== 1) throw new Error("DOWNLOAD_NOT_FOUND");
+  return signStorageDownload({ key: object.key, filename: object.originalName, mimeType: object.mimeType });
+}
+
 export async function storageReadiness(institutionId: string) {
   const config = getStorageConfig();
   const [active, pending, expiredPending, quarantined, usage] = await Promise.all([

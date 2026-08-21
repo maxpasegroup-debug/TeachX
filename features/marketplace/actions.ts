@@ -78,8 +78,10 @@ export async function updateTeacherMarketplaceProfileAction(formData: FormData) 
 export async function favoriteTeacherAction(formData: FormData) {
   const session = await auth();
   const teacherProfileId = value(formData, "teacherProfileId");
-  const title = value(formData, "title");
   if (!session?.user.id || !teacherProfileId) return;
+  const teacher = await getMarketplaceTeacher(teacherProfileId);
+  if (!teacher) return;
+  const title = teacher.user.name || "TeachX Teacher";
 
   await prisma.favoriteItem.upsert({
     where: { userId_type_entityId: { userId: session.user.id, type: "marketplace-teacher", entityId: teacherProfileId } },
@@ -87,8 +89,7 @@ export async function favoriteTeacherAction(formData: FormData) {
     create: { userId: session.user.id, type: "marketplace-teacher", entityId: teacherProfileId, title, link: `/marketplace/teachers/${teacherProfileId}` }
   });
 
-  const teacher = await getMarketplaceTeacher(teacherProfileId);
-  if (teacher?.userId) {
+  if (teacher.userId) {
     await prisma.notification.create({
       data: {
         userId: teacher.userId,
@@ -108,15 +109,20 @@ export async function createTeacherBookingRequestAction(formData: FormData) {
   const teacherProfileId = value(formData, "teacherProfileId");
   const teacher = teacherProfileId ? await getMarketplaceTeacher(teacherProfileId) : null;
   if (!session?.user.id || !teacher) return;
+  const requester = await prisma.user.findFirst({ where: { id: session.user.id, status: "ACTIVE" }, select: { id: true } });
+  if (!requester || teacher.userId === requester.id) return;
+  const preferredDateValue = value(formData, "preferredDate");
+  const preferredDate = preferredDateValue ? new Date(preferredDateValue) : undefined;
+  if (preferredDate && Number.isNaN(preferredDate.getTime())) return;
 
   await prisma.teacherBookingRequest.create({
     data: {
       teacherProfileId: teacher.id,
       teacherId: teacher.userId,
-      studentId: session.user.id,
+      studentId: requester.id,
       studentName: session.user.name ?? "Student",
       studentEmail: session.user.email ?? undefined,
-      preferredDate: value(formData, "preferredDate") ? new Date(value(formData, "preferredDate")) : undefined,
+      preferredDate,
       preferredTime: value(formData, "preferredTime") || undefined,
       subject: value(formData, "subject") || "General learning",
       className: value(formData, "className") || undefined,

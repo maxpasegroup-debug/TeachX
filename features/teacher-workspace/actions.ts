@@ -8,9 +8,20 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import type { UniversalSearchResult } from "@/services/search-service";
 import { searchTeacherOS } from "@/services/teacher-integration-service";
+import { setTeacherNotificationState } from "@/services/teacher-notification-service";
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function safeExternalUrl(raw: string) {
+  if (!raw) return undefined;
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 async function teacherSession() {
@@ -39,20 +50,26 @@ export async function createTeacherContentAction(formData: FormData) {
   const courseId = value(formData, "courseId");
   const title = value(formData, "title");
   if (!courseId || !title) return;
-  const course = await prisma.course.findFirst({ where: { id: courseId, institutionId: session.user.institutionId! } });
-  if (!course) return;
+  const subjectId = value(formData, "subjectId");
+  const externalUrl = safeExternalUrl(value(formData, "externalUrl"));
+  if (externalUrl === null) return;
+  const [course, subject] = await Promise.all([
+    prisma.course.findFirst({ where: { id: courseId, institutionId: session.user.institutionId! }, select: { id: true } }),
+    subjectId ? prisma.subject.findFirst({ where: { id: subjectId, courseId, course: { institutionId: session.user.institutionId! } }, select: { id: true } }) : null
+  ]);
+  if (!course || (subjectId && !subject)) return;
   await prisma.contentItem.create({
     data: {
       institutionId: session.user.institutionId!,
       createdById: session.user.id,
       courseId,
-      subjectId: value(formData, "subjectId") || undefined,
+      subjectId: subject?.id,
       title,
       description: value(formData, "description") || undefined,
       type: (value(formData, "type") || "NOTES") as "NOTES" | "DOCUMENT" | "WORKSHEET" | "QUESTION_PAPER" | "PDF" | "PPT" | "EXTERNAL_LINK" | "REFERENCE",
-      externalUrl: value(formData, "externalUrl") || undefined,
+      externalUrl,
       status: "DRAFT",
-      versions: { create: { version: 1, title, externalUrl: value(formData, "externalUrl") || undefined, updatedById: session.user.id, changeNote: "Created in Teacher Workspace" } }
+      versions: { create: { version: 1, title, externalUrl, updatedById: session.user.id, changeNote: "Created in Teacher Workspace" } }
     }
   });
   refresh();
@@ -65,6 +82,8 @@ export async function updateTeacherContentAction(formData: FormData) {
   const item = await prisma.contentItem.findFirst({ where: { id, createdById: session.user.id, institutionId } });
   if (!item) return;
   const title = value(formData, "title") || item.title;
+  const externalUrl = safeExternalUrl(value(formData, "externalUrl"));
+  if (externalUrl === null) return;
   const nextVersion = item.version + 1;
   await prisma.$transaction([
     prisma.contentItem.updateMany({
@@ -72,12 +91,12 @@ export async function updateTeacherContentAction(formData: FormData) {
       data: {
         title,
         description: value(formData, "description"),
-        externalUrl: value(formData, "externalUrl") || undefined,
+        externalUrl,
         version: nextVersion
       }
     }),
     prisma.contentVersion.create({
-      data: { itemId: id, version: nextVersion, title, externalUrl: value(formData, "externalUrl") || undefined, updatedById: session.user.id, changeNote: "Edited in Teacher Workspace" }
+      data: { itemId: id, version: nextVersion, title, externalUrl, updatedById: session.user.id, changeNote: "Edited in Teacher Workspace" }
     })
   ]);
   refresh();
@@ -261,17 +280,28 @@ export async function setTeacherPlannerItemStatusAction(formData: FormData) {
 
 export async function markTeacherNotificationReadAction(formData: FormData) {
   const session = await teacherSession();
-  const id=value(formData,"id");
-  const result=await prisma.notification.updateMany({ where: { id, userId: session.user.id }, data: { status: "READ", readAt: new Date() } });
-  if(!result.count) await prisma.userPreference.upsert({where:{userId_key:{userId:session.user.id,key:`notification-state:${id}`}},create:{userId:session.user.id,key:`notification-state:${id}`,value:{read:true}},update:{value:{read:true}}});
+  await setTeacherNotificationState({ userId: session.user.id, institutionId: session.user.institutionId!, id: value(formData, "id"), status: "READ" });
   refresh();
 }
 
 export async function deleteTeacherNotificationAction(formData: FormData) {
   const session = await teacherSession();
-  const id=value(formData,"id");
-  const result=await prisma.notification.deleteMany({ where: { id, userId: session.user.id } });
-  if(!result.count) await prisma.userPreference.upsert({where:{userId_key:{userId:session.user.id,key:`notification-state:${id}`}},create:{userId:session.user.id,key:`notification-state:${id}`,value:{hidden:true}},update:{value:{hidden:true}}});
+  const id = value(formData, "id");
+  const institutionId = session.user.institutionId!;
+  const notification = await prisma.notification.findFirst({
+    where: { id, OR: [{ userId: session.user.id, institutionId }, { userId: null, institutionId }] },
+    select: { userId: true }
+  });
+  if (!notification) return;
+  if (notification.userId) {
+    await prisma.notification.deleteMany({ where: { id, userId: session.user.id, institutionId } });
+  } else {
+    await prisma.userPreference.upsert({
+      where: { userId_key: { userId: session.user.id, key: `notification-state:${id}` } },
+      create: { userId: session.user.id, key: `notification-state:${id}`, value: { hidden: true } },
+      update: { value: { hidden: true } }
+    });
+  }
   refresh();
 }
 

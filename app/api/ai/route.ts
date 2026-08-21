@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
-    if (message === "AI_SCOPE_FORBIDDEN") return NextResponse.json({ error: "This AI scope is not available for a teacher account." }, { status: 403 });
+    if (message === "AI_SCOPE_FORBIDDEN" || message === "AI_TEACHER_FORBIDDEN") return NextResponse.json({ error: "This AI scope is not available for this account." }, { status: 403 });
     if (message === "Complete workspace setup before using AI Studio.") return NextResponse.json({ error: message }, { status: 403 });
     if (message.startsWith("Your AI credits are used") || message.startsWith("AI access is not active")) return NextResponse.json({ error: message }, { status: 402 });
     captureOperationalError(error, "ai.request.failed", {

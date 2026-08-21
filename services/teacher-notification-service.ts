@@ -14,7 +14,7 @@ export async function getTeacherNotificationCenter(userId?: string, institutionI
 
   const [notifications, states, preferences] = await Promise.all([
     prisma.notification.findMany({
-      where: { status: { not: "ARCHIVED" }, OR: [{ userId }, { userId: null, institutionId }] },
+      where: { status: { not: "ARCHIVED" }, OR: [{ userId, institutionId }, { userId: null, institutionId }] },
       orderBy: { createdAt: "desc" },
       take: 100
     }),
@@ -54,7 +54,7 @@ export function notificationCategory(metadata: unknown) {
 
 export async function setTeacherNotificationState(input: { userId: string; institutionId: string; id: string; status: "READ" | "UNREAD" }) {
   const owned = await prisma.notification.updateMany({
-    where: { id: input.id, userId: input.userId },
+    where: { id: input.id, userId: input.userId, institutionId: input.institutionId },
     data: { status: input.status, readAt: input.status === "READ" ? new Date() : null }
   });
   if (owned.count) return owned.count;
@@ -71,7 +71,7 @@ export async function setTeacherNotificationState(input: { userId: string; insti
 export async function markAllTeacherNotificationsRead(userId: string, institutionId: string) {
   const broadcasts = await prisma.notification.findMany({ where: { userId: null, institutionId, status: { not: "ARCHIVED" } }, select: { id: true }, take: 100 });
   await prisma.$transaction([
-    prisma.notification.updateMany({ where: { userId, status: "UNREAD" }, data: { status: "READ", readAt: new Date() } }),
+    prisma.notification.updateMany({ where: { userId, institutionId, status: "UNREAD" }, data: { status: "READ", readAt: new Date() } }),
     ...broadcasts.map((item) => prisma.userPreference.upsert({
       where: { userId_key: { userId, key: `notification-state:${item.id}` } },
       create: { userId, key: `notification-state:${item.id}`, value: { read: true } },

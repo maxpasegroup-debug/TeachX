@@ -204,6 +204,16 @@ export async function completeTeacherPhoneSignupAction(formData: FormData): Prom
     });
     if (!user.institutionId) throw new Error("Teacher workspace creation did not return a tenant.");
 
+    await tx.course.create({
+      data: {
+        institutionId: user.institutionId,
+        name: "My Teaching Library",
+        code: "PERSONAL-TEACHING",
+        description: "Personal workspace for lessons, resources, and AI-created teaching material.",
+        subjects: { create: { name: "General", code: "GENERAL" } }
+      }
+    });
+
     const launchPlan = defaultSubscriptionPlans.find((plan) => plan.key === "teacher-basic");
     if (!launchPlan) throw new Error("TeachX Basic is not configured.");
     const plan = await tx.subscriptionPlan.create({

@@ -14,6 +14,12 @@ import { favoriteTeacherAction, createTeacherBookingRequestAction, updateTeacher
 import type { MarketplaceTeacher, getMarketplaceFacets, getMarketplaceTeacher, getTeacherMarketplaceDashboard, getStudentMarketplaceDashboard } from "@/services/marketplace-service";
 import { getInitials } from "@/lib/utils";
 
+function publicProfileImage(url?: string | null) {
+  if (!url) return null;
+  const match = url.match(/^\/api\/storage\/objects\/([^/]+)\/download$/);
+  return match ? `/api/storage/public-profile/${encodeURIComponent(match[1])}` : url;
+}
+
 export function MarketplaceHome({ teachers, facets }: { teachers: MarketplaceTeacher[]; facets: Awaited<ReturnType<typeof getMarketplaceFacets>> }) {
   const featured = teachers.slice(0, 6);
   const online = teachers.filter((teacher) => teacher.teachingMode === "Online" || teacher.teachingMode === "Hybrid").slice(0, 6);
@@ -77,7 +83,7 @@ export function TeacherCard({ teacher }: { teacher: MarketplaceTeacher }) {
     <Card className="overflow-hidden shadow-soft">
       <div className="h-24 bg-gradient-to-br from-sky-100 to-blue-100" />
       <div className="p-5">
-        {teacher.user.profile?.avatarUrl ? <Image alt="" className="-mt-14 h-20 w-20 rounded-2xl border-4 border-surface object-cover" height={80} src={teacher.user.profile.avatarUrl} unoptimized width={80} /> : <div className="-mt-14 flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-surface bg-sky-600 text-xl font-semibold text-white">{getInitials(name)}</div>}
+        {publicProfileImage(teacher.user.profile?.avatarUrl) ? <Image alt="" className="-mt-14 h-20 w-20 rounded-2xl border-4 border-surface object-cover" height={80} src={publicProfileImage(teacher.user.profile?.avatarUrl)!} unoptimized width={80} /> : <div className="-mt-14 flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-surface bg-sky-600 text-xl font-semibold text-white">{getInitials(name)}</div>}
         <div className="mt-4 flex items-start justify-between gap-4">
           <div>
             <h3 className="text-xl font-semibold">{name}</h3>
@@ -112,7 +118,7 @@ export function PublicTeacherProfile({ teacher }: { teacher: NonNullable<Awaited
       <section className="overflow-hidden rounded-[2rem] border border-border bg-surface shadow-soft">
         <div className="h-48 bg-gradient-to-br from-sky-100 via-white to-blue-100" />
         <div className="p-6 sm:p-8">
-          {teacher.user.profile?.avatarUrl ? <Image alt={`${teacher.user.name} profile`} className="-mt-24 h-32 w-32 rounded-[2rem] border-4 border-surface object-cover" height={128} src={teacher.user.profile.avatarUrl} unoptimized width={128} /> : <div className="-mt-24 flex h-32 w-32 items-center justify-center rounded-[2rem] border-4 border-surface bg-sky-600 text-3xl font-semibold text-white">{getInitials(teacher.user.name)}</div>}
+          {publicProfileImage(teacher.user.profile?.avatarUrl) ? <Image alt={`${teacher.user.name} profile`} className="-mt-24 h-32 w-32 rounded-[2rem] border-4 border-surface object-cover" height={128} src={publicProfileImage(teacher.user.profile?.avatarUrl)!} unoptimized width={128} /> : <div className="-mt-24 flex h-32 w-32 items-center justify-center rounded-[2rem] border-4 border-surface bg-sky-600 text-3xl font-semibold text-white">{getInitials(teacher.user.name)}</div>}
           <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
             <div>
               <h1 className="text-4xl font-semibold tracking-tight">{teacher.user.name}</h1>

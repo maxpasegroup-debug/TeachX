@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bookmark, BookOpenCheck, Download, Eye, FileText, Filter, Lock, Search, Share2, Sparkles, UploadCloud } from "lucide-react";
+import { Bookmark, BookOpenCheck, Download, Eye, FileText, Filter, Lock, Search, Sparkles, UploadCloud } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -153,6 +153,8 @@ export function ResourceDetailPage({ resource, related, canAccess = false }: { r
   const metadata = getResourceMetadata(resource);
   const teacher = resource.createdBy;
   const isPremium = metadata.priceType === "Premium";
+  const hasDelivery = Boolean(resource.fileUrl || resource.externalUrl);
+  const needsPurchase = isPremium && !canAccess;
 
   return (
     <div className="space-y-8">
@@ -197,10 +199,9 @@ export function ResourceDetailPage({ resource, related, canAccess = false }: { r
               <StatMini label="Rating" value="Soon" />
             </div>
             <div className="mt-5 space-y-3">
-              <form action={isPremium && !canAccess ? createResourcePurchaseOrderAction : downloadLearningResourceAction}>
+              <form action={needsPurchase ? createResourcePurchaseOrderAction : downloadLearningResourceAction}>
                 <input name="resourceId" type="hidden" value={resource.id} />
-                <input name="amount" type="hidden" value="199" />
-                <Button className="w-full" type="submit">{isPremium && !canAccess ? <Lock className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}{isPremium && !canAccess ? "Create Purchase Order" : "Download Resource"}</Button>
+                <Button className="w-full" disabled={!needsPurchase && !hasDelivery} type="submit">{needsPurchase ? <Lock className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}{needsPurchase ? "Create Purchase Order" : hasDelivery ? "Download Resource" : "Delivery unavailable"}</Button>
               </form>
               {isPremium && !canAccess ? (
                 <form action={wishlistLearningResourceAction}>
@@ -212,7 +213,6 @@ export function ResourceDetailPage({ resource, related, canAccess = false }: { r
                 <input name="resourceId" type="hidden" value={resource.id} />
                 <Button className="w-full" type="submit" variant="secondary"><Bookmark className="mr-2 h-4 w-4" />Bookmark</Button>
               </form>
-              <Button className="w-full" type="button" variant="secondary"><Share2 className="mr-2 h-4 w-4" />Share Placeholder</Button>
             </div>
           </Card>
         </div>

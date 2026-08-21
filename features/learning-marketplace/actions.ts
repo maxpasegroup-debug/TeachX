@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
@@ -33,6 +34,17 @@ async function requireTeacherSession() {
   });
   if (!member) throw new Error("You do not have access to publish resources.");
   return session;
+}
+
+function safeResourceUrl(raw: string, allowPrivateStorage = false) {
+  if (!raw) return undefined;
+  if (allowPrivateStorage && /^\/api\/storage\/objects\/[^/]+\/download$/.test(raw)) return raw;
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
 async function resolveCourseId(institutionId: string, courseId?: string) {
@@ -70,6 +82,19 @@ export async function publishLearningResourceAction(formData: FormData) {
   const courseId = await resolveCourseId(institutionId, value(formData, "courseId"));
   if (!title || !courseId) return;
 
+  const requestedSubjectId = value(formData, "subjectId");
+  const subject = requestedSubjectId
+    ? await prisma.subject.findFirst({
+        where: { id: requestedSubjectId, courseId, course: { institutionId } },
+        select: { id: true }
+      })
+    : null;
+  if (requestedSubjectId && !subject) return;
+
+  const fileUrl = safeResourceUrl(value(formData, "fileUrl"), true);
+  const externalUrl = safeResourceUrl(value(formData, "externalUrl"));
+  if (fileUrl === null || externalUrl === null) return;
+
   const resourceType = value(formData, "resourceType") || "Study Notes";
   const status = value(formData, "intent") === "draft" ? "DRAFT" : "PUBLISHED";
   const visibility = status === "PUBLISHED" ? "PUBLIC" : "TEACHERS";
@@ -79,12 +104,12 @@ export async function publishLearningResourceAction(formData: FormData) {
       institutionId: session.user.institutionId!,
       createdById: session.user.id,
       courseId,
-      subjectId: value(formData, "subjectId") || undefined,
+      subjectId: subject?.id,
       title,
       description: value(formData, "description") || undefined,
       type: mapResourceTypeToContentType(resourceType),
-      fileUrl: value(formData, "fileUrl") || undefined,
-      externalUrl: value(formData, "externalUrl") || undefined,
+      fileUrl,
+      externalUrl,
       status,
       visibility,
       publishedAt: status === "PUBLISHED" ? new Date() : undefined,
@@ -93,14 +118,14 @@ export async function publishLearningResourceAction(formData: FormData) {
         create: {
           version: 1,
           title,
-          fileUrl: value(formData, "fileUrl") || undefined,
-          externalUrl: value(formData, "externalUrl") || undefined,
+          fileUrl,
+          externalUrl,
           updatedById: session.user.id,
           changeNote: status === "PUBLISHED" ? "Published to learning marketplace" : "Saved as marketplace draft"
         }
       },
       analytics: { create: {} },
-      externalContent: value(formData, "externalUrl") ? { create: { url: value(formData, "externalUrl"), provider: "External" } } : undefined
+      externalContent: externalUrl ? { create: { url: externalUrl, provider: "External" } } : undefined
     }
   });
 
@@ -215,6 +240,8 @@ export async function downloadLearningResourceAction(formData: FormData) {
   if (!session?.user.id || !resource) return;
   const metadata = getResourceMetadata(resource);
   if (metadata.priceType === "Premium" && !(await userOwnsResource(session.user.id, resource.id))) return;
+  const destination = safeResourceUrl(resource.fileUrl ?? "", true) ?? safeResourceUrl(resource.externalUrl ?? "");
+  if (!destination) return;
 
   await prisma.downloadHistory.create({ data: { itemId: resource.id, userId: session.user.id } });
   await prisma.contentAnalytics.upsert({
@@ -229,6 +256,7 @@ export async function downloadLearningResourceAction(formData: FormData) {
 
   revalidatePath(`/resources/${resource.id}`);
   revalidatePath("/student/resources");
+  redirect(destination);
 }
 
 export async function saveAIConversationAsResourceAction(formData: FormData) {

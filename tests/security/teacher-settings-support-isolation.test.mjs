@@ -24,8 +24,8 @@ test("mobile placeholder email is not exposed as account data", () => {
 
 test("teacher notification reads combine own records with current-tenant broadcasts only", () => {
   const service = read("services/teacher-notification-service.ts");
-  assert.match(service, /OR: \[\{ userId \}, \{ userId: null, institutionId \}\]/);
-  assert.match(service, /id: input\.id, userId: input\.userId/);
+  assert.match(service, /OR: \[\{ userId, institutionId \}, \{ userId: null, institutionId \}\]/);
+  assert.match(service, /id: input\.id, userId: input\.userId, institutionId: input\.institutionId/);
   assert.match(service, /id: input\.id, userId: null, institutionId: input\.institutionId/);
   assert.doesNotMatch(service, /institutionId:\s*undefined/);
 });

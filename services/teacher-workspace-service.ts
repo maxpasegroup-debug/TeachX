@@ -30,6 +30,21 @@ export async function getTeacherWorkspaceData(input: {
     };
   }
 
+  const activeTeacher = await prisma.user.count({
+    where: {
+      id: input.userId,
+      institutionId: input.institutionId,
+      status: "ACTIVE",
+      roles: { some: { role: { key: { in: ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"] } } } }
+    }
+  });
+  if (activeTeacher !== 1) {
+    return {
+      classrooms: [], content: [], planner: [], timetable: [], exams: [], notes: [], aiOutputs: [],
+      activities: [], notifications: [], downloads: [], purchases: [], favorites: [], recent: [], courses: [], subjects: [], assignments: []
+    };
+  }
+
   const rangeStart = new Date();
   rangeStart.setDate(rangeStart.getDate() - 31);
   rangeStart.setHours(0, 0, 0, 0);
@@ -62,17 +77,17 @@ export async function getTeacherWorkspaceData(input: {
       include: { course: true }, orderBy: { startsAt: "asc" }, take: 100
     }),
     prisma.userPreference.findMany({ where: { userId: input.userId, key: { startsWith: "teacher-note:" } }, orderBy: { updatedAt: "desc" }, take: 100 }),
-    prisma.aIConversation.findMany({ where: { userId: input.userId, scope: "TEACHER" }, orderBy: { updatedAt: "desc" }, take: 100 }),
+    prisma.aIConversation.findMany({ where: { userId: input.userId, institutionId: input.institutionId, scope: "TEACHER" }, orderBy: { updatedAt: "desc" }, take: 100 }),
     prisma.activity.findMany({
       where: { institutionId: input.institutionId, OR: [{ actorId: input.userId }, { type: { in: ["CONTENT", "ANNOUNCEMENT", "SYSTEM"] } }] },
       include: { actor: true },
       orderBy: { createdAt: "desc" },
       take: 100
     }),
-    prisma.notification.findMany({ where: { OR: [{ userId: input.userId }, { userId: null, institutionId: input.institutionId }] }, orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.notification.findMany({ where: { OR: [{ userId: input.userId, institutionId: input.institutionId }, { userId: null, institutionId: input.institutionId }] }, orderBy: { createdAt: "desc" }, take: 100 }),
     prisma.userPreference.findMany({ where: { userId: input.userId, key: { startsWith: "notification-state:" } } }),
-    prisma.downloadHistory.findMany({ where: { userId: input.userId }, include: { item: { include: { course: true, subject: true } } }, orderBy: { downloadedAt: "desc" }, take: 100 }),
-    prisma.commerceOrderItem.findMany({ where: { order: { buyerId: input.userId, status: "PAID" }, resourceId: { not: null } }, include: { resource: { include: { course: true, subject: true } }, order: true }, orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.downloadHistory.findMany({ where: { userId: input.userId, item: { institutionId: input.institutionId } }, include: { item: { include: { course: true, subject: true } } }, orderBy: { downloadedAt: "desc" }, take: 100 }),
+    prisma.commerceOrderItem.findMany({ where: { order: { buyerId: input.userId, institutionId: input.institutionId, status: "PAID" }, resourceId: { not: null }, resource: { institutionId: input.institutionId } }, include: { resource: { include: { course: true, subject: true } }, order: true }, orderBy: { createdAt: "desc" }, take: 100 }),
     prisma.favoriteItem.findMany({ where: { userId: input.userId }, orderBy: { createdAt: "desc" }, take: 100 }),
     prisma.recentItem.findMany({ where: { userId: input.userId }, orderBy: { viewedAt: "desc" }, take: 100 }),
     prisma.course.findMany({ where: { institutionId: input.institutionId }, orderBy: { name: "asc" } }),

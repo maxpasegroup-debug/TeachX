@@ -12,6 +12,7 @@
     "/api/version"
   ],
   "publicPrefixes": [
-    "/api/auth"
+    "/api/auth",
+    "/api/storage/public-profile"
   ]
 }

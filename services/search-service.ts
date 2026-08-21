@@ -60,7 +60,7 @@ export async function universalSearch(institutionId: string, query: string, user
     prisma.assignment.findMany({ where: { title: contains, classroom: { institutionId } }, include: { classroom: true }, take: 6 }),
     prisma.attendanceSession.findMany({ where: { classroom: { institutionId, title: contains } }, include: { classroom: true, batch: true }, take: 6 })
     ,
-    userId ? prisma.aIConversation.findMany({ where: { userId, scope: "TEACHER", title: contains }, take: 12 }) : Promise.resolve([]),
+    userId ? prisma.aIConversation.findMany({ where: { userId, institutionId, scope: "TEACHER", title: contains }, take: 12 }) : Promise.resolve([]),
     userId ? prisma.userPreference.findMany({ where: { userId, key: { startsWith: "teacher-note:" }, value: { path: ["title"], string_contains: query } }, take: 12 }) : Promise.resolve([]),
     prisma.institution.findMany({ where: { id: institutionId, OR: [{ name: contains }, { address: contains }, { email: contains }] }, take: 6 })
   ]);

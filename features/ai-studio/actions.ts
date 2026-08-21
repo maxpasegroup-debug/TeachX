@@ -20,6 +20,14 @@ function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
+function teacherAIError(error: unknown) {
+  const message = error instanceof Error ? error.message : "";
+  if (message.startsWith("Your AI credits are used") || message.startsWith("AI access is not active")) return message;
+  if (message === "AI_TEACHER_FORBIDDEN" || message === "AI_SCOPE_FORBIDDEN" || message === "AI_CONVERSATION_FORBIDDEN") return "That AI workspace or conversation is not available to this teacher account.";
+  if (message === "Complete workspace setup before using AI Studio.") return message;
+  return "TeachX AI is temporarily unavailable. Please try again.";
+}
+
 export async function generateAIStudioContent(_: AIStudioGenerationState, formData: FormData): Promise<AIStudioGenerationState> {
   const session = await auth();
   if (!session?.user?.institutionId) return { error: "Complete workspace setup before using AI Studio." };
@@ -62,7 +70,7 @@ export async function generateAIStudioContent(_: AIStudioGenerationState, formDa
       }
     });
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "We could not create that AI content. Please try again." };
+    return { error: teacherAIError(error) };
   }
 
   revalidatePath("/teacher/ai-studio");
@@ -96,7 +104,7 @@ export async function generateTeacherAIChat(_: AIStudioGenerationState, formData
     revalidatePath("/teacher/ai-studio/history");
     return { text: result.text, conversationId: result.conversationId };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "We could not answer that request. Please try again." };
+    return { error: teacherAIError(error) };
   }
 }
 
@@ -138,7 +146,7 @@ export async function improveAIStudioContentAction(formData: FormData): Promise<
       }
     });
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "We could not improve that content. Please try again." };
+    return { error: teacherAIError(error) };
   }
 
   revalidatePath("/teacher/ai-studio");

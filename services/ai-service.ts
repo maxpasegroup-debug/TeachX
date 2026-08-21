@@ -50,6 +50,15 @@ export async function runAI(input: { institutionId?: string | null; userId?: str
     if (!input.userId || !input.institutionId) {
       throw new Error("Complete workspace setup before using AI Studio.");
     }
+    const teacher = await prisma.user.count({
+      where: {
+        id: input.userId,
+        institutionId: input.institutionId,
+        status: "ACTIVE",
+        roles: { some: { role: { key: { in: ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"] } } } }
+      }
+    });
+    if (teacher !== 1) throw new Error("AI_TEACHER_FORBIDDEN");
     const credits = await getAICreditSummary({ userId: input.userId, institutionId: input.institutionId, audience: "TEACHER" });
     if (credits.balance <= 0) {
       throw new Error(credits.monthlyAllocation > 0 ? "Your AI credits are used. Upgrade or wait for the next reset." : "AI access is not active for this workspace. Choose a plan to continue.");

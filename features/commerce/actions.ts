@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { createCommerceOrder, ensureWallet } from "@/services/commerce-service";
-import { getLearningResource, getResourceMetadata } from "@/services/learning-marketplace-service";
+import { getLearningResource } from "@/services/learning-marketplace-service";
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -56,20 +56,29 @@ export async function createResourcePurchaseOrderAction(formData: FormData) {
   const session = await auth();
   const resourceId = value(formData, "resourceId");
   const resource = resourceId ? await getLearningResource(resourceId) : null;
-  if (!session?.user.id || !resource) return;
-
-  const metadata = getResourceMetadata(resource);
-  const amount = metadata.priceType === "Premium" ? numberValue(formData, "amount") || 199 : 0;
-  await createCommerceOrder({
+  if (!session?.user.id || !session.user.institutionId || !resource || resource.institutionId !== session.user.institutionId) return;
+  const listing = await prisma.marketplaceListing.findFirst({
+    where: { contentItemId: resource.id, status: "ACTIVE", purchaseEnabled: true, contentItem: { institutionId: session.user.institutionId, status: "PUBLISHED", visibility: "PUBLIC" } },
+    select: { id: true, price: true, currency: true, license: true }
+  });
+  if (!listing || Number(listing.price) <= 0) return;
+  const existing = await prisma.commerceOrder.findFirst({
+    where: { buyerId: session.user.id, institutionId: session.user.institutionId, status: "PENDING_PAYMENT", items: { some: { resourceId: resource.id } } },
+    select: { id: true }
+  });
+  if (existing) redirect(`/checkout/${existing.id}`);
+  const amount = Number(listing.price);
+  const order = await createCommerceOrder({
     buyerId: session.user.id,
     institutionId: session.user.institutionId,
     type: "RESOURCE_PURCHASE",
     title: resource.title,
     itemType: "RESOURCE",
     amount,
+    currency: listing.currency,
     resourceId: resource.id,
     sellerId: resource.createdById,
-    metadata: { provider: "future", source: "learning-marketplace", priceType: metadata.priceType ?? "Free" }
+    metadata: { provider: "checkout-ready", source: "learning-marketplace", listingId: listing.id, license: listing.license, canonicalPrice: String(listing.price) }
   });
 
   await prisma.notification.create({
@@ -77,8 +86,8 @@ export async function createResourcePurchaseOrderAction(formData: FormData) {
       userId: session.user.id,
       institutionId: session.user.institutionId,
       title: "Order created",
-      body: amount > 0 ? "Payment checkout will be connected in a later phase." : `${resource.title} is now available.`,
-      link: "/student/purchases"
+      body: `${resource.title} is ready for secure payment.`,
+      link: `/checkout/${order.id}`
     }
   });
 
@@ -97,6 +106,7 @@ export async function createResourcePurchaseOrderAction(formData: FormData) {
   revalidatePath(`/resources/${resource.id}`);
   revalidatePath("/student/purchases");
   revalidatePath("/teacher/business/wallet");
+  redirect(`/checkout/${order.id}`);
 }
 
 export async function changeSubscriptionAction(formData: FormData) {
