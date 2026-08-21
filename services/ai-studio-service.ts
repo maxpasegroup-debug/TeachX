@@ -32,12 +32,12 @@ export async function getAIStudioHome(userId?: string, institutionId?: string | 
   const [preferences, conversations, usage, templates, credits] = await Promise.all([
     getUserPreferences(userId),
     prisma.aIConversation.findMany({
-      where: { userId, scope: "TEACHER" },
+      where: { userId, institutionId, scope: "TEACHER" },
       orderBy: { updatedAt: "desc" },
       take: 8
     }),
     prisma.aIUsage.aggregate({
-      where: { userId, createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } },
+      where: { userId, institutionId, createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } },
       _sum: { totalTokens: true, promptTokens: true, completionTokens: true },
       _count: true
     }),
@@ -72,10 +72,10 @@ export async function getAIStudioHome(userId?: string, institutionId?: string | 
   };
 }
 
-export async function getAIHistory(userId?: string) {
-  if (!userId) return [];
+export async function getAIHistory(userId?: string, institutionId?: string | null) {
+  if (!userId || !institutionId) return [];
   return prisma.aIConversation.findMany({
-    where: { userId, scope: "TEACHER" as AIConversationScope },
+    where: { userId, institutionId, scope: "TEACHER" as AIConversationScope },
     include: { usages: true },
     orderBy: { updatedAt: "desc" },
     take: 50

@@ -13,11 +13,12 @@ const allowedMimeTypes = new Set([
 ]);
 
 export const uploadReservationSchema = z.object({
+  purpose: z.enum(["CONTENT", "PROFILE_PHOTO"]).default("CONTENT"),
   fileName: z.string().trim().min(1).max(180),
   mimeType: z.string().trim().toLowerCase().refine((value) => allowedMimeTypes.has(value), "Unsupported file type."),
   sizeBytes: z.number().int().positive(),
   checksumSha256: z.string().regex(/^[a-f0-9]{64}$/i),
-  courseId: z.string().min(1),
+  courseId: z.string().min(1).optional(),
   subjectId: z.string().optional(),
   chapterId: z.string().optional(),
   topicId: z.string().optional(),
@@ -28,6 +29,9 @@ export const uploadReservationSchema = z.object({
   type: z.enum(contentTypes),
   durationSeconds: z.number().int().min(0).max(86_400).optional(),
   status: z.enum(workflowStatuses).default("DRAFT")
+}).superRefine((input, context) => {
+  if (input.purpose === "CONTENT" && !input.courseId) context.addIssue({ code: "custom", path: ["courseId"], message: "Course is required." });
+  if (input.purpose === "PROFILE_PHOTO" && (!input.mimeType.startsWith("image/") || input.sizeBytes > 2 * 1024 * 1024)) context.addIssue({ code: "custom", path: ["fileName"], message: "Profile photos must be JPG, PNG, WebP, or GIF files up to 2 MB." });
 });
 
 export type UploadReservationInput = z.infer<typeof uploadReservationSchema>;

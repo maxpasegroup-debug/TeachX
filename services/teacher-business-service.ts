@@ -3,7 +3,7 @@ import { ensureDefaultSubscriptionPlans, ensureWallet, getAICreditSummary, getAc
 import { getResourceMetadata } from "@/services/learning-marketplace-service";
 
 export const teacherBusinessModules = [
-  "home", "profile", "portfolio", "publishing", "marketplace", "orders", "earnings", "wallet", "payouts", "analytics", "subscription", "downloads"
+  "home", "one-to-one", "profile", "portfolio", "publishing", "happy-notes", "marketplace", "orders", "earnings", "wallet", "payouts", "analytics", "subscription", "downloads", "opportunities"
 ] as const;
 export type TeacherBusinessModule = (typeof teacherBusinessModules)[number];
 
@@ -36,8 +36,9 @@ export async function getTeacherBusinessData(userId?: string, institutionId?: st
   const trendSince = new Date();
   trendSince.setDate(1); trendSince.setHours(0, 0, 0, 0); trendSince.setMonth(trendSince.getMonth() - 5);
 
-  const [portfolio, resources, sales, purchases, ownDownloads, wallets, earningTransactions, credits, plans, subscription, invoices, profileViews, followers, activities] = await Promise.all([
+  const [portfolio, happyNotes, resources, sales, purchases, ownDownloads, wallets, earningTransactions, credits, plans, subscription, invoices, profileViews, followers, activities] = await Promise.all([
     prisma.userPreference.findMany({ where: { userId, key: { startsWith: "teacher-portfolio:" } }, orderBy: { updatedAt: "desc" }, take: 100 }),
+    prisma.userPreference.findMany({ where: { userId, key: { startsWith: "happy-notes-submission:" } }, orderBy: { updatedAt: "desc" }, take: 50 }),
     prisma.contentItem.findMany({
       where: { createdById: userId, institutionId },
       include: {
@@ -140,11 +141,19 @@ export async function getTeacherBusinessData(userId?: string, institutionId?: st
       teachingMode: user.teacherProfile?.teachingMode, teachingStyle: user.teacherProfile?.teachingStyle,
       availability: String(availability.summary ?? ""), website: String(availability.website ?? ""),
       contactPreferences: String(availability.contactPreferences ?? ""), location: user.teacherProfile?.location,
+      teachingFormats: strings(availability.teachingFormats), pricingCurrency: String(availability.pricingCurrency ?? "INR"),
+      customPricing: String(availability.customPricing ?? ""), hourlyRate: Number(user.teacherProfile?.hourlyRate ?? 0),
+      weeklyRate: Number(user.teacherProfile?.weeklyRate ?? 0), monthlyRate: Number(user.teacherProfile?.monthlyRate ?? 0),
+      oneToOneStatus: user.teacherProfile?.onboardingStep ?? "NOT_STARTED",
       public: user.teacherProfile?.isMarketplaceListed ?? false, completion: profileCompletion
     },
     portfolio: portfolio.map((item) => {
       const entry = record(item.value);
       return { id: item.id, key: item.key, title: String(entry.title ?? ""), type: String(entry.type ?? "DOCUMENT"), description: String(entry.description ?? ""), url: String(entry.url ?? ""), thumbnail: String(entry.thumbnail ?? ""), public: Boolean(entry.public), updatedAt: item.updatedAt.toISOString() };
+    }),
+    happyNotes: happyNotes.map((item) => {
+      const entry = record(item.value);
+      return { id: item.id, title: String(entry.title ?? ""), category: String(entry.category ?? ""), status: String(entry.status ?? "READY_FOR_HANDOFF"), submittedAt: String(entry.submittedAt ?? item.createdAt.toISOString()) };
     }),
     resources: mappedResources,
     sales: sales.map((item) => ({

@@ -22,6 +22,8 @@ function storageKey(config: ReturnType<typeof getStorageConfig>, institutionId: 
 }
 
 async function assertContentScope(institutionId: string, input: UploadReservationInput) {
+  if (input.purpose === "PROFILE_PHOTO") return;
+  if (!input.courseId) throw new Error("CONTENT_SCOPE_INVALID");
   const checks = await Promise.all([
     prisma.course.count({ where: { id: input.courseId, institutionId } }),
     input.subjectId ? prisma.subject.count({ where: { id: input.subjectId, courseId: input.courseId, course: { institutionId } } }) : 1,
@@ -59,6 +61,7 @@ export async function reservePrivateUpload(input: UploadReservationInput & { ins
   if (partCount > 10_000) throw new Error("FILE_TOO_LARGE");
   const expiresAt = new Date(Date.now() + (multipart ? config.resumableTtlHours * 60 * 60 : config.uploadTtlSeconds) * 1000);
   const metadata: StoredMetadata = {
+    purpose: input.purpose,
     courseId: input.courseId,
     subjectId: input.subjectId,
     chapterId: input.chapterId,
@@ -198,6 +201,8 @@ export async function abortPrivateUpload(input: { objectId: string; institutionI
 export async function completePrivateUpload(input: { objectId: string; institutionId: string; ownerId: string; requestId?: string }) {
   const object = await prisma.storageObject.findFirst({ where: { id: input.objectId, institutionId: input.institutionId, ownerId: input.ownerId }, include: { uploadParts: { orderBy: { partNumber: "asc" } } } });
   if (!object) throw new Error("UPLOAD_NOT_FOUND");
+  const stored = object.metadata as StoredMetadata | null;
+  if (object.status === "ACTIVE" && stored?.purpose === "PROFILE_PHOTO") return object;
   if (object.status === "ACTIVE" && object.contentItemId) return prisma.contentItem.findUniqueOrThrow({ where: { id: object.contentItemId } });
   if (object.status !== "PENDING") throw new Error("UPLOAD_NOT_PENDING");
   if (object.uploadExpiresAt <= new Date()) {
@@ -249,6 +254,17 @@ export async function completePrivateUpload(input: { objectId: string; instituti
   }
 
   const metadata = object.metadata as StoredMetadata | null;
+  if (metadata?.purpose === "PROFILE_PHOTO") {
+    if (!object.mimeType.startsWith("image/") || Number(object.sizeBytes) > 2 * 1024 * 1024) throw new Error("UPLOAD_METADATA_INVALID");
+    return prisma.$transaction(async (tx) => {
+      const current = await tx.storageObject.findUniqueOrThrow({ where: { id: object.id } });
+      if (current.status === "ACTIVE") return current;
+      if (current.status !== "PENDING") throw new Error("UPLOAD_NOT_PENDING");
+      const avatarUrl = `/api/storage/objects/${object.id}/download`;
+      await tx.profile.upsert({ where: { userId: input.ownerId }, update: { avatarUrl }, create: { userId: input.ownerId, avatarUrl } });
+      return tx.storageObject.update({ where: { id: object.id }, data: { status: "ACTIVE", etag: head.ETag?.replaceAll('"', ""), activatedAt: new Date(), transfers: { create: { actorId: input.ownerId, kind: "UPLOAD_COMPLETED", requestId: input.requestId, bytes: object.sizeBytes } } } });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
   if (!metadata?.courseId || !metadata.title || !metadata.type) throw new Error("UPLOAD_METADATA_INVALID");
   return prisma.$transaction(async (tx) => {
     const current = await tx.storageObject.findUniqueOrThrow({ where: { id: object.id } });
@@ -257,7 +273,7 @@ export async function completePrivateUpload(input: { objectId: string; instituti
     const item = await createContentUpload({
       institutionId: input.institutionId,
       createdById: input.ownerId,
-      courseId: metadata.courseId,
+      courseId: metadata.courseId!,
       subjectId: metadata.subjectId,
       chapterId: metadata.chapterId,
       topicId: metadata.topicId,
@@ -291,8 +307,17 @@ export async function authorizePrivateDownload(input: { objectId: string; userId
     where: { id: input.objectId, status: "ACTIVE" },
     include: { contentItem: { include: { marketplaceListing: { select: { price: true } } } } }
   });
-  const item = object?.contentItem;
-  if (!object || !item) throw new Error("DOWNLOAD_NOT_FOUND");
+  if (!object) throw new Error("DOWNLOAD_NOT_FOUND");
+  const metadata = object.metadata as StoredMetadata | null;
+  if (metadata?.purpose === "PROFILE_PHOTO") {
+    const visible = object.ownerId === input.userId || Boolean(await prisma.teacherProfile.count({ where: { userId: object.ownerId, isMarketplaceListed: true, user: { status: "ACTIVE" } } }));
+    if (!visible) throw new Error("DOWNLOAD_FORBIDDEN");
+    const url = await signStorageDownload({ key: object.key, filename: object.originalName, mimeType: object.mimeType });
+    await prisma.storageTransferEvent.create({ data: { objectId: object.id, actorId: input.userId, kind: "DOWNLOAD_SIGNED", requestId: input.requestId, bytes: object.sizeBytes } });
+    return url;
+  }
+  const item = object.contentItem;
+  if (!item) throw new Error("DOWNLOAD_NOT_FOUND");
   const owns = object.ownerId === input.userId;
   const manages = object.institutionId === input.institutionId && userHasPermission(input.roles, "content.manage");
   const entitlement = await prisma.marketplaceEntitlement.count({ where: { userId: input.userId, contentItemId: item.id, status: "ACTIVE" } });

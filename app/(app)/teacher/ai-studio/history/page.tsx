@@ -4,7 +4,7 @@ import { getAIHistory } from "@/services/ai-studio-service";
 
 export default async function AIStudioHistoryPage() {
   const session = await auth();
-  const items = await getAIHistory(session?.user.id);
+  const items = await getAIHistory(session?.user.id, session?.user.institutionId);
 
   return <AIHistoryPage items={items} />;
 }

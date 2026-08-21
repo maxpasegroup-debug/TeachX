@@ -7,17 +7,24 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getMarketplaceTeacher } from "@/services/marketplace-service";
 
+const teacherRoles = ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"];
+
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
 function list(formData: FormData, key: string) {
-  return value(formData, key).split(",").map((item) => item.trim()).filter(Boolean);
+  return value(formData, key).split(",").map((item) => item.trim()).filter(Boolean).slice(0, 30);
 }
+function record(input: unknown) { return input && typeof input === "object" && !Array.isArray(input) ? input as Record<string, unknown> : {}; }
+function rate(formData: FormData, key: string) { const amount = Number(value(formData, key)); return Number.isFinite(amount) && amount >= 0 && amount <= 10_000_000 ? amount : 0; }
 
 export async function updateTeacherMarketplaceProfileAction(formData: FormData) {
   const session = await auth();
-  if (!session?.user.id) return;
+  if (!session?.user.id || !session.user.institutionId) return;
+  const teacher = await prisma.user.findFirst({ where: { id: session.user.id, institutionId: session.user.institutionId, status: "ACTIVE", roles: { some: { role: { key: { in: teacherRoles } } } } }, select: { id: true, teacherProfile: { select: { availability: true } } } });
+  if (!teacher) return;
+  const availability = { ...record(teacher.teacherProfile?.availability), summary: value(formData, "availability").slice(0, 1000) };
 
   await prisma.teacherProfile.upsert({
     where: { userId: session.user.id },
@@ -31,19 +38,15 @@ export async function updateTeacherMarketplaceProfileAction(formData: FormData) 
       boards: list(formData, "boards"),
       languages: list(formData, "languages"),
       teachingMode: value(formData, "teachingMode") || undefined,
-      hourlyRate: value(formData, "hourlyRate") || undefined,
-      weeklyRate: value(formData, "weeklyRate") || undefined,
-      monthlyRate: value(formData, "monthlyRate") || undefined,
+      hourlyRate: rate(formData, "hourlyRate"),
+      weeklyRate: rate(formData, "weeklyRate"),
+      monthlyRate: rate(formData, "monthlyRate"),
       location: value(formData, "location") || undefined,
       teachingStyle: value(formData, "teachingStyle") || undefined,
       certificates: list(formData, "certificates"),
       achievements: list(formData, "achievements"),
       isMarketplaceListed: formData.get("isMarketplaceListed") === "on",
-      availability: {
-        summary: value(formData, "availability"),
-        documentsPlaceholder: true,
-        portfolioPlaceholder: true
-      }
+      availability
     },
     create: {
       userId: session.user.id,
@@ -56,15 +59,15 @@ export async function updateTeacherMarketplaceProfileAction(formData: FormData) 
       boards: list(formData, "boards"),
       languages: list(formData, "languages"),
       teachingMode: value(formData, "teachingMode") || undefined,
-      hourlyRate: value(formData, "hourlyRate") || undefined,
-      weeklyRate: value(formData, "weeklyRate") || undefined,
-      monthlyRate: value(formData, "monthlyRate") || undefined,
+      hourlyRate: rate(formData, "hourlyRate"),
+      weeklyRate: rate(formData, "weeklyRate"),
+      monthlyRate: rate(formData, "monthlyRate"),
       location: value(formData, "location") || undefined,
       teachingStyle: value(formData, "teachingStyle") || undefined,
       certificates: list(formData, "certificates"),
       achievements: list(formData, "achievements"),
       isMarketplaceListed: formData.get("isMarketplaceListed") === "on",
-      availability: { summary: value(formData, "availability"), documentsPlaceholder: true, portfolioPlaceholder: true }
+      availability
     }
   });
 
@@ -89,7 +92,7 @@ export async function favoriteTeacherAction(formData: FormData) {
     await prisma.notification.create({
       data: {
         userId: teacher.userId,
-        institutionId: session.user.institutionId,
+        institutionId: teacher.user.institutionId,
         title: "Your profile was saved",
         body: `${session.user.name ?? "A student"} saved your teacher profile.`,
         link: "/teacher/business/marketplace"
@@ -125,7 +128,7 @@ export async function createTeacherBookingRequestAction(formData: FormData) {
   await prisma.notification.create({
     data: {
       userId: teacher.userId,
-      institutionId: session.user.institutionId,
+      institutionId: teacher.user.institutionId,
       title: "New booking request",
       body: `${session.user.name ?? "A student"} requested a class for ${value(formData, "subject") || "learning support"}.`,
       link: "/teacher/business/marketplace"

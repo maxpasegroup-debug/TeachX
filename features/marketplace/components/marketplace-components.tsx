@@ -1,6 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
-import { Bookmark, CalendarDays, Clock, Filter, GraduationCap, Languages, MapPin, MessageCircle, Search, Share2, Star, UsersRound, Video } from "lucide-react";
+import { Bookmark, CalendarDays, Filter, GraduationCap, Languages, MapPin, MessageCircle, Search, Share2, Star, UsersRound, Video } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,10 +33,9 @@ export function MarketplaceHome({ teachers, facets }: { teachers: MarketplaceTea
 
       <TeacherSection title="Featured Teachers" teachers={featured} />
       <SubjectCloud title="Popular Subjects" items={facets.subjects} />
-      <TeacherSection title="Top Rated" teachers={teachers.slice(0, 4)} placeholder="Ratings arrive in a later phase." />
       <TeacherSection title="Recently Joined" teachers={teachers.slice(-6).reverse()} />
       <TeacherSection title="Online Teachers" teachers={online} />
-      <SubjectCloud title="Nearby Teachers" items={facets.locations.length ? facets.locations : ["Nearby teacher discovery placeholder"]} />
+      {facets.locations.length ? <SubjectCloud title="Teacher Locations" items={facets.locations} /> : null}
     </div>
   );
 }
@@ -77,19 +77,19 @@ export function TeacherCard({ teacher }: { teacher: MarketplaceTeacher }) {
     <Card className="overflow-hidden shadow-soft">
       <div className="h-24 bg-gradient-to-br from-sky-100 to-blue-100" />
       <div className="p-5">
-        <div className="-mt-14 flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-surface bg-sky-600 text-xl font-semibold text-white">{getInitials(name)}</div>
+        {teacher.user.profile?.avatarUrl ? <Image alt="" className="-mt-14 h-20 w-20 rounded-2xl border-4 border-surface object-cover" height={80} src={teacher.user.profile.avatarUrl} unoptimized width={80} /> : <div className="-mt-14 flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-surface bg-sky-600 text-xl font-semibold text-white">{getInitials(name)}</div>}
         <div className="mt-4 flex items-start justify-between gap-4">
           <div>
             <h3 className="text-xl font-semibold">{name}</h3>
             <p className="mt-1 text-sm text-muted-foreground">{teacher.qualification ?? teacher.headline ?? "TeachX Teacher"}</p>
           </div>
-          <Badge>{teacher.teachingMode ?? "Hybrid"}</Badge>
+          {teacher.teachingMode ? <Badge>{teacher.teachingMode}</Badge> : null}
         </div>
         <div className="mt-4 flex flex-wrap gap-2">{teacher.subjects.slice(0, 4).map((subject) => <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium" key={subject}>{subject}</span>)}</div>
         <div className="mt-5 grid grid-cols-3 gap-3 text-sm">
-          <p><Star className="mr-1 inline h-4 w-4 text-sky-700" />New</p>
-          <p><Clock className="mr-1 inline h-4 w-4 text-sky-700" />Fast</p>
-          <p><MapPin className="mr-1 inline h-4 w-4 text-sky-700" />{teacher.location ?? "Remote"}</p>
+          <p><GraduationCap className="mr-1 inline h-4 w-4 text-sky-700" />{teacher.experienceYears ? `${teacher.experienceYears} yrs` : "Experience not added"}</p>
+          <p><Languages className="mr-1 inline h-4 w-4 text-sky-700" />{teacher.languages[0] ?? "Language not added"}</p>
+          <p><MapPin className="mr-1 inline h-4 w-4 text-sky-700" />{teacher.location ?? "Location not added"}</p>
         </div>
         <div className="mt-5 flex gap-2">
           <Link className="flex-1 rounded-xl bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground" href={`/marketplace/teachers/${teacher.id}`}>View Profile</Link>
@@ -105,12 +105,14 @@ export function TeacherCard({ teacher }: { teacher: MarketplaceTeacher }) {
 }
 
 export function PublicTeacherProfile({ teacher }: { teacher: NonNullable<Awaited<ReturnType<typeof getMarketplaceTeacher>>> }) {
+  const availability = teacher.availability && typeof teacher.availability === "object" && !Array.isArray(teacher.availability) ? teacher.availability as Record<string, unknown> : {};
+  const currency = ["INR", "AED", "SAR", "QAR", "OMR"].includes(String(availability.pricingCurrency)) ? String(availability.pricingCurrency) : "INR";
   return (
     <div className="space-y-8">
       <section className="overflow-hidden rounded-[2rem] border border-border bg-surface shadow-soft">
         <div className="h-48 bg-gradient-to-br from-sky-100 via-white to-blue-100" />
         <div className="p-6 sm:p-8">
-          <div className="-mt-24 flex h-32 w-32 items-center justify-center rounded-[2rem] border-4 border-surface bg-sky-600 text-3xl font-semibold text-white">{getInitials(teacher.user.name)}</div>
+          {teacher.user.profile?.avatarUrl ? <Image alt={`${teacher.user.name} profile`} className="-mt-24 h-32 w-32 rounded-[2rem] border-4 border-surface object-cover" height={128} src={teacher.user.profile.avatarUrl} unoptimized width={128} /> : <div className="-mt-24 flex h-32 w-32 items-center justify-center rounded-[2rem] border-4 border-surface bg-sky-600 text-3xl font-semibold text-white">{getInitials(teacher.user.name)}</div>}
           <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
             <div>
               <h1 className="text-4xl font-semibold tracking-tight">{teacher.user.name}</h1>
@@ -119,9 +121,10 @@ export function PublicTeacherProfile({ teacher }: { teacher: NonNullable<Awaited
             </div>
             <Card className="p-5 shadow-sm">
               <p className="font-semibold">Pricing</p>
-              <p className="mt-3 text-sm text-muted-foreground">Hourly: {teacher.hourlyRate ? `INR ${teacher.hourlyRate}` : "Available on request"}</p>
-              <p className="text-sm text-muted-foreground">Weekly: {teacher.weeklyRate ? `INR ${teacher.weeklyRate}` : "Available on request"}</p>
-              <p className="text-sm text-muted-foreground">Monthly: {teacher.monthlyRate ? `INR ${teacher.monthlyRate}` : "Available on request"}</p>
+              <p className="mt-3 text-sm text-muted-foreground">Hourly: {teacher.hourlyRate ? `${currency} ${teacher.hourlyRate}` : "Not set"}</p>
+              <p className="text-sm text-muted-foreground">Weekly: {teacher.weeklyRate ? `${currency} ${teacher.weeklyRate}` : "Not set"}</p>
+              <p className="text-sm text-muted-foreground">Monthly: {teacher.monthlyRate ? `${currency} ${teacher.monthlyRate}` : "Not set"}</p>
+              {typeof availability.customPricing === "string" && availability.customPricing ? <p className="mt-2 text-sm text-muted-foreground">Custom: {availability.customPricing}</p> : null}
             </Card>
           </div>
         </div>
@@ -130,14 +133,14 @@ export function PublicTeacherProfile({ teacher }: { teacher: NonNullable<Awaited
       <section className="grid gap-6 xl:grid-cols-[1fr_420px]">
         <div className="space-y-6">
           <Info title="About" text={teacher.bio ?? "This teacher is preparing a detailed TeachX profile."} />
-          <Info title="Teaching Style" text={teacher.teachingStyle ?? "Personalized, structured, and progress-focused."} />
+          <Info title="Teaching Style" text={teacher.teachingStyle ?? "Teaching style not added."} />
           <div className="grid gap-4 md:grid-cols-2">
             <Meta icon={Languages} title="Languages" items={teacher.languages} />
-            <Meta icon={Video} title="Teaching Mode" items={[teacher.teachingMode ?? "Hybrid"]} />
+            <Meta icon={Video} title="Teaching Mode" items={teacher.teachingMode ? [teacher.teachingMode] : []} />
             <Meta icon={Star} title="Achievements" items={teacher.achievements} />
             <Meta icon={GraduationCap} title="Certificates" items={teacher.certificates} />
           </div>
-          <Card className="p-5 shadow-soft"><h2 className="text-xl font-semibold">Ratings & Reviews</h2><p className="mt-3 text-muted-foreground">Ratings, reviews, and response time placeholders are ready for a later phase.</p></Card>
+          <Card className="p-5 shadow-soft"><h2 className="text-xl font-semibold">Ratings & Reviews</h2><p className="mt-3 text-muted-foreground">No verified teacher reviews are available yet.</p></Card>
         </div>
         <BookingRequestCard teacher={teacher} />
       </section>
@@ -169,8 +172,8 @@ function BookingRequestCard({ teacher }: { teacher: NonNullable<Awaited<ReturnTy
         <Button className="w-full" type="submit"><CalendarDays className="mr-2 h-4 w-4" />Request Class</Button>
       </form>
       <div className="mt-4 grid gap-2 text-sm text-muted-foreground">
-        <p><MessageCircle className="mr-2 inline h-4 w-4" />Messaging placeholder</p>
-        <p><Share2 className="mr-2 inline h-4 w-4" />Share profile architecture</p>
+        <p><MessageCircle className="mr-2 inline h-4 w-4" />Use the request form to contact this teacher.</p>
+        <p><Share2 className="mr-2 inline h-4 w-4" />Profile sharing is available through the page URL.</p>
       </div>
     </Card>
   );
@@ -189,7 +192,7 @@ export function TeacherMarketplaceEditor({ data }: { data: Awaited<ReturnType<ty
         <Stat label="Profile Views" value={data.profileViews.toString()} />
         <Stat label="Saved By Students" value={data.savedByStudents.toString()} />
         <Stat label="Teaching Requests" value={data.requests.length.toString()} />
-        <Stat label="Acceptance Rate" value="Placeholder" />
+        <Stat label="Accepted Requests" value={data.requests.filter((request) => request.status === "ACCEPTED").length.toString()} />
       </section>
       <Card className="p-5 shadow-soft">
         <h2 className="text-xl font-semibold">Profile Editor</h2>
@@ -234,14 +237,14 @@ export function StudentMarketplaceDashboard({ data }: { data: Awaited<ReturnType
       <section className="rounded-[2rem] border border-border bg-gradient-to-br from-sky-50 via-white to-blue-50 p-6 shadow-soft sm:p-8">
         <Badge>My Teachers</Badge>
         <h1 className="mt-6 text-4xl font-semibold tracking-tight">Saved teachers and requests.</h1>
-        <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">Track favorite teachers, recent profiles, class requests, and upcoming session placeholders.</p>
+        <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">Track favorite teachers, recent profiles, and class requests.</p>
       </section>
       <div className="grid gap-6 lg:grid-cols-3">
         <SimpleList title="Saved Teachers" items={data.savedTeachers.map((item) => item.title)} />
         <SimpleList title="Recent Teachers" items={data.recentTeachers.map((item) => item.title)} />
         <SimpleList title="My Requests" items={data.requests.map((item) => `${item.subject} • ${item.status}`)} />
       </div>
-      <Card className="p-5 shadow-soft"><h2 className="text-xl font-semibold">Upcoming Sessions</h2><p className="mt-3 text-muted-foreground">Placeholder for scheduled sessions. Live video belongs to a later phase.</p></Card>
+      <Card className="p-5 shadow-soft"><h2 className="text-xl font-semibold">Upcoming Sessions</h2><p className="mt-3 text-muted-foreground">No confirmed marketplace sessions are available.</p></Card>
     </div>
   );
 }

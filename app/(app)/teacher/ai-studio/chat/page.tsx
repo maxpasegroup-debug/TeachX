@@ -4,7 +4,7 @@ import { getAIHistory } from "@/services/ai-studio-service";
 
 export default async function AIStudioChatPage({ searchParams }: { searchParams: Promise<{ prompt?: string }> }) {
   const session = await auth();
-  const chats = await getAIHistory(session?.user.id);
+  const chats = await getAIHistory(session?.user.id, session?.user.institutionId);
   const { prompt } = await searchParams;
 
   return <AIChatPage chats={chats.map((chat) => ({ id: chat.id, title: chat.title, updatedAt: chat.updatedAt, messages: chat.messages }))} initialPrompt={prompt} />;

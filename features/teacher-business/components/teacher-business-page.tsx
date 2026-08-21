@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import {
   BarChart3, BookOpen, BriefcaseBusiness, CheckCircle2, CircleDollarSign, Download,
-  ExternalLink, FileText, Home, Package, Plus, Search, Sparkles, Star, Store, Upload,
+  ExternalLink, FileText, GraduationCap, Home, Lightbulb, Package, PenLine, Plus, Search, Sparkles, Star, Store, Upload,
   UserRound, WalletCards
 } from "lucide-react";
 
@@ -19,19 +20,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { changeSubscriptionAction } from "@/features/commerce/actions";
 import {
   deleteBusinessResourceAction, deletePortfolioItemAction, saveBusinessProfileAction,
-  saveMarketplaceProductAction, savePortfolioItemAction, setBusinessResourceStatusAction,
+  saveMarketplaceProductAction, saveOneToOneTeachingAction, savePortfolioItemAction, setBusinessResourceStatusAction, submitHappyNotesAction,
   setSubscriptionRenewalAction
 } from "@/features/teacher-business/actions";
 import type { getTeacherBusinessData, TeacherBusinessModule } from "@/services/teacher-business-service";
+import { ProfilePhotoUpload } from "@/features/teacher-business/components/profile-photo-upload";
 
 type Data = NonNullable<Awaited<ReturnType<typeof getTeacherBusinessData>>>;
 type Resource = Data["resources"][number];
 
 const modules: { slug: TeacherBusinessModule; label: string; icon: typeof Home }[] = [
   { slug: "home", label: "Business Home", icon: Home },
+  { slug: "one-to-one", label: "Teach 1:1", icon: GraduationCap },
   { slug: "profile", label: "Profile", icon: UserRound },
   { slug: "portfolio", label: "Portfolio", icon: BriefcaseBusiness },
   { slug: "publishing", label: "Publishing", icon: Upload },
+  { slug: "happy-notes", label: "Happy Notes", icon: PenLine },
   { slug: "marketplace", label: "Products", icon: Store },
   { slug: "orders", label: "Orders", icon: FileText },
   { slug: "earnings", label: "Earnings", icon: CircleDollarSign },
@@ -39,14 +43,17 @@ const modules: { slug: TeacherBusinessModule; label: string; icon: typeof Home }
   { slug: "payouts", label: "Payouts", icon: CheckCircle2 },
   { slug: "analytics", label: "Analytics", icon: BarChart3 },
   { slug: "subscription", label: "Subscription", icon: Star },
-  { slug: "downloads", label: "Purchases", icon: Download }
+  { slug: "downloads", label: "Purchases", icon: Download },
+  { slug: "opportunities", label: "Future Opportunities", icon: Lightbulb }
 ];
 
 const descriptions: Record<TeacherBusinessModule, string> = {
   home: "Your professional profile, publishing, sales, and wallet evidence in one concise view.",
+  "one-to-one": "Complete one simple professional teaching profile, set your real availability and pricing, then activate it for discovery.",
   profile: "Maintain the professional profile shared with the teacher network and marketplace.",
   portfolio: "Present selected teaching work, achievements, qualifications, and published resources.",
   publishing: "Move existing Resource Studio work through draft, publication, and marketplace availability.",
+  "happy-notes": "Prepare constructive knowledge for the existing Happy Notes platform through a clear TeachX handoff boundary.",
   marketplace: "Manage canonical product pricing, delivery status, reviews, and marketplace presence.",
   orders: "Review seller-owned order evidence without exposing private buyer contact details.",
   earnings: "Read completed and pending earnings from the shared wallet ledger.",
@@ -54,7 +61,8 @@ const descriptions: Record<TeacherBusinessModule, string> = {
   payouts: "Review settlement readiness and payout history when a verified provider is available.",
   analytics: "Use recorded profile, resource, order, and network signals to understand growth.",
   subscription: "Manage the existing teacher subscription, AI entitlement, usage, and billing records.",
-  downloads: "Access resources purchased through the shared commerce and entitlement system."
+  downloads: "Access resources purchased through the shared commerce and entitlement system.",
+  opportunities: "A truthful readiness area for future verified teacher opportunities."
 };
 
 function money(value: number, currency: string) {
@@ -94,8 +102,10 @@ function BusinessHome({ data }: { data: Data }) {
     </section>
     <section className="flex flex-wrap gap-2">
       <ActionLink href="/teacher/business/profile" primary><UserRound className="h-4 w-4" />Complete Profile</ActionLink>
+      <ActionLink href="/teacher/business/one-to-one"><GraduationCap className="h-4 w-4" />Teach 1:1</ActionLink>
       <ActionLink href="/teacher/resources"><Plus className="h-4 w-4" />Create Resource</ActionLink>
       <ActionLink href="/teacher/business/publishing"><Upload className="h-4 w-4" />Publishing Center</ActionLink>
+      <ActionLink href="/teacher/business/happy-notes"><PenLine className="h-4 w-4" />Publish Knowledge</ActionLink>
       <ActionLink href="/teacher/business/orders"><FileText className="h-4 w-4" />View Orders</ActionLink>
     </section>
     <section className="grid gap-5 lg:grid-cols-2">
@@ -110,7 +120,7 @@ function Profile({ data }: { data: Data }) {
   return <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
     <Card className="p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-semibold">Professional profile</h2><p className="text-sm text-muted-foreground">{p.completion}% complete</p></div><Link className="text-sm font-semibold text-sky-700" href="/teacher/ai-studio/chat"><Sparkles className="mr-1 inline h-4 w-4" />Improve with AI</Link></div>
       <form action={saveBusinessProfileAction} className="mt-5 grid gap-4 md:grid-cols-2">
-        <Field label="Profile photo URL"><Input defaultValue={p.avatarUrl ?? ""} name="avatarUrl" type="url" /></Field>
+        <Field label="Profile photo"><ProfilePhotoUpload /><Input defaultValue={p.avatarUrl ?? ""} name="avatarUrl" type="hidden" /></Field>
         <Field label="Cover URL"><Input defaultValue={p.banner ?? ""} name="coverUrl" type="url" /></Field>
         <Field label="Professional headline"><Input defaultValue={p.headline ?? ""} maxLength={180} name="headline" /></Field>
         <Field label="Experience years"><Input defaultValue={p.experienceYears ?? ""} max="80" min="0" name="experienceYears" type="number" /></Field>
@@ -140,6 +150,42 @@ function Profile({ data }: { data: Data }) {
 
 function Field({ label, className = "", children }: { label: string; className?: string; children: React.ReactNode }) {
   return <div className={className}><Label>{label}</Label>{children}</div>;
+}
+
+const teachingFormats = ["Online", "In person", "Hybrid", "Small group"];
+const happyNotesCategories = ["Education", "Personal Growth", "Health", "Wealth", "Happiness", "Leadership", "Career", "Psychology", "Productivity", "Life Skills"];
+
+function OneToOne({ data }: { data: Data }) {
+  const p = data.profile;
+  const active = p.oneToOneStatus === "one-to-one-active";
+  return <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+    <Card className="p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-semibold">Professional teaching profile</h2><p className="mt-1 text-sm text-muted-foreground">Save a draft at any time. Activation only succeeds when every essential detail is present.</p></div><Badge>{active ? "ACTIVE" : "DRAFT"}</Badge></div>
+      <form action={saveOneToOneTeachingAction} className="mt-5 grid gap-4 md:grid-cols-2">
+        <Field className="md:col-span-2" label="1. Profile photo"><div className="grid gap-3 sm:grid-cols-[80px_1fr]">{p.avatarUrl ? <Image alt="Current profile" className="h-20 w-20 border object-cover" height={80} src={p.avatarUrl} unoptimized width={80} /> : <div className="flex h-20 w-20 items-center justify-center border text-xs text-muted-foreground">No photo</div>}<ProfilePhotoUpload /></div></Field>
+        <Field label="2. Qualification"><Input defaultValue={p.qualification ?? ""} maxLength={180} name="qualification" required /></Field>
+        <Field label="3. Experience in years"><Input defaultValue={p.experienceYears ?? ""} max="80" min="0" name="experienceYears" type="number" required /></Field>
+        <Field label="4. Expertise"><Input defaultValue={p.skills.join(", ")} name="skills" placeholder="Primary teaching strengths" /></Field>
+        <Field label="Subjects"><Input defaultValue={p.subjects.join(", ")} name="subjects" placeholder="Mathematics, Science" /></Field>
+        <Field label="5. Teaching levels"><Input defaultValue={p.grades.join(", ")} name="classes" placeholder="Grade 6, Grade 7" required /></Field>
+        <Field label="6. Languages"><Input defaultValue={p.languages.join(", ")} name="languages" placeholder="English, Hindi" required /></Field>
+        <fieldset className="md:col-span-2"><legend className="text-sm font-medium">7. Teaching format</legend><div className="mt-2 grid gap-2 sm:grid-cols-2">{teachingFormats.map((format) => <label className="flex min-h-11 items-center gap-3 border px-3 text-sm" key={format}><input defaultChecked={p.teachingFormats.includes(format)} name="teachingFormats" type="checkbox" value={format} />{format}</label>)}</div></fieldset>
+        <Field className="md:col-span-2" label="8. Availability"><Textarea defaultValue={p.availability} maxLength={1000} name="availability" placeholder="Days, times and time zone" required /></Field>
+        <Field label="9. Pricing currency"><Select defaultValue={p.pricingCurrency} name="pricingCurrency">{["INR", "AED", "SAR", "QAR", "OMR"].map((currency) => <option key={currency}>{currency}</option>)}</Select></Field>
+        <div className="grid grid-cols-3 gap-2"><Field label="Hourly"><Input defaultValue={p.hourlyRate || ""} min="0" name="hourlyRate" step="0.01" type="number" /></Field><Field label="Weekly"><Input defaultValue={p.weeklyRate || ""} min="0" name="weeklyRate" step="0.01" type="number" /></Field><Field label="Monthly"><Input defaultValue={p.monthlyRate || ""} min="0" name="monthlyRate" step="0.01" type="number" /></Field></div>
+        <Field className="md:col-span-2" label="Custom pricing"><Input defaultValue={p.customPricing} maxLength={500} name="customPricing" placeholder="Optional package or custom pricing terms" /></Field>
+        <div className="flex flex-wrap gap-2 md:col-span-2"><Button name="intent" type="submit" value="draft" variant="secondary">Save Draft</Button><Button name="intent" type="submit" value="activate">Submit and Activate</Button>{p.id ? <ActionLink href={`/marketplace/teachers/${p.id}`}>Preview Profile</ActionLink> : null}</div>
+      </form>
+    </Card>
+    <aside className="space-y-4"><Card className="p-5"><h2 className="font-semibold">Preview</h2><p className="mt-2 text-lg font-semibold">{p.name}</p><p className="text-sm text-muted-foreground">{p.qualification || "Qualification not added"}</p><p className="mt-3 text-sm">{[...p.subjects, ...p.skills].join(", ") || "Expertise not added"}</p><p className="mt-3 text-sm">{p.languages.join(", ") || "Languages not added"}</p><p className="mt-3 font-semibold">{p.hourlyRate ? `${money(p.hourlyRate, p.pricingCurrency)} / hour` : "Hourly price not set"}</p></Card><Card className="p-5"><h2 className="font-semibold">Discovery and booking</h2><p className="mt-2 text-sm text-muted-foreground">Activation reuses your existing professional marketplace profile and the canonical teacher booking-request workflow.</p></Card></aside>
+  </div>;
+}
+
+function HappyNotes({ data }: { data: Data }) {
+  return <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]"><Card className="p-5"><h2 className="text-xl font-semibold">Submit constructive knowledge</h2><p className="mt-2 text-sm text-muted-foreground">TeachX securely prepares your submission for the Happy Notes integration boundary. External publication is not claimed until that platform accepts it.</p><form action={submitHappyNotesAction} className="mt-5 space-y-4"><Field label="Category"><Select name="category" required><option value="">Choose a category</option>{happyNotesCategories.map((category) => <option key={category}>{category}</option>)}</Select></Field><Field label="Title"><Input maxLength={180} name="title" required /></Field><Field label="Content"><Textarea className="min-h-64" maxLength={20000} minLength={50} name="content" required /></Field><Button type="submit">Submit to Happy Notes</Button></form></Card><Card className="p-5"><h2 className="font-semibold">Your submissions</h2><div className="mt-3 space-y-3">{data.happyNotes.length ? data.happyNotes.map((item) => <div className="border-b pb-3" key={item.id}><Badge>{item.status.replaceAll("_", " ")}</Badge><p className="mt-2 font-medium">{item.title}</p><p className="text-xs text-muted-foreground">{item.category} | {when(item.submittedAt)}</p></div>) : <p className="text-sm text-muted-foreground">No knowledge submissions yet.</p>}</div></Card></div>;
+}
+
+function Opportunities() {
+  return <Card className="mx-auto max-w-2xl p-7 text-center"><Lightbulb className="mx-auto h-8 w-8 text-sky-700" /><h2 className="mt-4 text-2xl font-semibold">Future Opportunities</h2><p className="mt-3 text-muted-foreground">Verified professional opportunities will appear here when an authorized opportunity provider is connected. TeachX does not display invented roles, employers, rates, or application counts.</p><div className="mt-5 flex justify-center"><ActionLink href="/teacher/business/profile">Keep your profile ready</ActionLink></div></Card>;
 }
 
 function PortfolioForm({ item }: { item?: Data["portfolio"][number] }) {
@@ -217,5 +263,5 @@ function Downloads({ data }: { data: Data }) {
 
 export function TeacherBusinessPage({ module, data }: { module: TeacherBusinessModule; data: Data }) {
   const active = modules.find((item) => item.slug === module)!;
-  return <div className="min-w-0 space-y-6"><nav className="text-sm text-muted-foreground"><Link href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span>Business</span><span className="mx-2">/</span><span className="text-foreground">{active.label}</span></nav><header className="border-b pb-5"><Badge>Teacher Business OS</Badge><h1 className="mt-3 text-3xl font-semibold">{active.label}</h1><p className="mt-2 max-w-3xl text-muted-foreground">{descriptions[module]}</p></header><nav aria-label="Teacher business modules" className="flex max-w-full gap-2 overflow-x-auto pb-2">{modules.map((item) => { const Icon = item.icon; return <Link aria-current={module === item.slug ? "page" : undefined} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-medium ${module === item.slug ? "bg-primary text-primary-foreground" : "border bg-surface"}`} href={`/teacher/business/${item.slug}`} key={item.slug}><Icon className="h-4 w-4" />{item.label}</Link>; })}</nav>{module === "home" ? <BusinessHome data={data} /> : module === "profile" ? <Profile data={data} /> : module === "portfolio" ? <Portfolio data={data} /> : module === "publishing" ? <Publishing data={data} /> : module === "marketplace" ? <Marketplace data={data} /> : module === "orders" ? <Orders data={data} /> : module === "earnings" ? <Earnings data={data} /> : module === "wallet" ? <Wallet data={data} /> : module === "payouts" ? <Payouts data={data} /> : module === "analytics" ? <Analytics data={data} /> : module === "subscription" ? <Subscription data={data} /> : <Downloads data={data} />}</div>;
+  return <div className="min-w-0 space-y-6"><nav className="text-sm text-muted-foreground"><Link href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span>Business</span><span className="mx-2">/</span><span className="text-foreground">{active.label}</span></nav><header className="border-b pb-5"><Badge>Teacher Business OS</Badge><h1 className="mt-3 text-3xl font-semibold">{active.label}</h1><p className="mt-2 max-w-3xl text-muted-foreground">{descriptions[module]}</p></header><nav aria-label="Teacher business modules" className="flex max-w-full gap-2 overflow-x-auto pb-2">{modules.map((item) => { const Icon = item.icon; return <Link aria-current={module === item.slug ? "page" : undefined} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-medium ${module === item.slug ? "bg-primary text-primary-foreground" : "border bg-surface"}`} href={`/teacher/business/${item.slug}`} key={item.slug}><Icon className="h-4 w-4" />{item.label}</Link>; })}</nav>{module === "home" ? <BusinessHome data={data} /> : module === "one-to-one" ? <OneToOne data={data} /> : module === "profile" ? <Profile data={data} /> : module === "portfolio" ? <Portfolio data={data} /> : module === "publishing" ? <Publishing data={data} /> : module === "happy-notes" ? <HappyNotes data={data} /> : module === "marketplace" ? <Marketplace data={data} /> : module === "orders" ? <Orders data={data} /> : module === "earnings" ? <Earnings data={data} /> : module === "wallet" ? <Wallet data={data} /> : module === "payouts" ? <Payouts data={data} /> : module === "analytics" ? <Analytics data={data} /> : module === "subscription" ? <Subscription data={data} /> : module === "opportunities" ? <Opportunities /> : <Downloads data={data} />}</div>;
 }

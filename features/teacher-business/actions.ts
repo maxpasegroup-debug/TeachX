@@ -7,12 +7,17 @@ import { prisma } from "@/lib/db";
 
 const teacherRoles = ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"];
 const licenses = ["INSTITUTION_PERSONAL", "PERSONAL", "CLASSROOM"];
+const teachingCurrencies = new Set(["INR", "AED", "SAR", "QAR", "OMR"]);
+const happyNotesCategories = new Set(["Education", "Personal Growth", "Health", "Wealth", "Happiness", "Leadership", "Career", "Psychology", "Productivity", "Life Skills"]);
 
 function value(formData: FormData, key: string) { return String(formData.get(key) ?? "").trim(); }
 function list(formData: FormData, key: string) { return value(formData, key).split(",").map((item) => item.trim()).filter(Boolean).slice(0, 30); }
+function selected(formData: FormData, key: string) { return formData.getAll(key).map(String).map((item) => item.trim()).filter(Boolean).slice(0, 20); }
+function rate(formData: FormData, key: string) { const amount = Number(value(formData, key)); return Number.isFinite(amount) && amount >= 0 && amount <= 10_000_000 ? amount : 0; }
 function object(input: unknown) { return input && typeof input === "object" && !Array.isArray(input) ? input as Record<string, unknown> : {}; }
 function safeUrl(input: string) {
   if (!input) return "";
+  if (/^\/api\/storage\/objects\/[A-Za-z0-9-]+\/download$/.test(input)) return input;
   try { const url = new URL(input); return ["http:", "https:"].includes(url.protocol) && input.length <= 2048 ? input : ""; } catch { return ""; }
 }
 function safeHttps(input?: string | null) {
@@ -90,6 +95,58 @@ export async function saveBusinessProfileAction(formData: FormData) {
     })
   ]);
   await businessActivity(teacher, "Professional profile updated");
+  refresh();
+}
+
+export async function saveOneToOneTeachingAction(formData: FormData) {
+  const teacher = await currentTeacher();
+  const existing = await prisma.teacherProfile.findFirst({
+    where: { userId: teacher.id, user: { institutionId: teacher.institutionId } },
+    select: { availability: true }
+  });
+  const previous = object(existing?.availability);
+  const qualification = value(formData, "qualification").slice(0, 180);
+  const experienceYears = Math.min(80, Math.max(0, Number(value(formData, "experienceYears")) || 0));
+  const skills = list(formData, "skills");
+  const subjects = list(formData, "subjects");
+  const classes = list(formData, "classes");
+  const languages = list(formData, "languages");
+  const teachingFormats = selected(formData, "teachingFormats");
+  const availabilitySummary = value(formData, "availability").slice(0, 1000);
+  const pricingCurrency = teachingCurrencies.has(value(formData, "pricingCurrency")) ? value(formData, "pricingCurrency") : "INR";
+  const hourlyRate = rate(formData, "hourlyRate");
+  const weeklyRate = rate(formData, "weeklyRate");
+  const monthlyRate = rate(formData, "monthlyRate");
+  const customPricing = value(formData, "customPricing").slice(0, 500);
+  const intent = value(formData, "intent");
+  const profile = await prisma.profile.findUnique({ where: { userId: teacher.id }, select: { avatarUrl: true } });
+  const missing = [
+    !profile?.avatarUrl && "photo", !qualification && "qualification", !experienceYears && "experience",
+    !skills.length && !subjects.length && "expertise", !classes.length && "teaching levels", !languages.length && "languages",
+    !teachingFormats.length && "teaching format", !availabilitySummary && "availability",
+    !hourlyRate && !weeklyRate && !monthlyRate && !customPricing && "pricing"
+  ].filter(Boolean) as string[];
+  const activate = intent === "activate" && missing.length === 0;
+  const availability = { ...previous, skills, teachingFormats, summary: availabilitySummary, pricingCurrency, customPricing };
+  await prisma.teacherProfile.upsert({
+    where: { userId: teacher.id },
+    update: { qualification: qualification || null, experienceYears: experienceYears || null, subjects, classes, languages, teachingMode: teachingFormats.join(", ") || null, hourlyRate, weeklyRate, monthlyRate, availability, onboardingStep: activate ? "one-to-one-active" : "one-to-one-draft", isMarketplaceListed: activate },
+    create: { userId: teacher.id, qualification: qualification || undefined, experienceYears: experienceYears || undefined, subjects, classes, languages, teachingMode: teachingFormats.join(", ") || undefined, hourlyRate, weeklyRate, monthlyRate, availability, onboardingStep: activate ? "one-to-one-active" : "one-to-one-draft", isMarketplaceListed: activate }
+  });
+  await businessActivity(teacher, activate ? "1:1 teaching profile activated" : `1:1 teaching profile saved${intent === "activate" && missing.length ? `; missing ${missing.join(", ")}` : ""}`);
+  refresh();
+}
+
+export async function submitHappyNotesAction(formData: FormData) {
+  const teacher = await currentTeacher();
+  const category = value(formData, "category");
+  const title = value(formData, "title").slice(0, 180);
+  const content = value(formData, "content").slice(0, 20_000);
+  if (!happyNotesCategories.has(category) || title.length < 3 || content.length < 50) return;
+  await prisma.userPreference.create({
+    data: { userId: teacher.id, key: `happy-notes-submission:${crypto.randomUUID()}`, value: { category, title, content, status: "READY_FOR_HANDOFF", boundary: "HAPPY_NOTES", submittedAt: new Date().toISOString() } }
+  });
+  await businessActivity(teacher, `Happy Notes submission prepared: ${title}`);
   refresh();
 }
 
