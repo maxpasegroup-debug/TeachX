@@ -26,8 +26,24 @@ export async function universalSearch(institutionId: string, query: string, user
     prisma.communication.findMany({ where: { institutionId, kind: "ANNOUNCEMENT", OR: [{ title: contains }, { body: contains }] }, take: 6 }),
     userId ? prisma.directConversation.findMany({ where: { institutionId, participants: { some: { userId } }, title: contains }, take: 6 }) : Promise.resolve([]),
     userId ? prisma.directMessage.findMany({ where: { conversation: { institutionId, participants: { some: { userId } } }, body: contains }, include: { conversation: true }, take: 6 }) : Promise.resolve([]),
-    prisma.genericDiscussion.findMany({ where: { institutionId, OR: [{ title: contains }, { body: contains }] }, take: 6 }),
-    prisma.community.findMany({ where: { institutionId, OR: [{ name: contains }, { description: contains }] }, take: 6 }),
+    prisma.genericDiscussion.findMany({
+      where: {
+        institutionId,
+        AND: [
+          { OR: [{ title: contains }, { body: contains }] },
+          { OR: [{ communityId: null }, { community: { visibility: "PUBLIC" } }, ...(userId ? [{ community: { members: { some: { userId } } } }] : [])] }
+        ]
+      }, take: 6
+    }),
+    prisma.community.findMany({
+      where: {
+        institutionId,
+        AND: [
+          { OR: [{ name: contains }, { description: contains }] },
+          { OR: [{ visibility: "PUBLIC" }, ...(userId ? [{ members: { some: { userId } } }] : [])] }
+        ]
+      }, take: 6
+    }),
     prisma.promptTemplate.findMany({ where: { AND: [{ OR: [{ institutionId }, { institutionId: null }] }, { OR: [{ name: contains }, { key: contains }] }] }, take: 6 }),
     prisma.supportTicket.findMany({ where: { institutionId, OR: [{ subject: contains }, { body: contains }] }, take: 6 }),
     prisma.commerceOrder.findMany({ where: { institutionId, OR: [{ gatewayOrderId: contains }, { buyer: { name: contains } }] }, include: { buyer: true }, take: 6 }),
