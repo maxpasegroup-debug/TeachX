@@ -17,6 +17,7 @@
     "security:test": "node --test tests/security/security-regression.test.mjs",
     "auth:test": "node --test tests/security/phone-auth-regression.test.mjs",
     "tenant:test": "node --test tests/security/teacher-tenant-isolation.test.mjs",
+    "planner:test": "node --test tests/security/teacher-planner-isolation.test.mjs",
     "security:audit": "npm audit --omit=dev --audit-level=high",
     "observability:audit": "node scripts/observability-audit.mjs",
     "observability:test": "node --test tests/observability/observability-regression.test.mjs",

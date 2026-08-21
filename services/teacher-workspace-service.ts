@@ -26,9 +26,15 @@ export async function getTeacherWorkspaceData(input: {
   if (!input.userId || !input.institutionId) {
     return {
       classrooms: [], content: [], planner: [], timetable: [], exams: [], notes: [], aiOutputs: [],
-      activities: [], notifications: [], downloads: [], purchases: [], favorites: [], recent: [], courses: [], subjects: []
+      activities: [], notifications: [], downloads: [], purchases: [], favorites: [], recent: [], courses: [], subjects: [], assignments: []
     };
   }
+
+  const rangeStart = new Date();
+  rangeStart.setDate(rangeStart.getDate() - 31);
+  rangeStart.setHours(0, 0, 0, 0);
+  const rangeEnd = new Date(rangeStart);
+  rangeEnd.setDate(rangeEnd.getDate() + 152);
 
   const [teacher, content, planner, exams, notes, aiOutputs, activities, notifications, notificationStates, downloads, purchases, favorites, recent, courses, subjects] = await Promise.all([
     getTeacherDashboard(input.userId, input.institutionId, input.roles),
@@ -38,8 +44,23 @@ export async function getTeacherWorkspaceData(input: {
       orderBy: { updatedAt: "desc" },
       take: 100
     }),
-    prisma.plannerEvent.findMany({ where: { institutionId: input.institutionId }, orderBy: { startsAt: "asc" }, take: 100 }),
-    prisma.exam.findMany({ where: { institutionId: input.institutionId }, include: { course: true }, orderBy: { startsAt: "asc" }, take: 50 }),
+    prisma.plannerEvent.findMany({
+      where: {
+        institutionId: input.institutionId,
+        startsAt: { gte: rangeStart, lt: rangeEnd },
+        OR: [{ createdById: input.userId }, { createdById: null }]
+      },
+      include: {
+        classroom: { include: { course: true, batch: true } },
+        lesson: { include: { course: true, subject: true } }
+      },
+      orderBy: { startsAt: "asc" },
+      take: 500
+    }),
+    prisma.exam.findMany({
+      where: { institutionId: input.institutionId, startsAt: { gte: rangeStart, lt: rangeEnd } },
+      include: { course: true }, orderBy: { startsAt: "asc" }, take: 100
+    }),
     prisma.userPreference.findMany({ where: { userId: input.userId, key: { startsWith: "teacher-note:" } }, orderBy: { updatedAt: "desc" }, take: 100 }),
     prisma.aIConversation.findMany({ where: { userId: input.userId, scope: "TEACHER" }, orderBy: { updatedAt: "desc" }, take: 100 }),
     prisma.activity.findMany({
@@ -89,13 +110,35 @@ export async function getTeacherWorkspaceData(input: {
     })),
     planner: planner.map((event) => ({
       id: event.id, title: event.title, type: event.type, description: event.description,
-      startsAt: event.startsAt.toISOString(), endsAt: event.endsAt.toISOString()
+      startsAt: event.startsAt.toISOString(), endsAt: event.endsAt.toISOString(),
+      kind: event.kind, status: event.status, priority: event.priority, location: event.location,
+      owned: event.createdById === input.userId,
+      classroom: event.classroom ? {
+        id: event.classroom.id, title: event.classroom.title, course: event.classroom.course.name,
+        section: event.classroom.batch.name
+      } : null,
+      lesson: event.lesson ? {
+        id: event.lesson.id, title: event.lesson.title, course: event.lesson.course.name,
+        subject: event.lesson.subject?.name ?? null
+      } : null
     })),
     timetable: teacher.upcomingClasses.map(({ classroom, entry }) => ({
       id: entry.id, title: `${entry.subject?.name ?? "Class"} - ${classroom.batch.name}`, type: "TEACHING",
       day: entry.day, time: `${entry.timeSlot.startsAt}-${entry.timeSlot.endsAt}`, href: `/classrooms/${classroom.id}`
     })),
     exams: exams.map((exam) => ({ id: exam.id, title: exam.name, type: "EXAM", startsAt: exam.startsAt?.toISOString() ?? exam.createdAt.toISOString(), course: exam.course.name })),
+    assignments: teacher.classrooms.flatMap((classroom) => classroom.assignments.map((assignment) => ({
+      id: assignment.id,
+      title: assignment.title,
+      dueDate: assignment.dueDate?.toISOString() ?? null,
+      status: assignment.status,
+      classroomId: classroom.id,
+      classroom: classroom.title,
+      course: classroom.course.name,
+      subject: assignment.subject?.name ?? null,
+      pendingReviews: assignment.submissions.filter((submission) => submission.status === "SUBMITTED" || submission.status === "LATE").length,
+      href: `/classrooms/${classroom.id}#assignments`
+    }))),
     notes: notes.map((note) => {
       const value = jsonRecord(note.value);
       return {

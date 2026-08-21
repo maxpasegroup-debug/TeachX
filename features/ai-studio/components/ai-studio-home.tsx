@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Progress } from "@/components/ui/progress";
-import { aiStudioTools, type AIStudioTool } from "@/services/ai-studio-service";
+import { studioToolConfigs, type StudioToolConfig } from "@/features/ai-studio/tool-config";
 import { GlobalCommandBar } from "@/features/workspace/components/global-command-bar";
 
 type AIStudioHomeProps = {
@@ -25,6 +25,9 @@ const studioGroups: Record<string, string[]> = {
   Create: ["worksheet-generator", "presentation-generator", "certificate-generator"],
   Communicate: ["parent-communication"]
 };
+
+type AIStudioTool = Pick<StudioToolConfig, "slug" | "title" | "category" | "description">;
+const aiStudioTools: AIStudioTool[] = studioToolConfigs.map(({ slug, title, category, description }) => ({ slug, title, category, description }));
 
 function groupedTools() {
   return Object.entries(studioGroups).reduce<Record<string, AIStudioTool[]>>((groups, [label, slugs]) => {

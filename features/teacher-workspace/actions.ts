@@ -2,6 +2,7 @@
 
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
@@ -14,6 +15,11 @@ function value(formData: FormData, key: string) {
 async function teacherSession() {
   const session = await auth();
   if (!session?.user.id || !session.user.institutionId) throw new Error("Teacher workspace access is required.");
+  const member = await prisma.user.findFirst({
+    where: { id: session.user.id, institutionId: session.user.institutionId, status: "ACTIVE" },
+    select: { id: true }
+  });
+  if (!member) throw new Error("Teacher workspace access is required.");
   return session;
 }
 
@@ -145,25 +151,100 @@ export async function deleteTeacherNoteAction(formData: FormData) {
   refresh();
 }
 
-export async function createTeacherPlannerEventAction(formData: FormData) {
+export type TeacherPlannerActionState = { message?: string; error?: string };
+
+const plannerItemSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().trim().min(1).max(160),
+  description: z.string().trim().max(2000).optional(),
+  kind: z.enum(["EVENT", "MEETING", "REMINDER", "DEADLINE", "TASK", "LESSON"]),
+  priority: z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]),
+  startsAt: z.coerce.date(),
+  endsAt: z.coerce.date(),
+  location: z.string().trim().max(240).optional(),
+  classroomId: z.string().optional(),
+  lessonId: z.string().optional()
+});
+
+export async function saveTeacherPlannerItemAction(_: TeacherPlannerActionState, formData: FormData): Promise<TeacherPlannerActionState> {
   const session = await teacherSession();
-  const startsAt = new Date(value(formData, "startsAt"));
-  const endsAt = new Date(value(formData, "endsAt"));
-  if (!value(formData, "title") || Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) return;
-  await prisma.plannerEvent.create({
-    data: {
-      institutionId: session.user.institutionId!, title: value(formData, "title"),
-      description: value(formData, "description") || undefined,
-      type: (["EVENT", "HOLIDAY", "SPECIAL_HOLIDAY"].includes(value(formData, "type")) ? value(formData, "type") : "EVENT") as "EVENT" | "HOLIDAY" | "SPECIAL_HOLIDAY",
-      startsAt, endsAt
-    }
+  const parsed = plannerItemSchema.safeParse({
+    id: value(formData, "id") || undefined,
+    title: value(formData, "title"),
+    description: value(formData, "description") || undefined,
+    kind: value(formData, "kind") || "EVENT",
+    priority: value(formData, "priority") || "NORMAL",
+    startsAt: value(formData, "startsAt"),
+    endsAt: value(formData, "endsAt"),
+    location: value(formData, "location") || undefined,
+    classroomId: value(formData, "classroomId") || undefined,
+    lessonId: value(formData, "lessonId") || undefined
   });
+  if (!parsed.success) return { error: "Enter a title, valid dates, and supported planning options." };
+  if (parsed.data.endsAt < parsed.data.startsAt) return { error: "End time must be after the start time." };
+
+  const institutionId = session.user.institutionId!;
+  const [classroom, lesson] = await Promise.all([
+    parsed.data.classroomId ? prisma.classroom.findFirst({
+      where: {
+        id: parsed.data.classroomId,
+        institutionId,
+        OR: [
+          { batch: { faculty: { some: { facultyId: session.user.id } } } },
+          { batch: { timetableEntries: { some: { facultyId: session.user.id } } } }
+        ]
+      }, select: { id: true }
+    }) : null,
+    parsed.data.lessonId ? prisma.contentItem.findFirst({
+      where: { id: parsed.data.lessonId, institutionId, createdById: session.user.id }, select: { id: true }
+    }) : null
+  ]);
+  if (parsed.data.classroomId && !classroom) return { error: "That class is not available in your teaching workspace." };
+  if (parsed.data.lessonId && !lesson) return { error: "That lesson is not owned by your teacher workspace." };
+
+  const data = {
+    title: parsed.data.title,
+    description: parsed.data.description,
+    kind: parsed.data.kind,
+    priority: parsed.data.priority,
+    startsAt: parsed.data.startsAt,
+    endsAt: parsed.data.endsAt,
+    location: parsed.data.location,
+    classroomId: classroom?.id,
+    lessonId: lesson?.id
+  };
+  if (parsed.data.id) {
+    const result = await prisma.plannerEvent.updateMany({
+      where: { id: parsed.data.id, institutionId, createdById: session.user.id }, data
+    });
+    if (!result.count) return { error: "This planning item is unavailable or not owned by you." };
+  } else {
+    await prisma.plannerEvent.create({ data: { ...data, institutionId, createdById: session.user.id, type: "EVENT" } });
+  }
   refresh();
+  return { message: parsed.data.id ? "Planning item updated." : "Planning item created." };
+}
+
+export async function createTeacherPlannerEventAction(formData: FormData) {
+  await saveTeacherPlannerItemAction({}, formData);
 }
 
 export async function deleteTeacherPlannerEventAction(formData: FormData) {
   const session = await teacherSession();
-  await prisma.plannerEvent.deleteMany({ where: { id: value(formData, "id"), institutionId: session.user.institutionId! } });
+  await prisma.plannerEvent.deleteMany({
+    where: { id: value(formData, "id"), institutionId: session.user.institutionId!, createdById: session.user.id }
+  });
+  refresh();
+}
+
+export async function setTeacherPlannerItemStatusAction(formData: FormData) {
+  const session = await teacherSession();
+  const status = value(formData, "status");
+  if (!["PENDING", "COMPLETED", "CANCELLED", "ARCHIVED"].includes(status)) return;
+  await prisma.plannerEvent.updateMany({
+    where: { id: value(formData, "id"), institutionId: session.user.institutionId!, createdById: session.user.id },
+    data: { status: status as "PENDING" | "COMPLETED" | "CANCELLED" | "ARCHIVED" }
+  });
   refresh();
 }
 

@@ -86,7 +86,7 @@ export async function getTeacherOperatingHome(input: { userId?: string; institut
     getUserPreferences(input.userId),
     getRecentNotifications(input.userId, 12),
     hasWorkspace ? prisma.contentItem.count({ where: { createdById: input.userId!, institutionId: input.institutionId! } }) : 0,
-    hasWorkspace ? prisma.batchStudent.count({ where: { batch: { institutionId: input.institutionId!, faculty: { some: { facultyId: input.userId! } } } } }) : 0,
+    hasWorkspace ? prisma.batchStudent.count({ where: { batch: { course: { institutionId: input.institutionId! }, faculty: { some: { facultyId: input.userId! } } } } }) : 0,
     hasWorkspace ? prisma.downloadHistory.count({ where: { item: { createdById: input.userId!, institutionId: input.institutionId! } } }) : 0,
     getTeacherDashboard(input.userId, input.institutionId, input.roles),
     hasWorkspace ? prisma.aIConversation.findMany({ where: { userId: input.userId!, institutionId: input.institutionId!, scope: "TEACHER" }, orderBy: { updatedAt: "desc" }, take: 5 }) : [],

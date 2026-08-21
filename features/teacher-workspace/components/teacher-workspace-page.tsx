@@ -24,6 +24,7 @@ import {
   type TeacherSearchState
 } from "@/features/teacher-workspace/actions";
 import { deleteAIConversationAction, duplicateAIConversationAction } from "@/features/ai-studio/actions";
+import { TeacherPlanner } from "@/features/teacher-workspace/components/teacher-planner";
 import type { getTeacherWorkspaceData, TeacherWorkspaceModule } from "@/services/teacher-workspace-service";
 
 type WorkspaceData = Awaited<ReturnType<typeof getTeacherWorkspaceData>>;
@@ -236,7 +237,7 @@ export function TeacherWorkspacePage({ module, data }: { module: TeacherWorkspac
       <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground"><Link className="hover:text-foreground" href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span className="text-foreground">{copy.title}</span></nav>
       <section className="rounded-[2rem] border border-border bg-gradient-to-br from-sky-50 via-white to-blue-50 p-6 shadow-soft sm:p-8"><Badge>Teacher Workspace</Badge><h1 className="mt-4 text-4xl font-semibold tracking-tight">{copy.title}</h1><p className="mt-3 max-w-3xl text-lg text-muted-foreground">{copy.description}</p></section>
       <nav className="flex gap-2 overflow-x-auto pb-2" aria-label="Teacher Workspace modules">{nav.map((item) => { const Icon = item.icon; return <Link className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${module === item.slug ? "bg-primary text-primary-foreground" : "border border-border bg-surface hover:bg-muted"}`} href={`/teacher/workspace/${item.slug}`} key={item.slug}><Icon className="h-4 w-4" />{item.label}</Link>; })}</nav>
-      {module === "classrooms" ? <Classrooms data={data} /> : module === "lessons" ? <Library data={data} lessonsOnly /> : module === "resources" ? <Resources data={data} /> : module === "planner" ? <Planner data={data} /> : module === "notes" ? <Notes data={data} /> : module === "saved-ai" ? <SavedAI data={data} /> : module === "activity" ? <Activity data={data} /> : module === "notifications" ? <Notifications data={data} /> : <GlobalSearch />}
+      {module === "classrooms" ? <Classrooms data={data} /> : module === "lessons" ? <Library data={data} lessonsOnly /> : module === "resources" ? <Resources data={data} /> : module === "planner" ? <TeacherPlanner data={data} /> : module === "notes" ? <Notes data={data} /> : module === "saved-ai" ? <SavedAI data={data} /> : module === "activity" ? <Activity data={data} /> : module === "notifications" ? <Notifications data={data} /> : <GlobalSearch />}
     </div>
   );
 }

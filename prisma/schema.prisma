@@ -97,6 +97,29 @@ enum PlannerEventType {
   EVENT
 }
 
+enum PlannerItemKind {
+  EVENT
+  MEETING
+  REMINDER
+  DEADLINE
+  TASK
+  LESSON
+}
+
+enum PlannerItemStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum PlannerPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
 enum WeekDay {
   MONDAY
   TUESDAY
@@ -917,6 +940,7 @@ model User {
   teacherProfile                 TeacherProfile?
   studentProfile                 StudentProfile?
   notifications                  Notification[]
+  plannerItemsCreated            PlannerEvent[]                  @relation("PlannerEventCreator")
   auditLogs                      AuditLog[]                      @relation("ActorAuditLogs")
   accounts                       Account[]
   sessions                       Session[]
@@ -1282,6 +1306,7 @@ model Classroom {
   studentNotes       StudentNote[]
   discussionThreads  DiscussionThread[]
   contentItems       ContentItem[]
+  plannerEvents      PlannerEvent[]
   createdAt          DateTime                @default(now())
   updatedAt          DateTime                @updatedAt
 
@@ -2796,6 +2821,7 @@ model ContentItem {
   marketplaceWishlistItems MarketplaceWishlistItem[]
   watches                  WatchHistory[]
   transcript               Transcript?
+  plannerEvents            PlannerEvent[]
   externalContent          ExternalContent?
   storageObject            StorageObject?
   createdAt                DateTime                  @default(now())
@@ -2942,10 +2968,22 @@ model PlannerEvent {
   startsAt       DateTime
   endsAt         DateTime
   description    String?
+  createdById    String?
+  createdBy      User?              @relation("PlannerEventCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  kind           PlannerItemKind    @default(EVENT)
+  status         PlannerItemStatus  @default(PENDING)
+  priority       PlannerPriority    @default(NORMAL)
+  location       String?
+  classroomId    String?
+  classroom      Classroom?         @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  lessonId       String?
+  lesson         ContentItem?       @relation(fields: [lessonId], references: [id], onDelete: SetNull)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
   @@index([institutionId, startsAt])
+  @@index([institutionId, createdById, startsAt])
+  @@index([createdById, status, startsAt])
 }
 
 model TimeSlot {
