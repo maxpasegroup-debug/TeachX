@@ -3,7 +3,7 @@
 import { useMemo, useState, useActionState, useEffect } from "react";
 import Link from "next/link";
 
-import { createAnnouncementAction, createAssignmentAction, createLiveSessionAction, createMaterialAction, createRecordingAction, saveAttendanceAction, reviewAssignmentSubmissionAction, transitionAssignmentStatusAction, getAssignmentReviewPayloadAction, getClassroomAssignmentDoubtsAction, replyAssignmentDoubtAction } from "@/features/classrooms/actions";
+import { addStandaloneStudentAction, createAnnouncementAction, createAssignmentAction, createLiveSessionAction, createMaterialAction, createRecordingAction, removeStandaloneStudentAction, saveAttendanceAction, reviewAssignmentSubmissionAction, transitionAssignmentStatusAction, getAssignmentReviewPayloadAction, getClassroomAssignmentDoubtsAction, replyAssignmentDoubtAction, updateStandaloneStudentAction } from "@/features/classrooms/actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import type { ClassroomWithDetails } from "@/services/classroom-service";
 import { formatDate, sentenceCase } from "@/lib/format";
 import { getInitials } from "@/lib/utils";
 
-export function ClassroomPage({ classroom }: { classroom: ClassroomWithDetails }) {
+export function ClassroomPage({ classroom, canManageRoster = false }: { classroom: ClassroomWithDetails; canManageRoster?: boolean }) {
   const [search, setSearch] = useState("");
   const subjects = classroom.course.subjects ?? [];
   const searchable = useMemo(() => {
@@ -47,7 +47,7 @@ export function ClassroomPage({ classroom }: { classroom: ClassroomWithDetails }
       <StudyMaterialsSection classroom={classroom} materials={searchable.materials} subjects={subjects} />
       <AssignmentsSection assignments={searchable.assignments} classroom={classroom} subjects={subjects} />
       <AttendanceSection classroom={classroom} />
-      <StudentsSection students={searchable.students} />
+      <StudentsSection canManageRoster={canManageRoster} classroomId={classroom.id} students={searchable.students} />
       <AnnouncementsSection classroom={classroom} />
     </div>
   );
@@ -114,7 +114,7 @@ function RecordedClassesSection({ classroom, recordings }: { classroom: Classroo
 function StudyMaterialsSection({ classroom, materials, subjects }: { classroom: ClassroomWithDetails; materials: ClassroomWithDetails["materials"]; subjects: ClassroomWithDetails["course"]["subjects"] }) {
   const [message, action, pending] = useActionState(createMaterialAction, undefined);
   return (
-    <Card className="p-7">
+    <Card className="p-7" id="materials">
       <SectionTitle title="Study Materials" note="Arrange by subject, chapter, and topic. AI hooks are built into the workflow." />
       <form action={action} className="mt-6 grid gap-4 md:grid-cols-2">
         <input name="classroomId" type="hidden" value={classroom.id} />
@@ -141,7 +141,7 @@ function StudyMaterialsSection({ classroom, materials, subjects }: { classroom: 
 function AssignmentsSection({ classroom, assignments, subjects }: { classroom: ClassroomWithDetails; assignments: ClassroomWithDetails["assignments"]; subjects: ClassroomWithDetails["course"]["subjects"] }) {
   const [message, action, pending] = useActionState(createAssignmentAction, undefined);
   return (
-    <Card className="p-7">
+    <Card className="p-7" id="assignments">
       <SectionTitle title="Assignments" note="Create work, due dates, instructions, attachments, and review status." />
       <form action={action} className="mt-6 grid gap-4 md:grid-cols-2">
         <input name="classroomId" type="hidden" value={classroom.id} />
@@ -172,7 +172,7 @@ function ReviewSubmissionForm({classroomId,submissionId,status,studentName,maxMa
 function AttendanceSection({ classroom }: { classroom: ClassroomWithDetails }) {
   const [message, action, pending] = useActionState(saveAttendanceAction, undefined);
   return (
-    <Card className="p-7">
+    <Card className="p-7" id="attendance">
       <SectionTitle title="Attendance" note="One-click attendance. Today's batch comes from this classroom and planner data." />
       <form action={action} className="mt-6">
         <input name="classroomId" type="hidden" value={classroom.id} />
@@ -194,22 +194,36 @@ function AttendanceSection({ classroom }: { classroom: ClassroomWithDetails }) {
   );
 }
 
-function StudentsSection({ students }: { students: ClassroomWithDetails["batch"]["students"] }) {
-  return (
-    <Card className="p-7">
-      <SectionTitle title="Students" note="Quick view only. Editing belongs to future student management." />
-      <div className="mt-6 grid gap-3">
-        {students.length ? students.map((item) => (
-          <div className="grid gap-4 rounded-lg bg-muted px-4 py-4 md:grid-cols-[auto_1fr_1fr_1fr]" key={item.id}>
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-surface font-semibold">{getInitials(item.student.name)}</span>
-            <p className="font-medium">{item.student.name}</p>
-            <p className="text-sm text-muted-foreground">Roll Number: Later</p>
-            <p className="text-sm text-muted-foreground">Attendance and assignment status ready</p>
-          </div>
-        )) : <p className="rounded-lg bg-muted px-4 py-8 text-center text-muted-foreground">No students assigned yet.</p>}
-      </div>
-    </Card>
-  );
+function StudentsSection({ classroomId, students, canManageRoster }: { classroomId: string; students: ClassroomWithDetails["batch"]["students"]; canManageRoster: boolean }) {
+  const [message, addAction, adding] = useActionState(addStandaloneStudentAction, undefined);
+  return <Card className="p-7" id="students">
+    <SectionTitle title="Students" note={canManageRoster ? "Add your students, then use this roster for attendance and assignments." : "Students assigned to this class."} />
+    {canManageRoster ? <form action={addAction} className="mt-6 grid gap-4 sm:grid-cols-2">
+      <input name="classroomId" type="hidden" value={classroomId} />
+      <div><Label htmlFor="studentName">Student name</Label><Input className="mt-2" id="studentName" name="name" placeholder="Student's full name" required /></div>
+      <div><Label htmlFor="studentEmail">Email (optional)</Label><Input className="mt-2" id="studentEmail" name="email" placeholder="student@example.com" type="email" /></div>
+      <div className="sm:col-span-2"><Button className="min-h-11" disabled={adding} type="submit">{adding ? "Adding student" : "Add student"}</Button>{message ? <p className="mt-3 text-sm" role="status">{message}</p> : null}</div>
+    </form> : null}
+    <div className="mt-6 grid gap-3">
+      {students.length ? students.map((item) => <StudentRosterRow canManage={canManageRoster} classroomId={classroomId} item={item} key={item.id} />) : <p className="rounded-lg bg-muted px-4 py-8 text-center text-muted-foreground">{canManageRoster ? "Add your students to begin attendance and assignments." : "No students assigned yet."}</p>}
+    </div>
+  </Card>;
+}
+
+function StudentRosterRow({ classroomId, item, canManage }: { classroomId: string; item: ClassroomWithDetails["batch"]["students"][number]; canManage: boolean }) {
+  const [updateMessage, updateAction, updating] = useActionState(updateStandaloneStudentAction, undefined);
+  const [removeMessage, removeAction, removing] = useActionState(removeStandaloneStudentAction, undefined);
+  return <div className="rounded-lg bg-muted px-4 py-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface font-semibold">{getInitials(item.student.name)}</span>
+      <div className="min-w-0 flex-1"><p className="break-words font-medium">{item.student.name}</p><p className="text-sm text-muted-foreground">Ready for attendance, assignments, and review</p></div>
+    </div>
+    {canManage && item.student.status === "INVITED" ? <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
+      <form action={updateAction} className="flex min-w-0 flex-col gap-2 sm:flex-row"><input name="classroomId" type="hidden" value={classroomId} /><input name="studentId" type="hidden" value={item.studentId} /><Input aria-label={`Edit ${item.student.name}`} defaultValue={item.student.name} name="name" required /><Button className="min-h-11" disabled={updating} type="submit" variant="secondary">{updating ? "Saving" : "Save name"}</Button></form>
+      <form action={removeAction}><input name="classroomId" type="hidden" value={classroomId} /><input name="studentId" type="hidden" value={item.studentId} /><Button className="min-h-11" disabled={removing} type="submit" variant="ghost">{removing ? "Removing" : "Remove"}</Button></form>
+      {updateMessage || removeMessage ? <p className="text-sm sm:col-span-2" role="status">{updateMessage ?? removeMessage}</p> : null}
+    </div> : null}
+  </div>;
 }
 
 function AnnouncementsSection({ classroom }: { classroom: ClassroomWithDetails }) {

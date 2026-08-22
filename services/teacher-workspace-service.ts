@@ -1,6 +1,7 @@
 import type { RoleKey } from "@/lib/constants/roles";
 import { prisma } from "@/lib/db";
 import { getTeacherDashboard } from "@/services/classroom-service";
+import { isPersonalTeacherWorkspace } from "@/services/standalone-teacher-service";
 
 export const teacherWorkspaceModules = [
   "classrooms", "lessons", "resources", "planner", "notes", "saved-ai", "activity", "notifications", "search"
@@ -26,7 +27,7 @@ export async function getTeacherWorkspaceData(input: {
   if (!input.userId || !input.institutionId) {
     return {
       classrooms: [], content: [], planner: [], timetable: [], exams: [], notes: [], aiOutputs: [],
-      activities: [], notifications: [], downloads: [], purchases: [], favorites: [], recent: [], courses: [], subjects: [], assignments: []
+      personalWorkspace: false, activities: [], notifications: [], downloads: [], purchases: [], favorites: [], recent: [], courses: [], subjects: [], assignments: []
     };
   }
 
@@ -41,9 +42,11 @@ export async function getTeacherWorkspaceData(input: {
   if (activeTeacher !== 1) {
     return {
       classrooms: [], content: [], planner: [], timetable: [], exams: [], notes: [], aiOutputs: [],
-      activities: [], notifications: [], downloads: [], purchases: [], favorites: [], recent: [], courses: [], subjects: [], assignments: []
+      personalWorkspace: false, activities: [], notifications: [], downloads: [], purchases: [], favorites: [], recent: [], courses: [], subjects: [], assignments: []
     };
   }
+
+  const personalWorkspace = await isPersonalTeacherWorkspace(input.userId, input.institutionId);
 
   const rangeStart = new Date();
   rangeStart.setDate(rangeStart.getDate() - 31);
@@ -95,6 +98,7 @@ export async function getTeacherWorkspaceData(input: {
   ]);
 
   return {
+    personalWorkspace,
     classrooms: teacher.classrooms.map((classroom) => {
       const attendanceRecords = classroom.attendanceSessions.flatMap((session) => session.records);
       const present = attendanceRecords.filter((record) => record.status === "PRESENT").length;

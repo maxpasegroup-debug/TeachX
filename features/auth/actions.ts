@@ -18,6 +18,7 @@ import { consumeEmailVerification, issueEmailVerification, sendPasswordResetEmai
 import { maskPhoneNumber, normalizePhoneNumber, validatePin } from "@/lib/auth/phone";
 import { consumeVerifiedPhoneChallenge, issuePhoneOtp, verifyPhoneOtp } from "@/services/phone-auth-service";
 import { defaultSubscriptionPlans, getTrialEndDate } from "@/services/commerce-service";
+import { personalWorkspaceSetting } from "@/services/standalone-teacher-service";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address."),
@@ -203,6 +204,10 @@ export async function completeTeacherPhoneSignupAction(formData: FormData): Prom
       }
     });
     if (!user.institutionId) throw new Error("Teacher workspace creation did not return a tenant.");
+
+    await tx.setting.create({
+      data: { institutionId: user.institutionId, key: "teachx.workspace", value: personalWorkspaceSetting(user.id) }
+    });
 
     await tx.course.create({
       data: {

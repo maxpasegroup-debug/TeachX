@@ -12,10 +12,94 @@ import { recordActivity } from "@/services/activity-service";
 import { createModuleNotification } from "@/services/notification-aggregation-service";
 import { createContentUpload } from "@/services/upload-service";
 import { reviewAssignmentSubmission, transitionAssignmentStatus, getTeacherReviewPayload, replyAssignmentDoubt } from "@/services/assignment-workflow-service";
+import { addStandaloneStudent, createStandaloneClass, removeStandaloneStudent, updateStandaloneStudent } from "@/services/standalone-teacher-service";
 
 function optionalText(value: FormDataEntryValue | null) {
   const text = value?.toString().trim();
   return text || undefined;
+}
+
+async function personalTeacherActor() {
+  const session = await auth();
+  if (!session?.user?.id || !session.user.institutionId) throw new Error("Sign in to your teacher workspace.");
+  return { userId: session.user.id, institutionId: session.user.institutionId };
+}
+
+function actionError(error: unknown) {
+  return error instanceof Error ? error.message : "That action could not be completed. Please try again.";
+}
+
+const standaloneClassSchema = z.object({
+  className: z.string().trim().min(2).max(100),
+  subjectName: z.string().trim().min(2).max(100),
+  section: z.string().trim().min(1).max(80),
+  capacity: z.coerce.number().int().min(1).max(200),
+  mode: z.enum(["LIVE", "OFFLINE", "HYBRID"])
+});
+
+export async function createStandaloneClassAction(_: string | undefined, formData: FormData) {
+  const parsed = standaloneClassSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return "Enter a class name, subject, section, and capacity.";
+  try {
+    const actor = await personalTeacherActor();
+    const classroom = await createStandaloneClass({ ...actor, ...parsed.data });
+    revalidatePath("/teacher/workspace/classrooms");
+    revalidatePath("/classrooms");
+    return `CLASS_CREATED:${classroom.id}`;
+  } catch (error) {
+    return actionError(error);
+  }
+}
+
+const rosterStudentSchema = z.object({
+  classroomId: z.string().min(1),
+  name: z.string().trim().min(2).max(100),
+  email: z.union([z.literal(""), z.string().trim().email()]).optional()
+});
+
+export async function addStandaloneStudentAction(_: string | undefined, formData: FormData) {
+  const parsed = rosterStudentSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return "Enter the student's name and a valid email if provided.";
+  try {
+    const actor = await personalTeacherActor();
+    await addStandaloneStudent({ ...actor, ...parsed.data, email: parsed.data.email || undefined });
+    revalidatePath(`/classrooms/${parsed.data.classroomId}`);
+    revalidatePath("/teacher/workspace/classrooms");
+    return "Student added to this class.";
+  } catch (error) {
+    return actionError(error);
+  }
+}
+
+const updateRosterStudentSchema = z.object({ classroomId: z.string().min(1), studentId: z.string().min(1), name: z.string().trim().min(2).max(100) });
+
+export async function updateStandaloneStudentAction(_: string | undefined, formData: FormData) {
+  const parsed = updateRosterStudentSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return "Enter a valid student name.";
+  try {
+    const actor = await personalTeacherActor();
+    await updateStandaloneStudent({ ...actor, ...parsed.data });
+    revalidatePath(`/classrooms/${parsed.data.classroomId}`);
+    return "Student updated.";
+  } catch (error) {
+    return actionError(error);
+  }
+}
+
+const removeRosterStudentSchema = z.object({ classroomId: z.string().min(1), studentId: z.string().min(1) });
+
+export async function removeStandaloneStudentAction(_: string | undefined, formData: FormData) {
+  const parsed = removeRosterStudentSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return "Student enrollment is required.";
+  try {
+    const actor = await personalTeacherActor();
+    await removeStandaloneStudent({ ...actor, ...parsed.data });
+    revalidatePath(`/classrooms/${parsed.data.classroomId}`);
+    revalidatePath("/teacher/workspace/classrooms");
+    return "Student removed from this class.";
+  } catch (error) {
+    return actionError(error);
+  }
 }
 
 async function getClassroomAccess(classroomId: string) {
