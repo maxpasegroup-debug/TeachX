@@ -26,18 +26,26 @@ export function PinResetForm() {
   function requestCode(formData: FormData) {
     setMessage(undefined);
     startTransition(async () => {
-      const result = await requestPinResetOtpAction(formData);
-      setMessage(result.message);
-      if (result.ok) { setRequest(result); setStep("code"); }
+      try {
+        const result = await requestPinResetOtpAction(formData);
+        setMessage(result.message);
+        if (result.ok) { setRequest(result); setStep("code"); }
+      } catch {
+        setMessage("We could not send the code. Check your connection and try again.");
+      }
     });
   }
 
   function verifyCode(formData: FormData) {
     setMessage(undefined);
     startTransition(async () => {
-      const result = await verifyPinResetOtpAction(formData);
-      setMessage(result.message);
-      if (result.ok) { setVerification(result); setStep("pin"); }
+      try {
+        const result = await verifyPinResetOtpAction(formData);
+        setMessage(result.message);
+        if (result.ok) { setVerification(result); setStep("pin"); }
+      } catch {
+        setMessage("We could not verify the code. Check your connection and try again.");
+      }
     });
   }
 

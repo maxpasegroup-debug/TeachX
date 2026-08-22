@@ -32,7 +32,8 @@ test("teacher PIN provider enforces verified teacher accounts and lockouts", () 
   assert.match(auth, /id: "teacher-pin"/);
   assert.match(auth, /user\.phoneVerifiedAt/);
   assert.match(auth, /user\.userType !== "teacher"/);
-  assert.match(auth, /nextAttempts >= 5/);
+  assert.match(auth, /pinFailedAttempts: \{ increment: 1 \}/);
+  assert.match(auth, /failed\.pinFailedAttempts >= 5/);
   assert.match(auth, /15 \* 60 \* 1000/);
   assert.match(auth, /bcrypt\.compare\(parsed\.data\.pin, user\.pinHash\)/);
 });

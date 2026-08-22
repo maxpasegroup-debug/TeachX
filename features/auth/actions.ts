@@ -7,18 +7,20 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { z } from "zod";
-import type { PhoneOtpPurpose } from "@prisma/client";
+import { Prisma, type PhoneOtpPurpose } from "@prisma/client";
 
 import { auth, signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getRequestOrigin } from "@/lib/host";
 import { getClientKey, rateLimit } from "@/lib/security";
 import type { RoleKey } from "@/lib/constants/roles";
+import { captureOperationalError } from "@/lib/observability/logger";
 import { consumeEmailVerification, issueEmailVerification, sendPasswordResetEmail } from "@/services/transactional-email-service";
 import { maskPhoneNumber, normalizePhoneNumber, validatePin } from "@/lib/auth/phone";
 import { consumeVerifiedPhoneChallenge, issuePhoneOtp, verifyPhoneOtp } from "@/services/phone-auth-service";
 import { defaultSubscriptionPlans, getTrialEndDate } from "@/services/commerce-service";
 import { personalWorkspaceSetting } from "@/services/standalone-teacher-service";
+import { ensureTeacherRole } from "@/services/teacher-account-provisioning";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address."),
@@ -103,6 +105,9 @@ async function requestPhoneOtp(formData: FormData, purpose: PhoneOtpPurpose): Pr
   const cooldown = await rateLimit(`phone-otp-cooldown:${purpose}:${phoneE164}`, 1, 45_000);
   const phoneLimit = await rateLimit(`phone-otp-hour:${purpose}:${phoneE164}`, 3, 60 * 60 * 1000);
   const clientLimit = await rateLimit(`phone-otp-client:${purpose}:${clientKey}`, 10, 60 * 60 * 1000);
+  if (cooldown?.status === 503 || phoneLimit?.status === 503 || clientLimit?.status === 503) {
+    return { ok: false, message: "Verification is temporarily unavailable. Please try again shortly." };
+  }
   if (cooldown || phoneLimit || clientLimit) return { ok: false, message: "Please wait before requesting another code." };
 
   try {
@@ -116,7 +121,8 @@ async function requestPhoneOtp(formData: FormData, purpose: PhoneOtpPurpose): Pr
       developmentCode: challenge.developmentCode
     };
   } catch (error) {
-    return { ok: false, message: error instanceof Error ? error.message : "We could not send the code. Please try again." };
+    captureOperationalError(error, "auth.phone_otp_delivery_failed", { purpose });
+    return { ok: false, message: "We could not send the code right now. Please wait a moment and try again." };
   }
 }
 
@@ -151,9 +157,9 @@ export async function verifyPinResetOtpAction(formData: FormData) {
 
 const teacherPhoneSignupSchema = z.object({
   name: z.string().trim().min(2, "Enter your full name.").max(100),
-  email: z.union([z.literal(""), z.string().email("Enter a valid email or leave it blank.")]).optional(),
+  email: z.union([z.literal(""), z.string().trim().max(254).email("Enter a valid email or leave it blank.")]).optional(),
   country: z.string().length(2).default("IN"),
-  phone: z.string().min(8),
+  phone: z.string().trim().min(8).max(32),
   pin: z.string(),
   confirmPin: z.string(),
   agreement: z.literal("on", { errorMap: () => ({ message: "Please accept the privacy policy and terms." }) })
@@ -165,101 +171,142 @@ const teacherPhoneSignupSchema = z.object({
 
 export type TeacherSignupResult = { ok: boolean; message?: string };
 
+const teacherSignupTransactionAttempts = 3;
+
+function isPrismaError(error: unknown, code: string) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === code;
+}
+
+async function createTeacherAccount(input: {
+  name: string;
+  email: string;
+  phoneE164: string;
+  pinHash: string;
+}) {
+  for (let attempt = 1; attempt <= teacherSignupTransactionAttempts; attempt += 1) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const role = await ensureTeacherRole(tx);
+        const user = await tx.user.create({
+          data: {
+            name: input.name,
+            email: input.email,
+            userType: "teacher",
+            // A teacher must always enter TeachX through a real tenant. Creating a
+            // personal institution uses the existing tenancy model and prevents
+            // every teacher-facing query from receiving an undefined tenant.
+            institution: { create: { name: `${input.name}'s TeachX Workspace` } },
+            phoneE164: input.phoneE164,
+            phoneVerifiedAt: new Date(),
+            pinHash: input.pinHash,
+            pinChangedAt: new Date(),
+            profile: { create: { phone: input.phoneE164, title: "Teacher" } },
+            teacherProfile: { create: { headline: "Teach with AI on TeachX", onboardingStep: "welcome" } },
+            roles: { create: { roleId: role.id } },
+            privacyConsents: {
+              create: [
+                { category: "ESSENTIAL", granted: true, policyVersion: "2026-08-20", source: "teacher_phone_signup" },
+                { category: "POLICY_ACKNOWLEDGEMENT", granted: true, policyVersion: "2026-08-20", source: "teacher_phone_signup" }
+              ]
+            }
+          }
+        });
+        if (!user.institutionId) throw new Error("Teacher workspace creation did not return a tenant.");
+
+        await tx.setting.create({
+          data: { institutionId: user.institutionId, key: "teachx.workspace", value: personalWorkspaceSetting(user.id) }
+        });
+
+        await tx.course.create({
+          data: {
+            institutionId: user.institutionId,
+            name: "My Teaching Library",
+            code: "PERSONAL-TEACHING",
+            description: "Personal workspace for lessons, resources, and AI-created teaching material.",
+            subjects: { create: { name: "General", code: "GENERAL" } }
+          }
+        });
+
+        const launchPlan = defaultSubscriptionPlans.find((plan) => plan.key === "teacher-basic");
+        if (!launchPlan) throw new Error("TeachX Basic is not configured.");
+        const plan = await tx.subscriptionPlan.create({
+          data: {
+            institutionId: user.institutionId,
+            key: launchPlan.key,
+            name: launchPlan.name,
+            audience: launchPlan.audience,
+            price: launchPlan.price,
+            currency: "INR",
+            aiMonthlyCredits: launchPlan.aiMonthlyCredits,
+            marketplaceAccess: launchPlan.marketplaceAccess,
+            resourceLimit: launchPlan.resourceLimit,
+            storageLimitMb: launchPlan.storageLimitMb,
+            featureFlags: launchPlan.featureFlags
+          }
+        });
+        const trialStartedAt = new Date();
+        const trialEndsAt = getTrialEndDate(trialStartedAt);
+        await tx.userSubscription.create({
+          data: {
+            userId: user.id,
+            institutionId: user.institutionId,
+            planId: plan.id,
+            status: "TRIALING",
+            currentPeriodStart: trialStartedAt,
+            currentPeriodEnd: trialEndsAt,
+            metadata: { source: "teacher_phone_signup", trial: true, trialDays: 7 }
+          }
+        });
+        await tx.notification.create({
+          data: {
+            userId: user.id,
+            institutionId: user.institutionId,
+            title: "Your 7-day TeachX trial is active",
+            body: "Explore the four teacher worlds and use your included AI credits before choosing a plan.",
+            link: "/teacher/business/subscription"
+          }
+        });
+        await tx.auditLog.create({ data: { actorId: user.id, action: "CREATE", entity: "TeacherAccount", entityId: user.id, message: "Teacher created a mobile and PIN account." } });
+        return user;
+      }, { isolationLevel: "Serializable" });
+    } catch (error) {
+      if (isPrismaError(error, "P2034") && attempt < teacherSignupTransactionAttempts) continue;
+      throw error;
+    }
+  }
+
+  throw new Error("Teacher account transaction retry limit reached.");
+}
+
 export async function completeTeacherPhoneSignupAction(formData: FormData): Promise<TeacherSignupResult> {
   const parsed = teacherPhoneSignupSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Please check your account details." };
   const phoneE164 = normalizePhoneNumber(parsed.data.phone, parsed.data.country);
   if (!phoneE164) return { ok: false, message: "Enter a valid mobile number." };
 
-  const role = await prisma.role.findUnique({ where: { key: "ACADEMIC_FACULTY" } });
-  if (!role) return { ok: false, message: "Teacher accounts are not configured yet. Please contact support." };
+  const clientKey = await getActionClientKey(phoneE164);
+  const clientLimited = await rateLimit(`teacher-signup-client:${clientKey}`, 10, 60 * 60 * 1000);
+  const phoneLimited = await rateLimit(`teacher-signup-phone:${phoneE164}`, 5, 60 * 60 * 1000);
+  if (clientLimited?.status === 503 || phoneLimited?.status === 503) {
+    return { ok: false, message: "Account protection is temporarily unavailable. Please try again shortly." };
+  }
+  if (clientLimited || phoneLimited) return { ok: false, message: "Too many account creation attempts. Please wait before trying again." };
+
   const email = parsed.data.email?.trim().toLowerCase() || `mobile-${phoneE164.slice(1)}-${crypto.randomBytes(5).toString("hex")}@accounts.teachx.invalid`;
-  const existing = await prisma.user.findFirst({ where: { OR: [{ phoneE164 }, { email }] }, select: { phoneE164: true } });
-  if (existing) return { ok: false, message: existing.phoneE164 === phoneE164 ? "An account already exists for this mobile number. Please log in." : "This email is already connected to another account." };
+  try {
+    const existing = await prisma.user.findFirst({ where: { OR: [{ phoneE164 }, { email }] }, select: { phoneE164: true } });
+    if (existing) return { ok: false, message: existing.phoneE164 === phoneE164 ? "An account already exists for this mobile number. Please log in." : "This email is already connected to another account." };
 
-  const pinHash = await bcrypt.hash(parsed.data.pin, 12);
-  await prisma.$transaction(async (tx) => {
-    const user = await tx.user.create({
-      data: {
-        name: parsed.data.name,
-        email,
-        userType: "teacher",
-        // A teacher must always enter TeachX through a real tenant. Creating a
-        // personal institution uses the existing tenancy model and prevents
-        // every teacher-facing query from receiving an undefined tenant.
-        institution: { create: { name: `${parsed.data.name}'s TeachX Workspace` } },
-        phoneE164,
-        phoneVerifiedAt: new Date(),
-        pinHash,
-        pinChangedAt: new Date(),
-        profile: { create: { phone: phoneE164, title: "Teacher" } },
-        teacherProfile: { create: { headline: "Teach with AI on TeachX", onboardingStep: "welcome" } },
-        roles: { create: { roleId: role.id } },
-        privacyConsents: {
-          create: [
-            { category: "ESSENTIAL", granted: true, policyVersion: "2026-08-20", source: "teacher_phone_signup" },
-            { category: "POLICY_ACKNOWLEDGEMENT", granted: true, policyVersion: "2026-08-20", source: "teacher_phone_signup" }
-          ]
-        }
-      }
-    });
-    if (!user.institutionId) throw new Error("Teacher workspace creation did not return a tenant.");
-
-    await tx.setting.create({
-      data: { institutionId: user.institutionId, key: "teachx.workspace", value: personalWorkspaceSetting(user.id) }
-    });
-
-    await tx.course.create({
-      data: {
-        institutionId: user.institutionId,
-        name: "My Teaching Library",
-        code: "PERSONAL-TEACHING",
-        description: "Personal workspace for lessons, resources, and AI-created teaching material.",
-        subjects: { create: { name: "General", code: "GENERAL" } }
-      }
-    });
-
-    const launchPlan = defaultSubscriptionPlans.find((plan) => plan.key === "teacher-basic");
-    if (!launchPlan) throw new Error("TeachX Basic is not configured.");
-    const plan = await tx.subscriptionPlan.create({
-      data: {
-        institutionId: user.institutionId,
-        key: launchPlan.key,
-        name: launchPlan.name,
-        audience: launchPlan.audience,
-        price: launchPlan.price,
-        currency: "INR",
-        aiMonthlyCredits: launchPlan.aiMonthlyCredits,
-        marketplaceAccess: launchPlan.marketplaceAccess,
-        resourceLimit: launchPlan.resourceLimit,
-        storageLimitMb: launchPlan.storageLimitMb,
-        featureFlags: launchPlan.featureFlags
-      }
-    });
-    const trialStartedAt = new Date();
-    const trialEndsAt = getTrialEndDate(trialStartedAt);
-    await tx.userSubscription.create({
-      data: {
-        userId: user.id,
-        institutionId: user.institutionId,
-        planId: plan.id,
-        status: "TRIALING",
-        currentPeriodStart: trialStartedAt,
-        currentPeriodEnd: trialEndsAt,
-        metadata: { source: "teacher_phone_signup", trial: true, trialDays: 7 }
-      }
-    });
-    await tx.notification.create({
-      data: {
-        userId: user.id,
-        institutionId: user.institutionId,
-        title: "Your 7-day TeachX trial is active",
-        body: "Explore the four teacher worlds and use your included AI credits before choosing a plan.",
-        link: "/teacher/business/subscription"
-      }
-    });
-    await tx.auditLog.create({ data: { actorId: user.id, action: "CREATE", entity: "TeacherAccount", entityId: user.id, message: "Teacher created a mobile and PIN account." } });
-  }, { isolationLevel: "Serializable" });
+    const pinHash = await bcrypt.hash(parsed.data.pin, 12);
+    await createTeacherAccount({ name: parsed.data.name, email, phoneE164, pinHash });
+  } catch (error) {
+    if (isPrismaError(error, "P2002")) {
+      return { ok: false, message: "An account already exists with these details. Please log in or reset your PIN." };
+    }
+    const requestId = crypto.randomUUID();
+    captureOperationalError(error, "auth.teacher_signup_failed", { requestId });
+    return { ok: false, message: `We could not create your account right now. Please try again. Reference: ${requestId.slice(0, 8)}` };
+  }
 
   // The browser performs the sign-in after this action completes. Keeping
   // account creation and credential sign-in separate avoids an Auth.js server
@@ -284,26 +331,31 @@ export async function completePinResetAction(_: string | undefined, formData: Fo
   if (!parsed.success) return parsed.error.issues[0]?.message ?? "Please check your new PIN.";
   const phoneE164 = normalizePhoneNumber(parsed.data.phone);
   if (!phoneE164) return "The verified mobile number is invalid.";
-  const user = await prisma.user.findUnique({ where: { phoneE164 }, select: { id: true } });
-  if (!user) return "The code is incorrect or expired.";
-  const pinHash = await bcrypt.hash(parsed.data.pin, 12);
-
-  const changed = await prisma.$transaction(async (tx) => {
-    const consumed = await consumeVerifiedPhoneChallenge(tx, {
-      challengeId: parsed.data.challengeId,
-      phoneE164,
-      purpose: "PIN_RESET",
-      verificationToken: parsed.data.verificationToken
-    });
-    if (!consumed) return false;
-    await tx.user.update({
-      where: { id: user.id },
-      data: { pinHash, pinChangedAt: new Date(), pinFailedAttempts: 0, pinLockedUntil: null, authSessionVersion: { increment: 1 } }
-    });
-    await tx.session.deleteMany({ where: { userId: user.id } });
-    await tx.auditLog.create({ data: { actorId: user.id, action: "PASSWORD_RESET", entity: "TeacherPin", entityId: user.id, message: "Teacher PIN reset after SMS verification." } });
-    return true;
-  }, { isolationLevel: "Serializable" });
+  let changed = false;
+  try {
+    const user = await prisma.user.findUnique({ where: { phoneE164 }, select: { id: true } });
+    if (!user) return "The code is incorrect or expired.";
+    const pinHash = await bcrypt.hash(parsed.data.pin, 12);
+    changed = await prisma.$transaction(async (tx) => {
+      const consumed = await consumeVerifiedPhoneChallenge(tx, {
+        challengeId: parsed.data.challengeId,
+        phoneE164,
+        purpose: "PIN_RESET",
+        verificationToken: parsed.data.verificationToken
+      });
+      if (!consumed) return false;
+      await tx.user.update({
+        where: { id: user.id },
+        data: { pinHash, pinChangedAt: new Date(), pinFailedAttempts: 0, pinLockedUntil: null, authSessionVersion: { increment: 1 } }
+      });
+      await tx.session.deleteMany({ where: { userId: user.id } });
+      await tx.auditLog.create({ data: { actorId: user.id, action: "PASSWORD_RESET", entity: "TeacherPin", entityId: user.id, message: "Teacher PIN reset after SMS verification." } });
+      return true;
+    }, { isolationLevel: "Serializable" });
+  } catch (error) {
+    captureOperationalError(error, "auth.teacher_pin_reset_failed");
+    return "We could not update your PIN right now. Please try again.";
+  }
   if (!changed) return "Your verification expired. Please request a new code.";
   redirect("/login?reset=success");
 }

@@ -31,26 +31,30 @@ export function TeacherPhoneSignupForm() {
     }
 
     startTransition(async () => {
-      const created = await completeTeacherPhoneSignupAction(form);
-      if (!created.ok) {
-        setError(created.message ?? "Your account could not be created.");
-        return;
-      }
+      try {
+        const created = await completeTeacherPhoneSignupAction(form);
+        if (!created.ok) {
+          setError(created.message ?? "Your account could not be created.");
+          return;
+        }
 
-      const destination = "/entry?mode=signup&next=%2Fteacher";
-      const result = await signIn("teacher-pin", {
-        phone: phone.number,
-        pin: String(form.get("pin") || ""),
-        redirect: false,
-        callbackUrl: destination
-      });
-      if (!result?.ok) {
-        setError("Your account was created, but automatic sign-in failed. Please log in with your mobile number and PIN.");
-        return;
-      }
+        const destination = "/entry?mode=signup&next=%2Fteacher";
+        const result = await signIn("teacher-pin", {
+          phone: phone.number,
+          pin: String(form.get("pin") || ""),
+          redirect: false,
+          callbackUrl: destination
+        });
+        if (!result?.ok) {
+          setError("Your account was created, but automatic sign-in failed. Please log in with your mobile number and PIN.");
+          return;
+        }
 
-      router.replace(destination);
-      router.refresh();
+        router.replace(destination);
+        router.refresh();
+      } catch {
+        setError("TeachX could not complete the request. Check your connection and try again.");
+      }
     });
   }
 

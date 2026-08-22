@@ -16,6 +16,7 @@
     "security:routes": "node scripts/security-audit.mjs",
     "security:test": "node --test tests/security/security-regression.test.mjs",
     "auth:test": "node --test tests/security/phone-auth-regression.test.mjs",
+    "auth:production:test": "node --test tests/security/teacher-auth-production-regression.test.mjs",
     "tenant:test": "node --test tests/security/teacher-tenant-isolation.test.mjs",
     "planner:test": "node --test tests/security/teacher-planner-isolation.test.mjs",
     "community:test": "node --test tests/security/teacher-community-isolation.test.mjs",

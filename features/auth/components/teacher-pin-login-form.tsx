@@ -28,13 +28,18 @@ export function TeacherPinLoginForm({ callbackUrl }: { callbackUrl?: string }) {
     }
     setPending(true);
     const destination = `/entry?mode=login&next=${encodeURIComponent(nextPath)}`;
-    const result = await signIn("teacher-pin", { phone: parsedPhone.number, pin: String(form.get("pin") || ""), redirect: false, callbackUrl: destination });
-    setPending(false);
-    if (!result?.ok) {
-      setError("Mobile number or PIN is incorrect. A temporarily locked account can be recovered by resetting the PIN.");
-      return;
+    try {
+      const result = await signIn("teacher-pin", { phone: parsedPhone.number, pin: String(form.get("pin") || ""), redirect: false, callbackUrl: destination });
+      if (!result?.ok) {
+        setError("Mobile number or PIN is incorrect. A temporarily locked account can be recovered by resetting the PIN.");
+        return;
+      }
+      window.location.assign(destination);
+    } catch {
+      setError("TeachX could not log you in. Check your connection and try again.");
+    } finally {
+      setPending(false);
     }
-    window.location.assign(destination);
   }
 
   return (

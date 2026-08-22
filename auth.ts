@@ -92,14 +92,17 @@ export const authConfig = {
 
         const validPin = await bcrypt.compare(parsed.data.pin, user.pinHash);
         if (!validPin) {
-          const nextAttempts = user.pinFailedAttempts + 1;
-          await prisma.user.update({
+          const failed = await prisma.user.update({
             where: { id: user.id },
-            data: {
-              pinFailedAttempts: nextAttempts,
-              pinLockedUntil: nextAttempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null
-            }
+            data: { pinFailedAttempts: { increment: 1 } },
+            select: { pinFailedAttempts: true }
           });
+          if (failed.pinFailedAttempts >= 5) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { pinLockedUntil: new Date(Date.now() + 15 * 60 * 1000) }
+            });
+          }
           return null;
         }
 
