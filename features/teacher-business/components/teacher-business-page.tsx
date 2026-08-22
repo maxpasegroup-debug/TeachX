@@ -118,10 +118,28 @@ function BusinessHome({ data }: { data: Data }) {
 
 function Profile({ data }: { data: Data }) {
   const p = data.profile;
+  const router = useRouter();
+  const [isSaving, startSaving] = useTransition();
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  function saveProfile(formData: FormData) {
+    setNotice(null);
+    startSaving(async () => {
+      try {
+        const result = await saveBusinessProfileAction(formData);
+        setNotice(result.message);
+        router.refresh();
+      } catch {
+        setNotice("Your professional profile could not be saved. Please try again.");
+      }
+    });
+  }
+
   return <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
     <Card className="p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-semibold">Professional profile</h2><p className="text-sm text-muted-foreground">{p.completion}% complete</p></div><Link className="text-sm font-semibold text-sky-700" href="/teacher/ai-studio/chat"><Sparkles className="mr-1 inline h-4 w-4" />Improve with AI</Link></div>
-      <form action={saveBusinessProfileAction} className="mt-5 grid gap-4 md:grid-cols-2">
-        <Field label="Profile photo"><ProfilePhotoUpload /><Input defaultValue={p.avatarUrl ?? ""} name="avatarUrl" type="hidden" /></Field>
+      <form action={saveProfile} className="mt-5 grid gap-4 md:grid-cols-2">
+        <Field label="Profile photo"><ProfilePhotoUpload onUploadStateChange={setIsPhotoUploading} /></Field>
         <Field label="Cover URL"><Input defaultValue={p.banner ?? ""} name="coverUrl" type="url" /></Field>
         <Field label="Professional headline"><Input defaultValue={p.headline ?? ""} maxLength={180} name="headline" /></Field>
         <Field label="Experience years"><Input defaultValue={p.experienceYears ?? ""} max="80" min="0" name="experienceYears" type="number" /></Field>
@@ -142,7 +160,7 @@ function Profile({ data }: { data: Data }) {
         <Field className="md:col-span-2" label="Availability"><Textarea defaultValue={p.availability} maxLength={1000} name="availability" /></Field>
         <Field className="md:col-span-2" label="Contact preferences"><Input defaultValue={p.contactPreferences} maxLength={500} name="contactPreferences" /></Field>
         <label className="flex min-h-11 items-center gap-2 text-sm"><input defaultChecked={p.public} name="public" type="checkbox" />Show my professional profile publicly</label>
-        <Button type="submit">Save Profile</Button>
+        <div className="space-y-3"><Button disabled={isSaving || isPhotoUploading} type="submit">{isPhotoUploading ? "Uploading photo" : isSaving ? "Saving profile" : "Save Profile"}</Button>{notice ? <p aria-live="polite" className={`rounded-md border px-3 py-2 text-sm ${notice.includes("successfully") ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900"}`}>{notice}</p> : null}</div>
       </form>
     </Card>
     <aside className="space-y-4"><Card className="p-5"><h2 className="font-semibold">Profile visibility</h2><p className="mt-2 text-sm text-muted-foreground">{p.public ? "Visible in the professional teacher marketplace." : "Private until you enable public visibility."}</p><ActionLink href="/teacher/business/profile-preview"><ExternalLink className="h-4 w-4" />Preview Profile</ActionLink></Card><Card className="p-5"><h2 className="font-semibold">Professional network</h2><p className="mt-2 text-sm text-muted-foreground">Your public profile is reused by Community teacher discovery.</p><ActionLink href="/teacher/community/network">Open Teacher Network</ActionLink></Card></aside>

@@ -65,14 +65,15 @@ export async function saveBusinessProfileAction(formData: FormData) {
     summary: value(formData, "availability").slice(0, 1000), skills: list(formData, "skills"), interests: list(formData, "interests"),
     website: safeUrl(value(formData, "website")), contactPreferences: value(formData, "contactPreferences").slice(0, 500)
   };
-  const avatarUrl = safeUrl(value(formData, "avatarUrl"));
   const coverUrl = safeUrl(value(formData, "coverUrl"));
   const years = Math.min(80, Math.max(0, Number(value(formData, "experienceYears")) || 0));
   await prisma.$transaction([
     prisma.profile.upsert({
       where: { userId: teacher.id },
-      update: { avatarUrl: avatarUrl || null, title: value(formData, "qualification").slice(0, 180) || null, bio: value(formData, "bio").slice(0, 4000) || null },
-      create: { userId: teacher.id, avatarUrl: avatarUrl || undefined, title: value(formData, "qualification").slice(0, 180) || undefined, bio: value(formData, "bio").slice(0, 4000) || undefined }
+      // Profile photos are written by the verified private-storage upload
+      // flow. Never overwrite that URL with an out-of-date form field.
+      update: { title: value(formData, "qualification").slice(0, 180) || null, bio: value(formData, "bio").slice(0, 4000) || null },
+      create: { userId: teacher.id, title: value(formData, "qualification").slice(0, 180) || undefined, bio: value(formData, "bio").slice(0, 4000) || undefined }
     }),
     prisma.teacherProfile.upsert({
       where: { userId: teacher.id },
@@ -96,6 +97,7 @@ export async function saveBusinessProfileAction(formData: FormData) {
   ]);
   await businessActivity(teacher, "Professional profile updated");
   refresh();
+  return { ok: true, message: "Your professional profile was saved successfully." };
 }
 
 export async function saveOneToOneTeachingAction(formData: FormData) {
