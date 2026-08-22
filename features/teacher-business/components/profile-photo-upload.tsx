@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ImageUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,18 @@ export function ProfilePhotoUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+
+  function selectPhoto(nextFile: File | null) {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setFile(nextFile);
+    setPreviewUrl(nextFile ? URL.createObjectURL(nextFile) : null);
+    setMessage(nextFile ? "Photo selected. Press Upload Photo to save it to your profile." : "");
+  }
 
   async function upload() {
     if (!file) return setMessage("Choose a photo first.");
@@ -39,10 +51,11 @@ export function ProfilePhotoUpload() {
       const stored = await fetch(reservation.url, { method: "PUT", headers: reservation.headers, body: file });
       if (!stored.ok) throw new Error("The storage provider rejected the photo.");
       await json(`/api/storage/uploads/${encodeURIComponent(reservation.objectId)}/complete`, { method: "POST" });
-      setFile(null); setMessage("Photo uploaded and verified."); router.refresh();
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null); setFile(null); setMessage("Photo uploaded and saved to your professional profile."); router.refresh();
     } catch (error) { setMessage(error instanceof Error ? error.message : "The photo could not be uploaded."); }
     finally { setBusy(false); }
   }
 
-  return <div className="space-y-2"><Input accept="image/jpeg,image/png,image/webp,image/gif" disabled={busy} onChange={(event) => setFile(event.target.files?.[0] ?? null)} type="file" /><Button disabled={busy || !file} onClick={upload} type="button" variant="secondary"><ImageUp className="mr-2 h-4 w-4" />{busy ? "Uploading" : "Upload Photo"}</Button><p aria-live="polite" className="text-xs text-muted-foreground">{message || "Private checksum-verified storage; maximum 2 MB."}</p></div>;
+  return <div className="space-y-2"><Input accept="image/jpeg,image/png,image/webp,image/gif" disabled={busy} onChange={(event) => selectPhoto(event.target.files?.[0] ?? null)} type="file" />{previewUrl ? <img alt="Selected profile photo preview" className="h-20 w-20 rounded-md border object-cover" src={previewUrl} /> : null}<Button disabled={busy || !file} onClick={upload} type="button" variant="secondary"><ImageUp className="mr-2 h-4 w-4" />{busy ? "Uploading" : "Upload Photo"}</Button><p aria-live="polite" className="text-xs text-muted-foreground">{message || "Choose a photo, then press Upload Photo. Maximum 2 MB."}</p></div>;
 }

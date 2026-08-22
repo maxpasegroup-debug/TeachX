@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   BarChart3, BookOpen, BriefcaseBusiness, CheckCircle2, CircleDollarSign, Download,
   ExternalLink, FileText, GraduationCap, Home, Lightbulb, Package, PenLine, Plus, Search, Sparkles, Star, Store, Upload,
@@ -158,9 +159,26 @@ const happyNotesCategories = ["Education", "Personal Growth", "Health", "Wealth"
 function OneToOne({ data }: { data: Data }) {
   const p = data.profile;
   const active = p.oneToOneStatus === "one-to-one-active";
+  const router = useRouter();
+  const [isSaving, startSaving] = useTransition();
+  const [notice, setNotice] = useState<{ ok: boolean; message: string } | null>(null);
+
+  function saveProfile(formData: FormData) {
+    setNotice(null);
+    startSaving(async () => {
+      try {
+        const result = await saveOneToOneTeachingAction(formData);
+        setNotice(result);
+        router.refresh();
+      } catch {
+        setNotice({ ok: false, message: "Your profile could not be saved. Please try again." });
+      }
+    });
+  }
+
   return <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
     <Card className="p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-semibold">Professional teaching profile</h2><p className="mt-1 text-sm text-muted-foreground">Save a draft at any time. Activation only succeeds when every essential detail is present.</p></div><Badge>{active ? "ACTIVE" : "DRAFT"}</Badge></div>
-      <form action={saveOneToOneTeachingAction} className="mt-5 grid gap-4 md:grid-cols-2">
+      <form action={saveProfile} className="mt-5 grid gap-4 md:grid-cols-2">
         <Field className="md:col-span-2" label="1. Profile photo"><div className="grid gap-3 sm:grid-cols-[80px_1fr]">{p.avatarUrl ? <Image alt="Current profile" className="h-20 w-20 border object-cover" height={80} src={p.avatarUrl} unoptimized width={80} /> : <div className="flex h-20 w-20 items-center justify-center border text-xs text-muted-foreground">No photo</div>}<ProfilePhotoUpload /></div></Field>
         <Field label="2. Qualification"><Input defaultValue={p.qualification ?? ""} maxLength={180} name="qualification" required /></Field>
         <Field label="3. Experience in years"><Input defaultValue={p.experienceYears ?? ""} max="80" min="0" name="experienceYears" type="number" required /></Field>
@@ -173,7 +191,7 @@ function OneToOne({ data }: { data: Data }) {
         <Field label="9. Pricing currency"><Select defaultValue={p.pricingCurrency} name="pricingCurrency">{["INR", "AED", "SAR", "QAR", "OMR"].map((currency) => <option key={currency}>{currency}</option>)}</Select></Field>
         <div className="grid grid-cols-3 gap-2"><Field label="Hourly"><Input defaultValue={p.hourlyRate || ""} min="0" name="hourlyRate" step="0.01" type="number" /></Field><Field label="Weekly"><Input defaultValue={p.weeklyRate || ""} min="0" name="weeklyRate" step="0.01" type="number" /></Field><Field label="Monthly"><Input defaultValue={p.monthlyRate || ""} min="0" name="monthlyRate" step="0.01" type="number" /></Field></div>
         <Field className="md:col-span-2" label="Custom pricing"><Input defaultValue={p.customPricing} maxLength={500} name="customPricing" placeholder="Optional package or custom pricing terms" /></Field>
-        <div className="flex flex-wrap gap-2 md:col-span-2"><Button name="intent" type="submit" value="draft" variant="secondary">Save Draft</Button><Button name="intent" type="submit" value="activate">Submit and Activate</Button><ActionLink href="/teacher/business/profile-preview">Preview Profile</ActionLink></div>
+        <div className="md:col-span-2 space-y-3"><div className="flex flex-wrap gap-2"><Button disabled={isSaving} name="intent" type="submit" value="draft" variant="secondary">{isSaving ? "Saving" : "Save Draft"}</Button><Button disabled={isSaving} name="intent" type="submit" value="activate">{isSaving ? "Saving" : "Submit and Activate"}</Button><ActionLink href="/teacher/business/profile-preview">Preview Profile</ActionLink></div>{notice ? <p aria-live="polite" className={`rounded-md border px-3 py-2 text-sm ${notice.ok ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-amber-200 bg-amber-50 text-amber-900"}`}>{notice.message}</p> : null}</div>
       </form>
     </Card>
     <aside className="space-y-4"><Card className="p-5"><h2 className="font-semibold">Preview</h2><p className="mt-2 text-lg font-semibold">{p.name}</p><p className="text-sm text-muted-foreground">{p.qualification || "Qualification not added"}</p><p className="mt-3 text-sm">{[...p.subjects, ...p.skills].join(", ") || "Expertise not added"}</p><p className="mt-3 text-sm">{p.languages.join(", ") || "Languages not added"}</p><p className="mt-3 font-semibold">{p.hourlyRate ? `${money(p.hourlyRate, p.pricingCurrency)} / hour` : "Hourly price not set"}</p></Card><Card className="p-5"><h2 className="font-semibold">Discovery and booking</h2><p className="mt-2 text-sm text-muted-foreground">Activation reuses your existing professional marketplace profile and the canonical teacher booking-request workflow.</p></Card></aside>

@@ -135,6 +135,16 @@ export async function saveOneToOneTeachingAction(formData: FormData) {
   });
   await businessActivity(teacher, activate ? "1:1 teaching profile activated" : `1:1 teaching profile saved${intent === "activate" && missing.length ? `; missing ${missing.join(", ")}` : ""}`);
   refresh();
+  if (intent === "activate" && missing.length) {
+    return {
+      ok: false,
+      message: `Your profile was saved as a draft. Add ${missing.join(", ")} before activating it.`
+    };
+  }
+  return {
+    ok: true,
+    message: activate ? "Your Teach 1:1 profile is active and ready for discovery." : "Your Teach 1:1 profile draft was saved successfully."
+  };
 }
 
 export async function submitHappyNotesAction(formData: FormData) {
