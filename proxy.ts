@@ -74,10 +74,15 @@ export default async function proxy(request: NextRequest) {
   }
 
   const userId = typeof token?.id === "string" ? token.id : null;
-  const authSessionVersion = typeof token?.authSessionVersion === "number" ? token.authSessionVersion : null;
+  const rawSessionVersion = token?.authSessionVersion;
+  const authSessionVersion = typeof rawSessionVersion === "number"
+    ? rawSessionVersion
+    : typeof rawSessionVersion === "string" && /^\d+$/.test(rawSessionVersion)
+      ? Number(rawSessionVersion)
+      : null;
   let isAuthenticated = Boolean(userId);
   let roles: RoleKey[] = [];
-  if (userId && authSessionVersion !== null) {
+  if (userId) {
     const account = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -86,7 +91,12 @@ export default async function proxy(request: NextRequest) {
         roles: { select: { role: { select: { key: true } } } }
       }
     }).catch(() => null);
-    isAuthenticated = account?.status === "ACTIVE" && account.authSessionVersion === authSessionVersion;
+    // Always read roles from the active account. Older valid JWTs may not
+    // have the session-version claim, and treating them as role-less sends
+    // teachers to /access-denied even though their account is active.
+    // New tokens still receive strict version invalidation after a reset.
+    isAuthenticated = account?.status === "ACTIVE"
+      && (authSessionVersion === null || account.authSessionVersion === authSessionVersion);
     roles = account?.roles.map(({ role }) => role.key as RoleKey) ?? [];
   }
 
