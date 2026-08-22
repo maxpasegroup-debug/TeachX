@@ -27,6 +27,9 @@ for (const viewport of viewports) {
 test("P17 public calls to action use canonical teacher signup", async ({ page }) => {
   await page.goto("/");
   const starts = page.getByRole("link", { name: /start free/i });
-  expect(await starts.count()).toBeGreaterThan(0);
-  for (let index = 0; index < await starts.count(); index += 1) await expect(starts.nth(index)).toHaveAttribute("href", "/signup/teacher");
+  // The public shell hydrates after the page response. Wait for the CTA rather
+  // than taking a one-time count while the mobile shell is still mounting.
+  await expect(starts.first()).toBeVisible();
+  const count = await starts.count();
+  for (let index = 0; index < count; index += 1) await expect(starts.nth(index)).toHaveAttribute("href", "/signup/teacher");
 });
