@@ -31,6 +31,7 @@
     "p17:test": "node --test tests/security/master-end-to-end-qa.test.mjs",
     "p18:test": "node --test tests/security/p18-beta-blocker-closure.test.mjs",
     "p19:test": "node --test tests/security/p19-founder-manual-qa.test.mjs",
+    "p20:test": "node --test tests/security/premium-public-website.test.mjs",
     "security:audit": "npm audit --omit=dev --audit-level=high",
     "observability:audit": "node scripts/observability-audit.mjs",
     "observability:test": "node --test tests/observability/observability-regression.test.mjs",

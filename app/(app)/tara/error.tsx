@@ -1,3 +1,0 @@
-"use client";
-import { AlertTriangle } from "lucide-react"; import { Button } from "@/components/ui/button"; import { Card } from "@/components/ui/card";
-export default function TaraError({ reset }: { error: Error; reset: () => void }) { return <main className="py-12"><Card className="mx-auto max-w-lg p-6 text-center"><AlertTriangle className="mx-auto h-8 w-8 text-amber-600"/><h1 className="mt-4 text-xl font-semibold">TARA is temporarily unavailable</h1><p className="mt-2 text-sm text-muted-foreground">Your product-specific AI workspaces are unchanged. Retry the shared companion when the service is available.</p><Button className="mt-5" onClick={reset}>Retry</Button></Card></main>; }

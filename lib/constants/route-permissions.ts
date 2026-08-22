@@ -1,7 +1,7 @@
 import type { PermissionKey } from "@/lib/constants/roles";
 import apiRoutePolicy from "@/security/api-route-policy.json";
 
-export const publicRoutes = ["/login", "/forgot-password", "/reset-password", "/verify-email", "/guest-portal", "/setup", "/welcome", "/teachers", "/students", "/signup", "/pricing", "/trust", "/status", "/privacy", "/terms", "/security", "/cookies", "/refund-policy", "/contact", "/marketplace", "/resources", "/manifest.webmanifest", "/robots.txt", "/sitemap.xml", "/sw.js", "/.well-known", "/offline", "/icons", "/brand"] as const;
+export const publicRoutes = ["/login", "/forgot-password", "/reset-password", "/verify-email", "/guest-portal", "/setup", "/welcome", "/teachers", "/students", "/signup", "/save-time", "/earn-more", "/learn-more", "/enjoy-more", "/tara", "/pricing", "/trust", "/status", "/privacy", "/terms", "/security", "/cookies", "/refund-policy", "/contact", "/marketplace", "/resources", "/manifest.webmanifest", "/robots.txt", "/sitemap.xml", "/sw.js", "/.well-known", "/offline", "/icons", "/brand"] as const;
 
 export function isPublicApiRoute(pathname: string) {
   return apiRoutePolicy.publicExact.includes(pathname)
@@ -19,7 +19,6 @@ export const routePermissions: Record<string, PermissionKey> = {
   "/campus": "operations.view",
   "/cloud": "dashboard.view",
   "/marketx": "dashboard.view",
-  "/tara": "dashboard.view",
   "/classrooms": "classrooms.view",
   "/courses": "courses.manage",
   "/batches": "batches.manage",

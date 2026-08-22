@@ -17,7 +17,7 @@ for (const viewport of viewports) {
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(overflow, `${route} horizontal overflow`).toBeLessThanOrEqual(1);
     }
-    for (const route of ["/teacher", "/tara", "/teacher/resources", "/teacher/workspace/planner", "/teacher/business/profile-preview"]) {
+    for (const route of ["/teacher", "/teacher/resources", "/teacher/workspace/planner", "/teacher/business/profile-preview"]) {
       await page.goto(route);
       await expect(page).toHaveURL(new RegExp(`/login\\?callbackUrl=${encodeURIComponent(route)}`));
     }

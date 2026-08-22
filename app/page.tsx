@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = (await headers()).get("host");
   if (isLearnXHost(host)) return {};
   const title = "TeachX Guru | The Teacher Life OS";
-  const description = "Teach better, work smarter, grow professionally, and make more time for life with TeachX and TARA.";
+  const description = "More time for the life you teach for. Bring teaching, AI, professional growth and learning into one intelligent workspace powered by TARA.";
   return {
     title: { absolute: title },
     description,

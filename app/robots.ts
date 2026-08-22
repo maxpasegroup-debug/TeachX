@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/welcome", "/teachers", "/pricing", "/trust", "/status", "/privacy", "/terms", "/security", "/cookies", "/refund-policy", "/contact", "/marketplace", "/resources", "/.well-known/security.txt"],
+        allow: ["/", "/welcome", "/teachers", "/save-time", "/earn-more", "/learn-more", "/enjoy-more", "/tara", "/pricing", "/trust", "/status", "/privacy", "/terms", "/security", "/cookies", "/refund-policy", "/contact", "/marketplace", "/resources", "/.well-known/security.txt"],
         disallow: ["/admin", "/teacher", "/student", "/api", "/dashboard", "/settings", "/profile"]
       }
     ],

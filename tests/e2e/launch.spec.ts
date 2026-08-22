@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const publicRoutes = ["/", "/teachers", "/pricing", "/trust", "/login", "/signup/teacher", "/signup/student", "/verify-email?invalid=1"];
+const publicRoutes = ["/", "/teachers", "/save-time", "/earn-more", "/learn-more", "/enjoy-more", "/tara", "/pricing", "/trust", "/login", "/signup/teacher", "/signup/student", "/verify-email?invalid=1"];
 
 for (const route of publicRoutes) {
   test(`${route} renders as a public page`, async ({ page }) => {

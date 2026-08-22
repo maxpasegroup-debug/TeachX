@@ -18,7 +18,7 @@ test("invalid public routes return a real not-found response", async ({ page }) 
   expect(response?.status()).toBe(404);
 });
 
-for (const route of ["/teacher/life/save-time", "/tara", "/teacher/business/subscription", "/teacher/settings", "/teacher/support"]) {
+for (const route of ["/teacher/life/save-time", "/teacher/business/subscription", "/teacher/settings", "/teacher/support"]) {
   test(`${route} fails closed without a teacher session`, async ({ page }) => {
     await page.goto(route, { waitUntil: "domcontentloaded" });
     await expect(page).toHaveURL(new RegExp(`/login\\?callbackUrl=${encodeURIComponent(route)}`));
