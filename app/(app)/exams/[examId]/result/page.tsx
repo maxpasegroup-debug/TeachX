@@ -1,18 +1,21 @@
-import { auth } from "@/auth";
+import { notFound } from "next/navigation";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 import { getLeaderboard } from "@/services/leaderboard-service";
-import { getExamsForInstitution } from "@/services/exam-service";
+import { getExamsForInstitution, getStudentExamResult } from "@/services/exam-service";
 import { sentenceCase } from "@/lib/format";
 
 export default async function ExamResultPage({ params }: { params: Promise<{ examId: string }> }) {
-  const session = await auth();
+  const user = await requireCurrentUser("exams.view");
+  if (!user.institutionId) notFound();
   const { examId } = await params;
-  const [exams, leaderboard] = await Promise.all([
-    getExamsForInstitution(session?.user.institutionId),
-    getLeaderboard(examId)
+  const [examData, leaderboard] = await Promise.all([
+    user.roles.includes("STUDENT") ? getStudentExamResult(examId, user.id) : getExamsForInstitution(user.institutionId),
+    getLeaderboard(examId, { userId: user.id, institutionId: user.institutionId, roles: user.roles })
   ]);
-  const exam = exams.find((item) => item.id === examId);
+  const exam = Array.isArray(examData) ? examData.find((item) => item.id === examId) : examData;
+  if (!exam) notFound();
 
   return (
     <>

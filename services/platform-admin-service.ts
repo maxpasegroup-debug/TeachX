@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/db";
-import { getAdminGrowthOS } from "@/services/admin-growth-service";
+import { getPlatformAdminGrowthOS } from "@/services/admin-growth-service";
 
 export const platformAdminModules = ["dashboard", "users", "roles", "marketplace", "moderation", "subscriptions", "ai-monitoring", "analytics", "settings", "audit-logs"] as const;
 export type PlatformAdminModule = (typeof platformAdminModules)[number];
 
 export async function getPlatformAdminData() {
   const [growth, institutions, roles, permissions, plans, loginAccounts] = await Promise.all([
-    getAdminGrowthOS(null),
+    getPlatformAdminGrowthOS(),
     prisma.institution.findMany({ include: { _count: { select: { users: true, courses: true } } }, orderBy: { createdAt: "desc" }, take: 100 }),
     prisma.role.findMany({ include: { permissions: { include: { permission: true } }, _count: { select: { users: true } } }, orderBy: { name: "asc" } }),
     prisma.permission.findMany({ orderBy: { key: "asc" } }),

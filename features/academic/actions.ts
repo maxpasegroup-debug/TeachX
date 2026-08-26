@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db";
-import { userHasPermission } from "@/lib/rbac";
 import { writeAuditLog } from "@/lib/audit";
+import { requireAcademicReferences } from "@/services/academic-integrity-service";
 
 function optionalText(value: FormDataEntryValue | null) {
   const text = value?.toString().trim();
@@ -14,11 +14,9 @@ function optionalText(value: FormDataEntryValue | null) {
 }
 
 async function getAcademicSession() {
-  const session = await auth();
-  const institutionId = session?.user.institutionId;
-  if (!session?.user || !institutionId) throw new Error("Institution is required.");
-  if (!userHasPermission(session.user.roles, "academic.setup.manage")) throw new Error("You do not have access to manage academic setup.");
-  return { session, institutionId };
+  const user = await requireCurrentUser("academic.setup.manage");
+  if (!user.institutionId) throw new Error("Institution is required.");
+  return { session: { user }, institutionId: user.institutionId };
 }
 
 const branchSchema = z.object({
@@ -203,6 +201,7 @@ export async function createRoomAction(_: string | undefined, formData: FormData
   });
 
   if (!parsed.success) return "Please enter a room name.";
+  await requireAcademicReferences(institutionId, { branchId: parsed.data.branchId });
 
   const room = await prisma.room.create({
     data: {
@@ -246,6 +245,7 @@ export async function createPlannerEventAction(_: string | undefined, formData: 
   });
 
   if (!parsed.success) return "Please enter a valid calendar item.";
+  await requireAcademicReferences(institutionId, { academicYearId: parsed.data.academicYearId });
 
   const event = await prisma.plannerEvent.create({
     data: {

@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/db";
+import type { RoleKey } from "@/lib/constants/roles";
+import { userHasPermission } from "@/lib/rbac";
 
 export type UniversalSearchResult = {
   type: string;
@@ -7,11 +9,16 @@ export type UniversalSearchResult = {
   href: string;
 };
 
-export async function universalSearch(institutionId: string, query: string, userId?: string): Promise<UniversalSearchResult[]> {
+export async function universalSearch(institutionId: string, query: string, userId?: string, roles: RoleKey[] = []): Promise<UniversalSearchResult[]> {
   const contains = { contains: query, mode: "insensitive" as const };
+  const canSeePeople = userHasPermission(roles, "people.view");
+  const canSeeSupport = userHasPermission(roles, "settings.manage");
+  const canSeeFinance = userHasPermission(roles, "finance.view");
+  const canSeeAdmissions = userHasPermission(roles, "admissions.view");
+  const canSeeAdministration = roles.includes("ADMIN") || userHasPermission(roles, "settings.manage");
   const [students, teachers, marketplaceTeachers, learningResources, announcements, conversations, messages, discussions, communities, promptTemplates, supportTickets, commerceOrders, featureFlags, auditLogs, courses, batches, exams, content, leads, invoices, receipts, partners, assignments, attendance, aiOutputs, notes, institutions] = await Promise.all([
-    prisma.user.findMany({ where: { institutionId, name: contains, roles: { some: { role: { key: "STUDENT" } } } }, take: 6 }),
-    prisma.user.findMany({ where: { institutionId, name: contains, roles: { some: { role: { key: { in: ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"] } } } } }, take: 6 }),
+    canSeePeople ? prisma.user.findMany({ where: { institutionId, name: contains, roles: { some: { role: { key: "STUDENT" } } } }, take: 6 }) : Promise.resolve([]),
+    canSeePeople ? prisma.user.findMany({ where: { institutionId, name: contains, roles: { some: { role: { key: { in: ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"] } } } } }, take: 6 }) : Promise.resolve([]),
     prisma.teacherProfile.findMany({ where: { isMarketplaceListed: true, OR: [{ user: { institutionId, name: contains } }, { headline: contains }, { bio: contains }, { location: contains }] }, include: { user: true }, take: 6 }),
     prisma.contentItem.findMany({
       where: {
@@ -45,17 +52,17 @@ export async function universalSearch(institutionId: string, query: string, user
       }, take: 6
     }),
     prisma.promptTemplate.findMany({ where: { AND: [{ OR: [{ institutionId }, { institutionId: null }] }, { OR: [{ name: contains }, { key: contains }] }] }, take: 6 }),
-    prisma.supportTicket.findMany({ where: { institutionId, OR: [{ subject: contains }, { body: contains }] }, take: 6 }),
-    prisma.commerceOrder.findMany({ where: { institutionId, OR: [{ gatewayOrderId: contains }, { buyer: { name: contains } }] }, include: { buyer: true }, take: 6 }),
-    prisma.featureFlag.findMany({ where: { AND: [{ OR: [{ institutionId }, { institutionId: null }] }, { OR: [{ key: contains }, { name: contains }] }] }, take: 6 }),
-    prisma.auditLog.findMany({ where: { institutionId, OR: [{ entity: contains }, { message: contains }] }, include: { actor: true }, take: 6 }),
+    canSeeSupport ? prisma.supportTicket.findMany({ where: { institutionId, OR: [{ subject: contains }, { body: contains }] }, take: 6 }) : Promise.resolve([]),
+    canSeeFinance ? prisma.commerceOrder.findMany({ where: { institutionId, OR: [{ gatewayOrderId: contains }, { buyer: { name: contains } }] }, include: { buyer: true }, take: 6 }) : Promise.resolve([]),
+    canSeeAdministration ? prisma.featureFlag.findMany({ where: { AND: [{ OR: [{ institutionId }, { institutionId: null }] }, { OR: [{ key: contains }, { name: contains }] }] }, take: 6 }) : Promise.resolve([]),
+    canSeeAdministration ? prisma.auditLog.findMany({ where: { institutionId, OR: [{ entity: contains }, { message: contains }] }, include: { actor: true }, take: 6 }) : Promise.resolve([]),
     prisma.course.findMany({ where: { institutionId, name: contains }, take: 6 }),
     prisma.batch.findMany({ where: { name: contains, course: { institutionId } }, include: { course: true }, take: 6 }),
     prisma.exam.findMany({ where: { institutionId, name: contains }, include: { course: true }, take: 6 }),
     prisma.contentItem.findMany({ where: { institutionId, title: contains }, include: { course: true }, take: 6 }),
-    prisma.lead.findMany({ where: { institutionId, name: contains }, take: 6 }),
-    prisma.invoice.findMany({ where: { institutionId, invoiceNumber: contains }, include: { student: true }, take: 6 }),
-    prisma.receipt.findMany({ where: { institutionId, receiptNumber: contains }, include: { payment: { include: { student: true } } }, take: 6 }),
+    canSeeAdmissions ? prisma.lead.findMany({ where: { institutionId, name: contains }, take: 6 }) : Promise.resolve([]),
+    canSeeFinance ? prisma.invoice.findMany({ where: { institutionId, invoiceNumber: contains }, include: { student: true }, take: 6 }) : Promise.resolve([]),
+    canSeeFinance ? prisma.receipt.findMany({ where: { institutionId, receiptNumber: contains }, include: { payment: { include: { student: true } } }, take: 6 }) : Promise.resolve([]),
     prisma.partner.findMany({ where: { institutionId, name: contains }, take: 6 }),
     prisma.assignment.findMany({ where: { title: contains, classroom: { institutionId } }, include: { classroom: true }, take: 6 }),
     prisma.attendanceSession.findMany({ where: { classroom: { institutionId, title: contains } }, include: { classroom: true, batch: true }, take: 6 })

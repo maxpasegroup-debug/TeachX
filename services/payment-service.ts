@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { getPublicBaseUrl } from "@/lib/env";
 import { captureOperationalError } from "@/lib/observability/logger";
 import { getPaymentConfig, minorAmount } from "@/lib/payments/config";
+import { getAICreditPackage } from "@/lib/payments/ai-credit-catalog";
 import { createRazorpayOrder, createRazorpayRefund, stripe } from "@/lib/payments/providers";
 import { sendCommerceEmail } from "@/services/transactional-email-service";
 
@@ -166,7 +167,15 @@ async function fulfil(tx: Prisma.TransactionClient, order: OrderForPayment, sign
       });
     }
     if (item.itemType === "AI_CREDITS") {
-      await tx.walletTransaction.updateMany({ where: { orderId: order.id, userId: order.buyerId, type: "HOLD", pending: true }, data: { type: "CREDIT", pending: false, description: `${String(metadata.credits || "AI")} credits purchased` } });
+      const creditPack = typeof metadata.packageId === "string" ? getAICreditPackage(metadata.packageId) : null;
+      if (!creditPack || order.currency !== creditPack.currency || Number(item.unitPrice) !== creditPack.amount || Number(item.total) !== creditPack.amount) {
+        throw new Error("AI credit order does not match the authoritative product catalog.");
+      }
+      const credited = await tx.walletTransaction.updateMany({
+        where: { orderId: order.id, userId: order.buyerId, type: "HOLD", pending: true, amount: creditPack.credits },
+        data: { type: "CREDIT", pending: false, description: `${creditPack.credits} AI credits purchased`, metadata: { creditType: "AI", packageId: creditPack.id, provider: signal.provider, providerPaymentId: signal.providerPaymentId } }
+      });
+      if (credited.count !== 1) throw new Error("AI credit fulfillment record is invalid.");
     }
     if (item.sellerId && Number(item.total) > 0) {
       const wallet = await tx.wallet.upsert({

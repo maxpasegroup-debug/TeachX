@@ -1,5 +1,6 @@
 .env
 .env*.local
+.env.qa
 .next
 node_modules
 dist

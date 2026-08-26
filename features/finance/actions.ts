@@ -3,10 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { writeAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
-import { userHasPermission } from "@/lib/rbac";
 import { assignStudentFee, createFeeHead, createFeePlan } from "@/services/fee-service";
 import { createExpense } from "@/services/expense-service";
 import { createInvoice } from "@/services/invoice-service";
@@ -19,11 +18,9 @@ function text(value: FormDataEntryValue | null) {
 }
 
 async function getFinanceSession() {
-  const session = await auth();
-  const institutionId = session?.user.institutionId;
-  if (!session?.user || !institutionId) throw new Error("Institution is required.");
-  if (!userHasPermission(session.user.roles, "finance.manage")) throw new Error("You do not have finance access.");
-  return { session, institutionId };
+  const user = await requireCurrentUser("finance.manage");
+  if (!user.institutionId) throw new Error("Institution is required.");
+  return { session: { user }, institutionId: user.institutionId };
 }
 
 const feeHeadSchema = z.object({

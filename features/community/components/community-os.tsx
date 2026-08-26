@@ -220,7 +220,10 @@ function NotificationCenterPanel({ data }: { data: CommunityOSData }) {
   return (
     <Card className="p-5 shadow-soft">
       <div className="flex items-center justify-between gap-4"><div className="flex items-center gap-3"><Bell className="h-5 w-5 text-sky-700" /><h2 className="text-xl font-semibold">Notification Center</h2></div><Badge>{data.notifications.unreadCount} unread</Badge></div>
-      <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]"><Input placeholder="Search notifications" /><Button type="button" variant="secondary"><Search className="mr-2 h-4 w-4" />Search</Button></div>
+      <form action="/communication" method="get" className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
+        <Input name="notificationQuery" defaultValue={data.notifications.query} placeholder="Search notifications" />
+        <Button type="submit" variant="secondary"><Search className="mr-2 h-4 w-4" />Search</Button>
+      </form>
       <div className="mt-5 grid gap-4 xl:grid-cols-3">
         <NotificationGroup title="Today" items={groups.today} />
         <NotificationGroup title="Yesterday" items={groups.yesterday} />

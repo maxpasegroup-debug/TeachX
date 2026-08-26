@@ -8,6 +8,7 @@ export async function GET() {
   const access = await requireApiSession("dashboard.view");
   if ("response" in access) return access.response;
   const workspace = resolveWorkspace(access.session.user.roles);
+  if (workspace === "DENIED") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   return NextResponse.json({ widgets: await getDashboardWidgets(access.session.user.id, workspace, []) });
 }
 
@@ -15,9 +16,11 @@ export async function POST(request: Request) {
   const access = await requireApiSession("dashboard.view");
   if ("response" in access) return access.response;
   const body = await request.json();
+  const workspace = resolveWorkspace(access.session.user.roles);
+  if (workspace === "DENIED") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const widget = await upsertDashboardWidget({
     userId: access.session.user.id,
-    workspace: body.workspace ?? resolveWorkspace(access.session.user.roles),
+    workspace,
     type: body.type ?? "CARD",
     title: body.title,
     order: body.order,

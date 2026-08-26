@@ -30,7 +30,8 @@ export type WorkspaceKey =
   | "ACCOUNTS"
   | "RECEPTION"
   | "VIDEO_EDITOR"
-  | "ADMIN";
+  | "ADMIN"
+  | "DENIED";
 
 export type WorkspaceData = {
   key: WorkspaceKey;
@@ -55,11 +56,14 @@ export function resolveWorkspace(roles: RoleKey[] = []): WorkspaceKey {
   if (roles.includes("ACCOUNTS")) return "ACCOUNTS";
   if (roles.includes("RECEPTION")) return "RECEPTION";
   if (roles.includes("VIDEO_EDITOR")) return "VIDEO_EDITOR";
-  return "ADMIN";
+  if (roles.includes("ADMIN")) return "ADMIN";
+  return "DENIED";
 }
 
 export async function getWorkspaceData(input: { userId?: string; name?: string | null; institutionId?: string | null; roles: RoleKey[] }): Promise<WorkspaceData> {
   const workspace = resolveWorkspace(input.roles);
+  if (workspace === "DENIED") throw new Error("WORKSPACE_ACCESS_DENIED");
+  if (workspace !== "PARENT" && !input.institutionId) throw new Error("INSTITUTION_ACCESS_REQUIRED");
   const [activity, notificationCenter] = await Promise.all([
     getRecentActivities(input.institutionId, 8),
     getNotificationCenter(input.userId, input.institutionId)

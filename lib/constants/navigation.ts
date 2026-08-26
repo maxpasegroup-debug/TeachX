@@ -40,7 +40,7 @@ export type NavigationItem = {
   group?: string;
 };
 
-export type NavigationWorkspace = "teacher" | "student" | "parent" | "director" | "campus" | "admin";
+export type NavigationWorkspace = "teacher" | "student" | "parent" | "director" | "campus" | "admin" | "denied";
 
 // Shared Platform: workspace navigation remains role-aware because future
 // frontends reuse the same auth, RBAC, and shell primitives.
@@ -126,7 +126,8 @@ export const teachXNavigation: Record<NavigationWorkspace, NavigationItem[]> = {
     { label: "Community", href: "/admin/announcements", icon: MessageCircle },
     { label: "Support", href: "/admin/support", icon: LifeBuoy },
     { label: "Settings", href: "/settings", icon: Settings }
-  ]
+  ],
+  denied: []
 };
 
 const teacherRoles: RoleKey[] = ["ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR", "ACADEMIC_HEAD"];
@@ -137,7 +138,8 @@ export function resolveNavigationWorkspace(roles: RoleKey[] = []): NavigationWor
   if (roles.includes("DIRECTOR")) return "director";
   if (roles.includes("RECEPTION") || roles.includes("ACCOUNTS")) return "campus";
   if (roles.some((role) => teacherRoles.includes(role))) return "teacher";
-  return "admin";
+  if (roles.includes("ADMIN")) return "admin";
+  return "denied";
 }
 
 export function getNavigationForRoles(roles: RoleKey[] = []) {

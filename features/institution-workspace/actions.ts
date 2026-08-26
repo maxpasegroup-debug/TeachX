@@ -1,15 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db";
-import { userHasPermission } from "@/lib/rbac";
+import { requireAcademicReferences } from "@/services/academic-integrity-service";
 
 const text = (fd: FormData, key: string) => fd.get(key)?.toString().trim() ?? "";
 async function access(permission: "institution.manage" | "academic.setup.manage" = "academic.setup.manage") {
-  const session = await auth();
-  if (!session?.user.id || !session.user.institutionId || !userHasPermission(session.user.roles, permission)) throw new Error("Institution workspace permission is required.");
-  return { userId: session.user.id, institutionId: session.user.institutionId };
+  const user = await requireCurrentUser(permission);
+  if (!user.institutionId) throw new Error("Institution workspace permission is required.");
+  return { userId: user.id, institutionId: user.institutionId };
 }
 function refresh() { revalidatePath("/institution", "layout"); }
 
@@ -68,12 +68,14 @@ export async function deleteClassAction(fd: FormData) {
 }
 export async function assignFacultyAction(fd: FormData) {
   const { institutionId } = await access(); const batchId = text(fd, "batchId"), facultyId = text(fd, "facultyId");
-  const valid = await prisma.batch.findFirst({ where: { id: batchId, course: { institutionId } } }); const faculty = await prisma.user.findFirst({ where: { id: facultyId, institutionId } }); if (!valid || !faculty) throw new Error("Assignment is invalid.");
+  await requireAcademicReferences(institutionId, { batchId, facultyId });
   await prisma.batchFaculty.upsert({ where: { batchId_facultyId: { batchId, facultyId } }, create: { batchId, facultyId, isLead: fd.get("isLead") === "on" }, update: { isLead: fd.get("isLead") === "on" } }); refresh();
 }
 export async function saveTimetableAction(fd: FormData) {
-  const { institutionId } = await access(); const batchId = text(fd, "batchId"); const batch = await prisma.batch.findFirst({ where: { id: batchId, course: { institutionId } } }); if (!batch) throw new Error("Class not found.");
-  await prisma.timetableEntry.create({ data: { batchId, courseId: batch.courseId, day: text(fd, "day") as never, timeSlotId: text(fd, "timeSlotId"), subjectId: text(fd, "subjectId") || null, facultyId: text(fd, "facultyId") || null, roomId: text(fd, "roomId") || null } }); refresh();
+  const { institutionId } = await access(); const batchId = text(fd, "batchId"), timeSlotId = text(fd, "timeSlotId"), subjectId = text(fd, "subjectId") || null, facultyId = text(fd, "facultyId") || null, roomId = text(fd, "roomId") || null;
+  const refs = await requireAcademicReferences(institutionId, { batchId, timeSlotId, subjectId, facultyId, roomId });
+  if (!refs.batch) throw new Error("Class not found.");
+  await prisma.timetableEntry.create({ data: { batchId, courseId: refs.batch.courseId, day: text(fd, "day") as never, timeSlotId, subjectId, facultyId, roomId } }); refresh();
 }
 export async function deleteTimetableAction(fd: FormData) {
   const { institutionId } = await access(); await prisma.timetableEntry.deleteMany({ where: { id: text(fd, "id"), course: { institutionId } } }); refresh();

@@ -10,9 +10,9 @@ export function isPublicApiRoute(pathname: string) {
 
 export const routePermissions: Record<string, PermissionKey> = {
   "/dashboard": "dashboard.view",
-  "/teacher": "dashboard.view",
-  "/student": "dashboard.view",
-  "/admin": "dashboard.view",
+  "/teacher": "classrooms.view",
+  "/student": "exams.attempt",
+  "/admin": "settings.manage",
   "/learning": "dashboard.view",
   "/parent": "dashboard.view",
   "/parentx": "dashboard.view",

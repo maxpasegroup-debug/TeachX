@@ -1,15 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { writeAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 
 const value = (fd: FormData, key: string) => String(fd.get(key) ?? "").trim();
 async function admin() {
-  const session = await auth();
-  if (!session?.user.id || !session.user.roles.includes("ADMIN")) throw new Error("Platform administrator access is required.");
-  return session;
+  const user = await requireCurrentUser();
+  if (!user.roles.includes("ADMIN")) throw new Error("Platform administrator access is required.");
+  return { user };
 }
 function refresh() { revalidatePath("/admin/control", "layout"); }
 async function audit(actorId: string, action: "CREATE"|"UPDATE"|"DELETE", entity: string, entityId: string, message: string) {

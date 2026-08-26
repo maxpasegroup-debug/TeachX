@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { requireApiSession } from "@/lib/api-auth";
+import { authorizeAIScope } from "@/lib/ai-authorization";
 import { captureOperationalError } from "@/lib/observability/logger";
 import { getRequestId } from "@/lib/observability/request-context";
 import { getClientKey, rateLimit } from "@/lib/security";
@@ -29,10 +30,12 @@ export async function POST(request: Request) {
   const parsed = aiRequestSchema.safeParse(payload);
   if (!parsed.success) return NextResponse.json({ error: "Invalid AI request." }, { status: 400 });
   const body = parsed.data;
-  const teacherRoles = ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"];
-  const teacher = access.session.user.roles.some((role) => teacherRoles.includes(role));
-  const scope = body.scope ?? (teacher ? "TEACHER" : "SYSTEM");
-  if (teacher && scope !== "TEACHER") return NextResponse.json({ error: "This AI scope is not available for a teacher account." }, { status: 403 });
+  let scope;
+  try {
+    scope = authorizeAIScope(access.session.user.roles, body.scope);
+  } catch {
+    return NextResponse.json({ error: "This AI capability is not available for this account." }, { status: 403 });
+  }
   const requestId = await getRequestId();
   try {
     const result = await runAI({

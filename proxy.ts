@@ -96,7 +96,8 @@ export default async function proxy(request: NextRequest) {
     // teachers to /access-denied even though their account is active.
     // New tokens still receive strict version invalidation after a reset.
     isAuthenticated = account?.status === "ACTIVE"
-      && (authSessionVersion === null || account.authSessionVersion === authSessionVersion);
+      && authSessionVersion !== null
+      && account.authSessionVersion === authSessionVersion;
     roles = account?.roles.map(({ role }) => role.key as RoleKey) ?? [];
   }
 
@@ -105,7 +106,6 @@ export default async function proxy(request: NextRequest) {
   const requiredPermission = getRoutePermission(nextUrl.pathname);
 
   if (!isApi && !isAuthenticated && !isPublicRoute) {
-    if (!requiredPermission) return nextResponse(request, requestId);
     const loginUrl = new URL("/login", nextUrl);
     loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);
     return withRequestId(NextResponse.redirect(loginUrl), requestId);

@@ -20,7 +20,8 @@ function money(value: number) {
   return Number(value.toFixed(2));
 }
 
-export async function getAdminGrowthOS(institutionId?: string | null) {
+async function loadAdminGrowthOS(institutionId: string | null, platformScope: boolean) {
+  if (!institutionId && !platformScope) throw new Error("Institution scope is required for tenant administration.");
   const today = startOfDay();
   const month = startOfMonth();
   const scope = institutionId ? { institutionId } : {};
@@ -202,4 +203,13 @@ export async function getAdminGrowthOS(institutionId?: string | null) {
       ]
     }
   };
+}
+
+export async function getAdminGrowthOS(institutionId?: string | null) {
+  if (!institutionId) throw new Error("Institution scope is required for tenant administration.");
+  return loadAdminGrowthOS(institutionId, false);
+}
+
+export async function getPlatformAdminGrowthOS() {
+  return loadAdminGrowthOS(null, true);
 }

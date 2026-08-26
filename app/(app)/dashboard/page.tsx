@@ -6,6 +6,7 @@ import { resolveNavigationWorkspace } from "@/lib/constants/navigation";
 export default async function DashboardPage() {
   const session = await auth();
   const workspace = resolveNavigationWorkspace(session?.user.roles ?? []);
+  if (workspace === "denied") redirect("/access-denied");
 
   redirect(`/${workspace}`);
 }

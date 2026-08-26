@@ -1,7 +1,10 @@
 import type { CommunicationChannel, CommunicationKind, CommunicationPriority } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
+import { requireCurrentUser } from "@/lib/auth/current-user";
+import { userHasPermission } from "@/lib/rbac";
 import { createModuleNotification } from "@/services/notification-aggregation-service";
+import { requireAcademicReferences } from "@/services/academic-integrity-service";
 
 export async function getCommunicationCenter(institutionId?: string | null) {
   if (!institutionId) return { communications: [], logs: [] };
@@ -15,7 +18,7 @@ export async function getCommunicationCenter(institutionId?: string | null) {
 }
 
 export async function createCommunication(input: {
-  institutionId: string;
+  institutionId?: string;
   createdById?: string;
   kind: CommunicationKind;
   title: string;
@@ -30,10 +33,34 @@ export async function createCommunication(input: {
   expiresAt?: Date;
   attachmentUrl?: string;
 }) {
+  const actor = await requireCurrentUser();
+  if (!actor.institutionId || input.institutionId && input.institutionId !== actor.institutionId) {
+    throw new Error("Authorized institution context is required.");
+  }
+  if (!userHasPermission(actor.roles, "operations.view") && !userHasPermission(actor.roles, "classrooms.manage")) {
+    throw new Error("Communication permission is required.");
+  }
+
+  const institutionId = actor.institutionId;
+  await requireAcademicReferences(institutionId, { courseId: input.courseId, batchId: input.batchId });
+  const requestedUserIds = [...new Set(input.userIds ?? [])];
+  const [authorizedUsers, course, batch, role] = await Promise.all([
+    requestedUserIds.length
+      ? prisma.user.findMany({ where: { id: { in: requestedUserIds }, institutionId, status: "ACTIVE" }, select: { id: true } })
+      : Promise.resolve([]),
+    input.courseId ? prisma.course.findFirst({ where: { id: input.courseId, institutionId }, select: { id: true } }) : Promise.resolve(null),
+    input.batchId ? prisma.batch.findFirst({ where: { id: input.batchId, course: { institutionId } }, select: { id: true } }) : Promise.resolve(null),
+    input.roleKey ? prisma.role.findUnique({ where: { key: input.roleKey }, select: { key: true } }) : Promise.resolve(null)
+  ]);
+  if (authorizedUsers.length !== requestedUserIds.length) throw new Error("One or more recipients are not authorized.");
+  if (input.courseId && !course) throw new Error("The selected course is not authorized.");
+  if (input.batchId && !batch) throw new Error("The selected batch is not authorized.");
+  if (input.roleKey && !role) throw new Error("The selected role is not valid.");
+
   const communication = await prisma.communication.create({
     data: {
-      institutionId: input.institutionId,
-      createdById: input.createdById,
+      institutionId,
+      createdById: actor.id,
       kind: input.kind,
       title: input.title,
       body: input.body,
@@ -62,7 +89,7 @@ export async function createCommunication(input: {
   });
 
   if (input.channels.includes("IN_APP")) {
-    await createModuleNotification({ institutionId: input.institutionId, type: input.kind === "ANNOUNCEMENT" ? "ANNOUNCEMENT" : "SYSTEM", title: input.title, body: input.body, link: "/dashboard" });
+    await createModuleNotification({ institutionId, type: input.kind === "ANNOUNCEMENT" ? "ANNOUNCEMENT" : "SYSTEM", title: input.title, body: input.body, link: "/dashboard" });
   }
 
   return communication;

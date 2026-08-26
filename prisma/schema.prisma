@@ -912,6 +912,16 @@ model Institution {
   commercePaymentEvents CommercePaymentEvent[]
   transactionalEmails   TransactionalEmail[]
   storageObjects        StorageObject[]
+  studentCommunityRequests      StudentCommunityRequest[]       @relation("StudentCommunityRequestInstitution")
+  studentCommunityVotes         StudentCommunityVote[]          @relation("StudentCommunityVoteInstitution")
+  studentAcceptedAnswers        StudentAcceptedAnswer[]         @relation("StudentAcceptedAnswerInstitution")
+  studentAcceptedAnswerHistory  StudentAcceptedAnswerHistory[]  @relation("StudentAcceptedAnswerHistoryInstitution")
+  studentCommunityReports       StudentCommunityReport[]        @relation("StudentCommunityReportInstitution")
+  studentCommunityBlocks        StudentCommunityBlock[]         @relation("StudentCommunityBlockInstitution")
+  studentCommunityResourceShares StudentCommunityResourceShare[] @relation("StudentCommunityResourceShareInstitution")
+  studentGroupEvents            StudentGroupEvent[]             @relation("StudentGroupEventInstitution")
+  studentGroupChallenges        StudentGroupChallenge[]         @relation("StudentGroupChallengeInstitution")
+  studentCommunityReputations   StudentCommunityReputation[]    @relation("StudentCommunityReputationInstitution")
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -1037,6 +1047,21 @@ model User {
   approvedLeaves                 LeaveApplication[]              @relation("LeaveApprover")
   privacyConsents                PrivacyConsent[]
   privacyRequests                PrivacyRequest[]
+  studentCommunityRequestsMade     StudentCommunityRequest[]              @relation("StudentCommunityRequestRequester")
+  studentCommunityRequestsReceived StudentCommunityRequest[]              @relation("StudentCommunityRequestRecipient")
+  studentCommunityVotes            StudentCommunityVote[]                 @relation("StudentCommunityVoteUser")
+  studentAcceptedAnswers            StudentAcceptedAnswer[]                @relation("StudentAcceptedAnswerActor")
+  studentAcceptedAnswerHistory      StudentAcceptedAnswerHistory[]         @relation("StudentAcceptedAnswerHistoryActor")
+  studentCommunityReportsMade       StudentCommunityReport[]               @relation("StudentCommunityReportReporter")
+  studentCommunityReportsModerated  StudentCommunityReport[]               @relation("StudentCommunityReportModerator")
+  studentCommunityBlocksCreated     StudentCommunityBlock[]                @relation("StudentCommunityBlockBlocker")
+  studentCommunityBlocksReceived    StudentCommunityBlock[]                @relation("StudentCommunityBlockBlocked")
+  studentCommunityResourceShares    StudentCommunityResourceShare[]        @relation("StudentCommunityResourceShareOwner")
+  studentGroupEventsCreated          StudentGroupEvent[]                    @relation("StudentGroupEventCreator")
+  studentGroupEventRsvps             StudentGroupEventRsvp[]
+  studentGroupChallengesCreated      StudentGroupChallenge[]                @relation("StudentGroupChallengeCreator")
+  studentGroupChallengeParticipations StudentGroupChallengeParticipant[]
+  studentCommunityReputations        StudentCommunityReputation[]           @relation("StudentCommunityReputationUser")
   createdAt                      DateTime                        @default(now())
   updatedAt                      DateTime                        @updatedAt
 
@@ -1180,6 +1205,9 @@ model Subject {
   studentFees       StudentFee[]
   contentFolders    ContentFolder[]
   contentItems      ContentItem[]
+  studentCommunityRequests StudentCommunityRequest[] @relation("StudentCommunityRequestSubject")
+  studentGroupEvents       StudentGroupEvent[]        @relation("StudentGroupEventSubject")
+  studentGroupChallenges   StudentGroupChallenge[]    @relation("StudentGroupChallengeSubject")
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
 
@@ -1423,6 +1451,7 @@ model AssignmentSubmissionRevision {
 
   @@unique([submissionId, version])
   @@index([submissionId, createdAt])
+  @@index([reviewedById])
 }
 
 model AssignmentDoubt {
@@ -2824,6 +2853,7 @@ model ContentItem {
   plannerEvents            PlannerEvent[]
   externalContent          ExternalContent?
   storageObject            StorageObject?
+  studentCommunityResourceShares StudentCommunityResourceShare[] @relation("StudentCommunityResourceShareContent")
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
 
@@ -3299,6 +3329,7 @@ model DirectConversation {
   context       Json?
   participants  DirectConversationParticipant[]
   messages      DirectMessage[]
+  studentCommunityResourceShares StudentCommunityResourceShare[] @relation("StudentCommunityResourceShareConversation")
   createdAt     DateTime                        @default(now())
   updatedAt     DateTime                        @updatedAt
 
@@ -3352,6 +3383,10 @@ model Community {
   metadata      Json?
   members       CommunityMember[]
   discussions   GenericDiscussion[]
+  studentCommunityRequests      StudentCommunityRequest[]      @relation("StudentCommunityRequestCommunity")
+  studentCommunityResourceShares StudentCommunityResourceShare[] @relation("StudentCommunityResourceShareCommunity")
+  studentGroupEvents            StudentGroupEvent[]            @relation("StudentGroupEventCommunity")
+  studentGroupChallenges        StudentGroupChallenge[]        @relation("StudentGroupChallengeCommunity")
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
@@ -3387,6 +3422,8 @@ model GenericDiscussion {
   isPinned      Boolean                  @default(false)
   isLocked      Boolean                  @default(false)
   replies       GenericDiscussionReply[]
+  studentAcceptedAnswer       StudentAcceptedAnswer?        @relation("StudentAcceptedAnswerDiscussion")
+  studentAcceptedAnswerHistory StudentAcceptedAnswerHistory[] @relation("StudentAcceptedAnswerHistoryDiscussion")
   metadata      Json?
   createdAt     DateTime                 @default(now())
   updatedAt     DateTime                 @updatedAt
@@ -3403,6 +3440,9 @@ model GenericDiscussionReply {
   author       User?             @relation("GenericDiscussionReplyAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   body         String
   metadata     Json?
+  studentAcceptedAnswer          StudentAcceptedAnswer?         @relation("StudentAcceptedAnswerReply")
+  previousAcceptedAnswerHistory  StudentAcceptedAnswerHistory[] @relation("StudentAcceptedAnswerHistoryPreviousReply")
+  nextAcceptedAnswerHistory      StudentAcceptedAnswerHistory[] @relation("StudentAcceptedAnswerHistoryNextReply")
   createdAt    DateTime          @default(now())
 
   @@index([discussionId, createdAt])
@@ -3835,11 +3875,16 @@ enum StudentCommunityReportStatus {
 model StudentCommunityRequest {
   id            String                        @id @default(cuid())
   institutionId String
+  institution   Institution                   @relation("StudentCommunityRequestInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
   kind          StudentCommunityRequestKind
   requesterId   String
+  requester     User                          @relation("StudentCommunityRequestRequester", fields: [requesterId], references: [id], onDelete: Cascade)
   recipientId   String?
+  recipient     User?                         @relation("StudentCommunityRequestRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
   communityId   String?
+  community     Community?                    @relation("StudentCommunityRequestCommunity", fields: [communityId], references: [id], onDelete: Cascade)
   subjectId     String
+  subject       Subject                       @relation("StudentCommunityRequestSubject", fields: [subjectId], references: [id], onDelete: Cascade)
   status        StudentCommunityRequestStatus @default(PENDING)
   expiresAt     DateTime?
   respondedAt   DateTime?
@@ -3853,7 +3898,9 @@ model StudentCommunityRequest {
 model StudentCommunityVote {
   id            String                     @id @default(cuid())
   institutionId String
+  institution   Institution                @relation("StudentCommunityVoteInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
   userId        String
+  user          User                       @relation("StudentCommunityVoteUser", fields: [userId], references: [id], onDelete: Cascade)
   targetType    StudentCommunityVoteTarget
   targetId      String
   value         Int                        @default(1)
@@ -3866,21 +3913,28 @@ model StudentCommunityVote {
 model StudentAcceptedAnswer {
   id            String   @id @default(cuid())
   institutionId String
+  institution   Institution            @relation("StudentAcceptedAnswerInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
   discussionId  String   @unique
+  discussion    GenericDiscussion       @relation("StudentAcceptedAnswerDiscussion", fields: [discussionId], references: [id], onDelete: Cascade)
   replyId       String   @unique
+  reply         GenericDiscussionReply  @relation("StudentAcceptedAnswerReply", fields: [replyId], references: [id], onDelete: Cascade)
   acceptedById  String
+  acceptedBy    User                     @relation("StudentAcceptedAnswerActor", fields: [acceptedById], references: [id], onDelete: Cascade)
   acceptedAt    DateTime @default(now())
 }
 
 model StudentCommunityReport {
   id            String                       @id @default(cuid())
   institutionId String
+  institution   Institution                  @relation("StudentCommunityReportInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
   reporterId    String
+  reporter      User                         @relation("StudentCommunityReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
   targetType    StudentCommunityReportTarget
   targetId      String
   reason        String
   status        StudentCommunityReportStatus @default(REPORTED)
   moderatorId   String?
+  moderator     User?                        @relation("StudentCommunityReportModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
   resolution    String?
   resolvedAt    DateTime?
   createdAt     DateTime                     @default(now())
@@ -3893,8 +3947,11 @@ model StudentCommunityReport {
 model StudentCommunityBlock {
   id            String   @id @default(cuid())
   institutionId String
+  institution   Institution @relation("StudentCommunityBlockInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
   blockerId     String
+  blocker       User        @relation("StudentCommunityBlockBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
   blockedId     String
+  blocked       User        @relation("StudentCommunityBlockBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
 
   @@unique([blockerId, blockedId])
@@ -3904,14 +3961,21 @@ model StudentCommunityBlock {
 model StudentCommunityResourceShare {
   id             String   @id @default(cuid())
   institutionId  String
+  institution    Institution                     @relation("StudentCommunityResourceShareInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
   ownerId        String
+  owner          User                            @relation("StudentCommunityResourceShareOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   communityId    String?
+  community      Community?                      @relation("StudentCommunityResourceShareCommunity", fields: [communityId], references: [id], onDelete: Cascade)
   conversationId String?
+  conversation   DirectConversation?             @relation("StudentCommunityResourceShareConversation", fields: [conversationId], references: [id], onDelete: Cascade)
   contentItemId  String?
+  contentItem    ContentItem?                    @relation("StudentCommunityResourceShareContent", fields: [contentItemId], references: [id], onDelete: SetNull)
   snapshotType   String
   title          String
   snapshot       Json
-  supersedesId   String?
+  supersedesId   String?                         @unique
+  supersedes     StudentCommunityResourceShare?  @relation("StudentCommunityResourceShareSupersession", fields: [supersedesId], references: [id], onDelete: SetNull)
+  supersededBy   StudentCommunityResourceShare?  @relation("StudentCommunityResourceShareSupersession")
   version        Int      @default(1)
   status         String   @default("PUBLISHED")
   createdAt      DateTime @default(now())
@@ -3923,9 +3987,13 @@ model StudentCommunityResourceShare {
 model StudentGroupEvent {
   id            String   @id @default(cuid())
   institutionId String
+  institution   Institution             @relation("StudentGroupEventInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
   communityId   String
+  community     Community               @relation("StudentGroupEventCommunity", fields: [communityId], references: [id], onDelete: Cascade)
   subjectId     String
+  subject       Subject                 @relation("StudentGroupEventSubject", fields: [subjectId], references: [id], onDelete: Cascade)
   createdById   String
+  createdBy     User                    @relation("StudentGroupEventCreator", fields: [createdById], references: [id], onDelete: Cascade)
   kind          String
   title         String
   description   String?
@@ -3934,6 +4002,7 @@ model StudentGroupEvent {
   status        String   @default("ACTIVE")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  rsvps         StudentGroupEventRsvp[]
 
   @@index([institutionId, communityId, startsAt])
 }
@@ -3941,7 +4010,9 @@ model StudentGroupEvent {
 model StudentGroupEventRsvp {
   id        String   @id @default(cuid())
   eventId   String
+  event     StudentGroupEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
   userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   status    String   @default("GOING")
   createdAt DateTime @default(now())
 
@@ -3951,9 +4022,13 @@ model StudentGroupEventRsvp {
 model StudentGroupChallenge {
   id            String   @id @default(cuid())
   institutionId String
+  institution   Institution                        @relation("StudentGroupChallengeInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
   communityId   String
+  community     Community                          @relation("StudentGroupChallengeCommunity", fields: [communityId], references: [id], onDelete: Cascade)
   subjectId     String
+  subject       Subject                            @relation("StudentGroupChallengeSubject", fields: [subjectId], references: [id], onDelete: Cascade)
   createdById   String
+  createdBy     User                               @relation("StudentGroupChallengeCreator", fields: [createdById], references: [id], onDelete: Cascade)
   kind          String
   title         String
   description   String?
@@ -3963,6 +4038,7 @@ model StudentGroupChallenge {
   status        String   @default("ACTIVE")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  participants  StudentGroupChallengeParticipant[]
 
   @@index([institutionId, communityId, status, endsAt])
 }
@@ -3970,7 +4046,9 @@ model StudentGroupChallenge {
 model StudentGroupChallengeParticipant {
   id          String    @id @default(cuid())
   challengeId String
+  challenge   StudentGroupChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
   userId      String
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   progress    Int       @default(0)
   completedAt DateTime?
   createdAt   DateTime  @default(now())
@@ -3981,7 +4059,9 @@ model StudentGroupChallengeParticipant {
 model StudentCommunityReputation {
   id            String   @id @default(cuid())
   institutionId String
+  institution   Institution @relation("StudentCommunityReputationInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
   userId        String
+  user          User        @relation("StudentCommunityReputationUser", fields: [userId], references: [id], onDelete: Cascade)
   eventType     String
   sourceId      String
   points        Int
@@ -3994,10 +4074,15 @@ model StudentCommunityReputation {
 model StudentAcceptedAnswerHistory {
   id              String   @id @default(cuid())
   institutionId   String
+  institution     Institution             @relation("StudentAcceptedAnswerHistoryInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
   discussionId    String
+  discussion      GenericDiscussion       @relation("StudentAcceptedAnswerHistoryDiscussion", fields: [discussionId], references: [id], onDelete: Cascade)
   previousReplyId String?
+  previousReply   GenericDiscussionReply? @relation("StudentAcceptedAnswerHistoryPreviousReply", fields: [previousReplyId], references: [id], onDelete: SetNull)
   nextReplyId     String?
+  nextReply       GenericDiscussionReply? @relation("StudentAcceptedAnswerHistoryNextReply", fields: [nextReplyId], references: [id], onDelete: SetNull)
   actorId         String
+  actor           User                    @relation("StudentAcceptedAnswerHistoryActor", fields: [actorId], references: [id], onDelete: Cascade)
   action          String
   createdAt       DateTime @default(now())
 
