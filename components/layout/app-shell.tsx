@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
+import { AppShellFrame } from "@/components/layout/app-shell-frame";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopHeader } from "@/components/layout/top-header";
 import { FeedbackWidget } from "@/features/launch-intelligence/components/feedback-widget";
@@ -17,13 +18,12 @@ export function AppShell({ children, institutionName, roles, whiteLabel }: { chi
 
   return (
     <div className="min-h-screen bg-background text-foreground" style={style}>
-      <div className="flex">
-        <Sidebar institutionName={institutionName} logoUrl={whiteLabel?.logoUrl} roles={roles ?? []} />
-        <div className="min-w-0 flex-1">
-          <TopHeader institutionName={institutionName} roles={roles ?? []} />
-          <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
-        </div>
-      </div>
+      <AppShellFrame
+        sidebar={<Sidebar institutionName={institutionName} logoUrl={whiteLabel?.logoUrl} roles={roles ?? []} />}
+        topHeader={<TopHeader institutionName={institutionName} roles={roles ?? []} />}
+      >
+        {children}
+      </AppShellFrame>
       <FeedbackWidget />
     </div>
   );

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
-  ArrowRight, BadgeIndianRupee, BookOpen, Bot, Brain, CalendarDays, Camera, Check,
+  ArrowRight, BadgeIndianRupee, BookOpen, Bot, Brain, CalendarDays, Camera, Check, Compass,
   CircleDollarSign, Clock3, ClipboardCheck, FileText, FolderOpen, Headphones, Heart,
   MessageCircle, Mic, NotebookPen, Plane, Search, Sparkles, Upload, UsersRound, Video
 } from "lucide-react";
@@ -49,10 +49,25 @@ function PillarNav({ active }: { active: TeacherLifePillar }) {
 
 const staffRoomTabs = [
   ["Today", "#today", CalendarDays],
-  ["My Classes", "#classes", UsersRound],
-  ["My Students", "#students", ClipboardCheck],
-  ["My Materials", "#materials", FolderOpen],
+  ["Groups", "#groups", UsersRound],
+  ["Learners", "#learners", ClipboardCheck],
+  ["Files", "#files", FolderOpen],
   ["Ask TeachX", "#ask-teachx", Sparkles]
+] as const;
+
+const teachingSpaceNav = [
+  ["Overview", "#today", CalendarDays],
+  ["My Spaces", "#spaces", Compass],
+  ["Learners", "#learners", UsersRound],
+  ["Programs", "#programs", BookOpen],
+  ["Groups", "#groups", UsersRound],
+  ["Schedule", "#schedule", CalendarDays],
+  ["Learning Plan", "#learning-plan", NotebookPen],
+  ["Activities", "#activities", FileText],
+  ["Attendance & Progress", "#progress", ClipboardCheck],
+  ["Communication", "#communication", MessageCircle],
+  ["Files", "#files", FolderOpen],
+  ["Setup", "/teacher/settings", Sparkles]
 ] as const;
 
 const quietAIActions: Destination[] = [
@@ -86,14 +101,14 @@ function TodayLine({ title, detail, href, icon: Icon }: Destination & { icon: Lu
 }
 
 function ClassRoomCard({ item }: { item: WorkspaceData["classrooms"][number] }) {
-  const firstSubject = item.subjects[0] ?? "Subject";
+  const firstSubject = item.subjects[0] ?? "Program";
   return (
     <article className="rounded-md border bg-background p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="break-words text-lg font-semibold">{item.title}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Subject: {firstSubject}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{item.course} - {item.section} - {item.studentCount} students</p>
+          <p className="mt-1 text-sm text-muted-foreground">Program: {firstSubject}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{item.course} - {item.section} - {item.studentCount} learners</p>
         </div>
         <Badge>{item.attendanceRate === null ? "Attendance due" : `${item.attendanceRate}% present`}</Badge>
       </div>
@@ -101,10 +116,37 @@ function ClassRoomCard({ item }: { item: WorkspaceData["classrooms"][number] }) 
         <Link className="rounded-md bg-primary px-3 py-2 text-center text-xs font-semibold text-primary-foreground" href={`/classrooms/${item.id}`}>Today&apos;s lesson</Link>
         <Link className="rounded-md border px-3 py-2 text-center text-xs font-semibold hover:bg-sky-50" href={`/classrooms/${item.id}#attendance`}>Attendance</Link>
         <Link className="rounded-md border px-3 py-2 text-center text-xs font-semibold hover:bg-sky-50" href={`/classrooms/${item.id}#assignments`}>Homework</Link>
-        <Link className="rounded-md border px-3 py-2 text-center text-xs font-semibold hover:bg-sky-50" href={`/classrooms/${item.id}#students`}>Students</Link>
+        <Link className="rounded-md border px-3 py-2 text-center text-xs font-semibold hover:bg-sky-50" href={`/classrooms/${item.id}#students`}>Learners</Link>
       </div>
       <Link className="mt-2 flex min-h-10 items-center justify-center gap-2 rounded-md border px-3 text-xs font-semibold hover:bg-sky-50" href="/teacher/ai-studio/create/parent-communication"><MessageCircle className="h-3.5 w-3.5" />Message parents</Link>
     </article>
+  );
+}
+
+function TeachingSpaceSidebar() {
+  return (
+    <aside className="rounded-[1.5rem] border border-black/10 bg-[#111714] p-4 text-white shadow-[0_20px_60px_rgba(17,23,20,.14)] lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
+      <div className="mb-5 rounded-2xl bg-white/8 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#20d16b]">Save Time</p>
+        <h2 className="mt-2 text-xl font-semibold">My Teaching Space</h2>
+        <p className="mt-2 text-xs leading-5 text-white/60">Organize your real teaching world.</p>
+      </div>
+      <nav className="space-y-1" aria-label="Save Time workspace">
+        {teachingSpaceNav.map(([label, href, Icon]) => {
+          const internal = href.startsWith("#");
+          const className = "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-white/76 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#20d16b]/50";
+          return internal ? (
+            <a className={className} href={href} key={label}><Icon className="h-4 w-4 text-[#20d16b]" />{label}</a>
+          ) : (
+            <Link className={className} href={href} key={label}><Icon className="h-4 w-4 text-[#20d16b]" />{label}</Link>
+          );
+        })}
+      </nav>
+      <Link className="mt-5 flex min-h-12 items-center gap-3 rounded-2xl bg-[#20d16b] px-4 text-sm font-semibold text-[#111714]" href="/tara">
+        <Sparkles className="h-4 w-4" />
+        <span><span className="block">TARA</span><span className="block text-xs font-medium opacity-70">Your teaching co-worker</span></span>
+      </Link>
+    </aside>
   );
 }
 
@@ -129,7 +171,9 @@ function SaveTime({ data, workspaceData }: { data: Data; workspaceData?: Workspa
   const results = searchable.filter((item) => `${item.title} ${item.detail}`.toLowerCase().includes(query.trim().toLowerCase())).slice(0, 8);
 
   return (
-    <div className="space-y-8">
+    <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+      <TeachingSpaceSidebar />
+      <div className="min-w-0 space-y-8">
       <section className="rounded-md border border-sky-200 bg-sky-50 p-5 sm:p-7">
         <div className="grid gap-6 lg:grid-cols-[1.15fr_.85fr] lg:items-end">
           <div>
@@ -143,8 +187,8 @@ function SaveTime({ data, workspaceData }: { data: Data; workspaceData?: Workspa
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
             <StatPill label="Today" value={today} />
-            <StatPill label="Classes" value={classrooms.length} />
-            <StatPill label="Students" value={students} />
+            <StatPill label="Groups" value={classrooms.length} />
+            <StatPill label="Learners" value={students} />
             <StatPill label="Pending" value={attendancePending + pendingReviews} />
           </div>
         </div>
@@ -181,24 +225,24 @@ function SaveTime({ data, workspaceData }: { data: Data; workspaceData?: Workspa
       </nav>
 
       <section className="grid gap-4 lg:grid-cols-3">
-        <Card className="p-5 shadow-soft lg:col-span-2" id="classes">
-          <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-sm font-semibold text-sky-700">My Classes</p><h2 className="mt-1 text-2xl font-semibold">Walk into your classroom</h2></div><Link className="text-sm font-semibold text-sky-700 hover:underline" href="/teacher/workspace/classrooms">All classes</Link></div>
+        <Card className="p-5 shadow-soft lg:col-span-2" id="groups">
+          <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-sm font-semibold text-sky-700">Groups</p><h2 className="mt-1 text-2xl font-semibold">Walk into your classroom, batch or cohort</h2></div><Link className="text-sm font-semibold text-sky-700 hover:underline" href="/teacher/workspace/classrooms">All groups</Link></div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {classrooms.length ? classrooms.slice(0, 4).map((item) => <ClassRoomCard item={item} key={item.id} />) : <EmptyState description="Bring a timetable or class list and TeachX will help you start from attendance, lessons and homework." icon={<UsersRound className="h-5 w-5" />} title="Your classroom door is ready" />}
           </div>
         </Card>
-        <Card className="p-5 shadow-soft" id="students">
-          <p className="text-sm font-semibold text-sky-700">My Students</p>
-          <h2 className="mt-1 text-2xl font-semibold">{students} students</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">See students through the classes you teach. Attendance, homework, notes and messages stay together.</p>
+        <Card className="p-5 shadow-soft" id="learners">
+          <p className="text-sm font-semibold text-sky-700">Learners</p>
+          <h2 className="mt-1 text-2xl font-semibold">{students} learners</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">See learners through the groups you teach. Attendance, activities, notes and messages stay together.</p>
           <div className="mt-5 space-y-2">
-            <StaffRoomAction title="Open my students" detail="Choose a class and see the children there." href="/teacher/workspace/classrooms" icon={UsersRound} />
+            <StaffRoomAction title="Open learners" detail="Choose a group and see the people there." href="/teacher/workspace/classrooms" icon={UsersRound} />
             <StaffRoomAction title="Review work" detail={`${pendingReviews} submissions need attention.`} href="/teacher/workspace/classrooms" icon={FileText} />
           </div>
         </Card>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[.9fr_1.1fr]" id="materials">
+      <section className="grid gap-4 lg:grid-cols-[.9fr_1.1fr]" id="files">
         <Card className="p-5 shadow-soft sm:p-6">
           <p className="text-sm font-semibold text-sky-700">Bring Your Teaching</p>
           <h2 className="mt-1 text-2xl font-semibold">My Teaching Bag</h2>
@@ -220,6 +264,16 @@ function SaveTime({ data, workspaceData }: { data: Data; workspaceData?: Workspa
         </Card>
       </section>
 
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Card className="p-5 shadow-soft" id="spaces"><p className="text-sm font-semibold text-sky-700">My Spaces</p><h2 className="mt-2 text-xl font-semibold">Schools, tuition centres, online academies and coaching spaces.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/workspace/classrooms">Open spaces</Link></Card>
+        <Card className="p-5 shadow-soft" id="programs"><p className="text-sm font-semibold text-sky-700">Programs</p><h2 className="mt-2 text-xl font-semibold">Subjects, courses, skills and training programs.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/workspace/resources">Open materials</Link></Card>
+        <Card className="p-5 shadow-soft" id="schedule"><p className="text-sm font-semibold text-sky-700">Schedule</p><h2 className="mt-2 text-xl font-semibold">Sessions, timetable uploads and reminders.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/workspace/planner">My plan</Link></Card>
+        <Card className="p-5 shadow-soft" id="communication"><p className="text-sm font-semibold text-sky-700">Communication</p><h2 className="mt-2 text-xl font-semibold">Prepare messages and use WhatsApp in your own flow.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/ai-studio/create/parent-communication">Prepare message</Link></Card>
+        <Card className="p-5 shadow-soft" id="learning-plan"><p className="text-sm font-semibold text-sky-700">Learning Plan</p><h2 className="mt-2 text-xl font-semibold">Bring syllabus, curriculum or training plans.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/resources#upload-resource">Upload plan</Link></Card>
+        <Card className="p-5 shadow-soft" id="activities"><p className="text-sm font-semibold text-sky-700">Activities</p><h2 className="mt-2 text-xl font-semibold">Assignments, homework, worksheets, projects and practice.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/workspace/classrooms">Open activities</Link></Card>
+        <Card className="p-5 shadow-soft md:col-span-2" id="progress"><p className="text-sm font-semibold text-sky-700">Attendance & Progress</p><h2 className="mt-2 text-xl font-semibold">Attendance, completion, session history, milestones and notes.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href={classrooms[0] ? `/classrooms/${classrooms[0].id}#attendance` : "/teacher/workspace/classrooms"}>Open attendance</Link></Card>
+      </section>
+
       <section className="grid gap-4 lg:grid-cols-[1fr_360px]" id="ask-teachx">
         <Card className="p-5 shadow-soft sm:p-6">
           <p className="text-sm font-semibold text-sky-700">Ask TeachX</p>
@@ -234,6 +288,7 @@ function SaveTime({ data, workspaceData }: { data: Data; workspaceData?: Workspa
           </div>
         </Card>
       </section>
+      </div>
     </div>
   );
 }
