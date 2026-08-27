@@ -34,6 +34,17 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "no-store, max-age=0" }
         ]
       },
+      // Authentication pages contain one-time CSRF values and Next.js Server
+      // Action references. A CDN or browser must never reuse an older copy
+      // after a deployment.
+      {
+        source: "/login",
+        headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }]
+      },
+      {
+        source: "/signup/:path*",
+        headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }]
+      },
       {
         source: "/sw.js",
         headers: [
