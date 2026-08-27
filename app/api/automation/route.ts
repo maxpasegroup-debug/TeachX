@@ -4,13 +4,13 @@ import { requireApiSession } from "@/lib/api-auth";
 import { createAutomationRule, executeAutomation, getAutomationRules } from "@/services/automation-service";
 
 export async function GET() {
-  const access = await requireApiSession("dashboard.view");
+  const access = await requireApiSession("settings.manage");
   if ("response" in access) return access.response;
   return NextResponse.json({ rules: await getAutomationRules(access.session.user.institutionId) });
 }
 
 export async function POST(request: Request) {
-  const access = await requireApiSession("dashboard.view");
+  const access = await requireApiSession("settings.manage");
   if ("response" in access) return access.response;
   if (!access.session.user.institutionId) return NextResponse.json({ error: "Institution required" }, { status: 400 });
   const body = await request.json();

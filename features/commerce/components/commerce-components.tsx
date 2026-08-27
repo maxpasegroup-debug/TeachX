@@ -106,8 +106,7 @@ function CreditPackForm() {
     <Card className="p-5 shadow-soft">
       <h2 className="text-xl font-semibold">AI Credit Packs</h2>
       <form action={createAICreditPackOrderAction} className="mt-5 grid gap-4 md:grid-cols-3">
-        <Select name="credits"><option value="500">500 credits</option><option value="1500">1,500 credits</option><option value="5000">5,000 credits</option></Select>
-        <Select name="amount"><option value="99">INR 99</option><option value="249">INR 249</option><option value="699">INR 699</option></Select>
+        <Select name="packageId"><option value="ai-credits-500-inr">500 credits - INR 99</option><option value="ai-credits-1500-inr">1,500 credits - INR 249</option><option value="ai-credits-5000-inr">5,000 credits - INR 699</option></Select>
         <Button type="submit"><Sparkles className="mr-2 h-4 w-4" />Create Order</Button>
       </form>
     </Card>

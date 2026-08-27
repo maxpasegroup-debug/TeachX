@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
+import { requireAcademicReferences } from "@/services/academic-integrity-service";
 
 export async function createContentUpload(input: {
   institutionId: string;
@@ -24,6 +25,7 @@ export async function createContentUpload(input: {
   status?: "DRAFT" | "SUBMITTED" | "PUBLISHED";
 }, db: Prisma.TransactionClient | typeof prisma = prisma) {
   const status = input.status ?? "DRAFT";
+  await requireAcademicReferences(input.institutionId, input);
 
   return db.contentItem.create({
     data: {

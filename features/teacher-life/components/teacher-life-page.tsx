@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
-  ArrowRight, BadgeIndianRupee, BookOpen, Bot, Brain, CalendarDays, Check,
-  CircleDollarSign, Clock3, Headphones, Heart, Plane, Search, Sparkles,
-  UsersRound, Video
+  ArrowRight, BadgeIndianRupee, BookOpen, Bot, Brain, CalendarDays, Camera, Check, Compass,
+  CircleDollarSign, Clock3, ClipboardCheck, FileText, FolderOpen, Headphones, Heart,
+  MessageCircle, Mic, NotebookPen, Plane, Search, Sparkles, Upload, UsersRound, Video
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -14,8 +14,10 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import type { getTeacherLifeData, TeacherLifePillar } from "@/services/teacher-life-service";
+import type { getTeacherWorkspaceData } from "@/services/teacher-workspace-service";
 
 type Data = NonNullable<Awaited<ReturnType<typeof getTeacherLifeData>>>;
+type WorkspaceData = Awaited<ReturnType<typeof getTeacherWorkspaceData>>;
 type Destination = { title: string; detail: string; href: string };
 
 const pillarDetails: Record<TeacherLifePillar, { title: string; description: string; icon: LucideIcon; tone: string }> = {
@@ -45,73 +47,248 @@ function PillarNav({ active }: { active: TeacherLifePillar }) {
   );
 }
 
-const saveTimeGroups: { title: string; subtitle: string; items: Destination[] }[] = [
-  {
-    title: "Teach & Plan", subtitle: "Move from preparation to the classroom.", items: [
-      { title: "Lesson Planner", detail: "Plan and schedule a lesson", href: "/teacher/workspace/lessons" },
-      { title: "Lessons", detail: "Open your existing lesson workspace", href: "/teacher/workspace/lessons" },
-      { title: "Weekly Planning", detail: "See the week and upcoming work", href: "/teacher/workspace/planner" },
-      { title: "Class Schedule", detail: "See classes, subjects and preparation", href: "/teacher/workspace/planner" },
-      { title: "Teaching Workspace", detail: "Classes, students and classroom work", href: "/teacher/workspace/classrooms" },
-      { title: "Planner", detail: "Calendar, events, reminders and tasks", href: "/teacher/workspace/planner" }
-    ]
-  },
-  {
-    title: "Create", subtitle: "Build classroom-ready work with the existing AI Studio.", items: [
-      { title: "Lesson Generator", detail: "Create a complete classroom lesson", href: "/teacher/ai-studio/create/lesson-generator" },
-      { title: "Worksheet Generator", detail: "Create printable practice material", href: "/teacher/ai-studio/create/worksheet-generator" },
-      { title: "Quiz Generator", detail: "Build quizzes and question banks", href: "/teacher/ai-studio/create/quiz-generator" },
-      { title: "Question Paper Builder", detail: "Create blueprint-aligned papers", href: "/teacher/ai-studio/create/question-paper-builder" },
-      { title: "Assessment Builder", detail: "Create aligned assessments", href: "/teacher/ai-studio/create/assessment-builder" },
-      { title: "Rubric Generator", detail: "Create editable scoring rubrics", href: "/teacher/ai-studio/create/rubric-generator" },
-      { title: "Homework Generator", detail: "Prepare focused homework", href: "/teacher/ai-studio/create/homework-generator" },
-      { title: "Classroom Activity", detail: "Design practical class activities", href: "/teacher/ai-studio/create/classroom-activity-generator" },
-      { title: "Presentation / PPT", detail: "Create a slide-by-slide presentation", href: "/teacher/ai-studio/create/presentation-generator" },
-      { title: "Certificate Generator", detail: "Prepare personalized certificates", href: "/teacher/ai-studio/create/certificate-generator" },
-      { title: "Report / Comment Generator", detail: "Draft balanced report comments", href: "/teacher/ai-studio/create/report-card-comments" }
-    ]
-  },
-  {
-    title: "Communicate", subtitle: "Prepare clear communication and stay connected.", items: [
-      { title: "Parent Communication", detail: "Draft respectful parent messages", href: "/teacher/ai-studio/create/parent-communication" },
-      { title: "Messages", detail: "Open professional conversations", href: "/teacher/community/messages" },
-      { title: "Announcements", detail: "Open community discussions and announcements", href: "/teacher/community/discussions" },
-      { title: "Emails", detail: "Prepare a professional email", href: "/teacher/ai-studio/create/parent-communication" },
-      { title: "Student Feedback", detail: "Prepare evidence-based comments", href: "/teacher/ai-studio/create/report-card-comments" }
-    ]
-  },
-  {
-    title: "Organize", subtitle: "Keep teaching work easy to find and act on.", items: [
-      { title: "Classes", detail: "Open your assigned classes", href: "/teacher/workspace/classrooms" },
-      { title: "Students", detail: "View students through authorized classes", href: "/teacher/workspace/classrooms" },
-      { title: "Resources", detail: "Create, organize and reuse resources", href: "/teacher/resources" },
-      { title: "Assignments", detail: "Open classroom assignments", href: "/teacher/workspace/classrooms" },
-      { title: "Attendance", detail: "Open class attendance", href: "/teacher/workspace/classrooms" },
-      { title: "Tasks", detail: "Create and complete teaching tasks", href: "/teacher/workspace/planner" },
-      { title: "Notes", detail: "Keep private teacher notes", href: "/teacher/workspace/notes" },
-      { title: "Calendar", detail: "Day, week, month and agenda planning", href: "/teacher/workspace/planner" },
-      { title: "Documents", detail: "Find teaching documents and files", href: "/teacher/resources" }
-    ]
-  },
-  {
-    title: "TARA", subtitle: "One AI partner across your teaching day.", items: [
-      { title: "Ask TARA", detail: "Talk naturally about the work ahead", href: "/tara" },
-      { title: "Plan with TARA", detail: "Plan lessons, days and weeks", href: "/tara" },
-      { title: "Create with TARA", detail: "Turn an idea into usable teaching work", href: "/tara" },
-      { title: "Organize with TARA", detail: "Get help prioritizing your work", href: "/tara" }
-    ]
-  }
+const staffRoomTabs = [
+  ["Today", "#today", CalendarDays],
+  ["Groups", "#groups", UsersRound],
+  ["Learners", "#learners", ClipboardCheck],
+  ["Files", "#files", FolderOpen],
+  ["Ask TeachX", "#ask-teachx", Sparkles]
+] as const;
+
+const teachingSpaceNav = [
+  ["Overview", "#today", CalendarDays],
+  ["My Spaces", "#spaces", Compass],
+  ["Learners", "#learners", UsersRound],
+  ["Programs", "#programs", BookOpen],
+  ["Groups", "#groups", UsersRound],
+  ["Schedule", "#schedule", CalendarDays],
+  ["Learning Plan", "#learning-plan", NotebookPen],
+  ["Activities", "#activities", FileText],
+  ["Attendance & Progress", "#progress", ClipboardCheck],
+  ["Communication", "#communication", MessageCircle],
+  ["Files", "#files", FolderOpen],
+  ["Setup", "/teacher/settings", Sparkles]
+] as const;
+
+const quietAIActions: Destination[] = [
+  { title: "Prepare a lesson", detail: "Make tomorrow's class easier to teach.", href: "/teacher/ai-studio/create/lesson-generator" },
+  { title: "Add homework", detail: "Create practice work from the topic.", href: "/teacher/ai-studio/create/homework-generator" },
+  { title: "Message parents", detail: "Draft a respectful parent update.", href: "/teacher/ai-studio/create/parent-communication" },
+  { title: "Ask TeachX", detail: "Tell TeachX what you need in plain language.", href: "/tara" }
 ];
 
-function SaveTime({ data }: { data: Data }) {
-  const [query, setQuery] = useState("");
-  const filtered = useMemo(() => saveTimeGroups.map((group) => ({ ...group, items: group.items.filter((item) => `${item.title} ${item.detail}`.toLowerCase().includes(query.trim().toLowerCase())) })).filter((group) => group.items.length), [query]);
-  const featured = [saveTimeGroups[0].items[0], saveTimeGroups[1].items[1], saveTimeGroups[3].items[2], saveTimeGroups[4].items[0]];
+function StatPill({ label, value }: { label: string; value: string | number }) {
+  return <div className="min-w-0 rounded-md border bg-white/70 px-3 py-2"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 break-words text-lg font-semibold leading-6">{value}</p></div>;
+}
+
+function StaffRoomAction({ title, detail, href, icon: Icon }: Destination & { icon: LucideIcon }) {
   return (
-    <div className="space-y-8">
-      <section aria-labelledby="featured-actions"><div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-sm font-semibold text-sky-700">Start here</p><h2 className="mt-1 text-2xl font-semibold" id="featured-actions">Featured actions</h2></div><label className="flex min-h-12 w-full items-center gap-2 rounded-md border bg-surface px-3 sm:max-w-sm"><Search className="h-4 w-4" aria-hidden="true" /><span className="sr-only">Search Save Time tools</span><Input className="border-0 px-0 focus-visible:ring-0" onChange={(event) => setQuery(event.target.value)} placeholder="Find a teaching tool" value={query} /></label></div>{!query ? <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">{featured.map((item) => <ActionLink {...item} key={item.title} />)}</div> : null}</section>
-      {!query ? <section aria-labelledby="recently-used"><h2 className="text-xl font-semibold" id="recently-used">Recently used</h2>{data.recentItems.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{data.recentItems.map((item) => <ActionLink detail={item.type} href={item.href} key={item.id} title={item.title} />)}</div> : <EmptyState description="Open a teaching tool and it will be easy to return to here." icon={<Clock3 className="h-5 w-5" />} title="No recent teaching work yet" />}</section> : null}
-      <section className="space-y-7" aria-live="polite">{filtered.length ? filtered.map((group) => <div key={group.title}><h2 className="text-xl font-semibold">{group.title}</h2><p className="mt-1 text-sm text-muted-foreground">{group.subtitle}</p><div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{group.items.map((item) => <ActionLink {...item} key={item.title} />)}</div></div>) : <EmptyState description="Try a shorter tool name such as lesson, quiz, message or calendar." icon={<Search className="h-5 w-5" />} title="No matching tools" />}</section>
+    <Link className="group flex min-h-20 items-center gap-3 rounded-md border bg-surface p-4 transition hover:border-sky-300 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-primary" href={href}>
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-sky-50 text-sky-700"><Icon className="h-5 w-5" /></span>
+      <span className="min-w-0 flex-1"><strong className="block text-sm">{title}</strong><span className="mt-1 block text-xs leading-5 text-muted-foreground">{detail}</span></span>
+      <ArrowRight className="h-4 w-4 shrink-0 opacity-60 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
+    </Link>
+  );
+}
+
+function TodayLine({ title, detail, href, icon: Icon }: Destination & { icon: LucideIcon }) {
+  return (
+    <Link className="flex min-h-16 items-center gap-3 rounded-md border bg-background px-4 py-3 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-primary" href={href}>
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-sky-50 text-sky-700"><Icon className="h-4 w-4" /></span>
+      <span className="min-w-0"><strong className="block text-sm">{title}</strong><span className="mt-1 block text-xs leading-5 text-muted-foreground">{detail}</span></span>
+    </Link>
+  );
+}
+
+function ClassRoomCard({ item }: { item: WorkspaceData["classrooms"][number] }) {
+  const firstSubject = item.subjects[0] ?? "Program";
+  return (
+    <article className="rounded-md border bg-background p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="break-words text-lg font-semibold">{item.title}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Program: {firstSubject}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{item.course} - {item.section} - {item.studentCount} learners</p>
+        </div>
+        <Badge>{item.attendanceRate === null ? "Attendance due" : `${item.attendanceRate}% present`}</Badge>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Link className="rounded-md bg-primary px-3 py-2 text-center text-xs font-semibold text-primary-foreground" href={`/classrooms/${item.id}`}>Today&apos;s lesson</Link>
+        <Link className="rounded-md border px-3 py-2 text-center text-xs font-semibold hover:bg-sky-50" href={`/classrooms/${item.id}#attendance`}>Attendance</Link>
+        <Link className="rounded-md border px-3 py-2 text-center text-xs font-semibold hover:bg-sky-50" href={`/classrooms/${item.id}#assignments`}>Homework</Link>
+        <Link className="rounded-md border px-3 py-2 text-center text-xs font-semibold hover:bg-sky-50" href={`/classrooms/${item.id}#students`}>Learners</Link>
+      </div>
+      <Link className="mt-2 flex min-h-10 items-center justify-center gap-2 rounded-md border px-3 text-xs font-semibold hover:bg-sky-50" href="/teacher/ai-studio/create/parent-communication"><MessageCircle className="h-3.5 w-3.5" />Message parents</Link>
+    </article>
+  );
+}
+
+function TeachingSpaceSidebar() {
+  return (
+    <aside className="rounded-[1.5rem] border border-black/10 bg-[#111714] p-4 text-white shadow-[0_20px_60px_rgba(17,23,20,.14)] lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
+      <div className="mb-5 rounded-2xl bg-white/8 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#20d16b]">Save Time</p>
+        <h2 className="mt-2 text-xl font-semibold">My Teaching Space</h2>
+        <p className="mt-2 text-xs leading-5 text-white/60">Organize your real teaching world.</p>
+      </div>
+      <nav className="space-y-1" aria-label="Save Time workspace">
+        {teachingSpaceNav.map(([label, href, Icon]) => {
+          const internal = href.startsWith("#");
+          const className = "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-white/76 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#20d16b]/50";
+          return internal ? (
+            <a className={className} href={href} key={label}><Icon className="h-4 w-4 text-[#20d16b]" />{label}</a>
+          ) : (
+            <Link className={className} href={href} key={label}><Icon className="h-4 w-4 text-[#20d16b]" />{label}</Link>
+          );
+        })}
+      </nav>
+      <Link className="mt-5 flex min-h-12 items-center gap-3 rounded-2xl bg-[#20d16b] px-4 text-sm font-semibold text-[#111714]" href="/tara">
+        <Sparkles className="h-4 w-4" />
+        <span><span className="block">TARA</span><span className="block text-xs font-medium opacity-70">Your teaching co-worker</span></span>
+      </Link>
+    </aside>
+  );
+}
+
+function SaveTime({ data, workspaceData }: { data: Data; workspaceData?: WorkspaceData }) {
+  const [query, setQuery] = useState("");
+  const today = new Intl.DateTimeFormat("en", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
+  const dayName = new Date().toLocaleDateString("en", { weekday: "long" }).toUpperCase();
+  const classrooms = workspaceData?.classrooms ?? [];
+  const materials = workspaceData?.content ?? [];
+  const pendingReviews = workspaceData?.assignments.reduce((total, item) => total + item.pendingReviews, 0) ?? 0;
+  const attendancePending = classrooms.filter((item) => item.attendanceRate === null).length;
+  const students = classrooms.reduce((total, item) => total + item.studentCount, 0);
+  const todaysClasses = (workspaceData?.timetable ?? []).filter((item) => item.day === dayName);
+  const nextClass = todaysClasses[0] ?? workspaceData?.timetable[0];
+  const importantPlan = workspaceData?.planner[0];
+  const recentMaterial = materials[0];
+  const searchable = [
+    ...classrooms.map((item) => ({ title: item.title, detail: `${item.course} ${item.section} ${item.subjects.join(" ")}`, href: `/classrooms/${item.id}` })),
+    ...materials.map((item) => ({ title: item.title, detail: `${item.course} ${item.subject ?? ""} ${item.type}`, href: "/teacher/workspace/resources" })),
+    ...quietAIActions
+  ];
+  const results = searchable.filter((item) => `${item.title} ${item.detail}`.toLowerCase().includes(query.trim().toLowerCase())).slice(0, 8);
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+      <TeachingSpaceSidebar />
+      <div className="min-w-0 space-y-8">
+      <section className="rounded-md border border-sky-200 bg-sky-50 p-5 sm:p-7">
+        <div className="grid gap-6 lg:grid-cols-[1.15fr_.85fr] lg:items-end">
+          <div>
+            <Badge>TeachX Guru</Badge>
+            <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Your Digital Staff Room</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-sky-950/75">Bring your teaching, open today&apos;s class, take attendance, find material, message parents, and let TeachX quietly help in the background.</p>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <Link className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-sky-800 px-5 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-sky-700 focus:ring-offset-2" href="/teacher/resources#upload-resource"><Upload className="h-4 w-4" />Bring Teaching</Link>
+              <Link className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-sky-200 bg-white px-5 text-sm font-semibold text-sky-900 hover:bg-sky-50" href={nextClass?.href ?? "/teacher/workspace/classrooms"}><BookOpen className="h-4 w-4" />Open today&apos;s class</Link>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
+            <StatPill label="Today" value={today} />
+            <StatPill label="Groups" value={classrooms.length} />
+            <StatPill label="Learners" value={students} />
+            <StatPill label="Pending" value={attendancePending + pendingReviews} />
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[1fr_360px]" id="today">
+        <Card className="p-5 shadow-soft sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div><p className="text-sm font-semibold text-sky-700">Today</p><h2 className="mt-1 text-2xl font-semibold">What you need today</h2></div>
+            <Link className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-4 text-sm font-semibold hover:bg-sky-50" href="/teacher/workspace/planner">My plan<ArrowRight className="h-4 w-4" /></Link>
+          </div>
+          <div className="mt-5 space-y-3">
+            {nextClass ? <TodayLine title={todaysClasses.length ? "Next class" : "First class on your plan"} detail={`${nextClass.title} - ${nextClass.day} ${nextClass.time}`} href={nextClass.href} icon={BookOpen} /> : null}
+            {attendancePending ? <TodayLine title="Attendance pending" detail={`${attendancePending} class${attendancePending === 1 ? "" : "es"} need attendance.`} href={classrooms[0] ? `/classrooms/${classrooms[0].id}#attendance` : "/teacher/workspace/classrooms"} icon={ClipboardCheck} /> : null}
+            {pendingReviews ? <TodayLine title="Homework to review" detail={`${pendingReviews} submission${pendingReviews === 1 ? "" : "s"} waiting.`} href="/teacher/workspace/classrooms" icon={NotebookPen} /> : null}
+            {importantPlan ? <TodayLine title="Reminder" detail={`${importantPlan.title} - ${new Date(importantPlan.startsAt).toLocaleString()}`} href="/teacher/workspace/planner" icon={CalendarDays} /> : null}
+            {recentMaterial ? <TodayLine title="Recent material" detail={`${recentMaterial.title} - ${recentMaterial.course}${recentMaterial.subject ? ` - ${recentMaterial.subject}` : ""}`} href="/teacher/workspace/resources" icon={FolderOpen} /> : null}
+            {!nextClass && !attendancePending && !pendingReviews && !importantPlan && !recentMaterial ? <EmptyState description="Bring your timetable, syllabus, lesson plans, notes or photos. TeachX will help keep your year organized." icon={<CalendarDays className="h-5 w-5" />} title="Your staff room is ready" /> : null}
+          </div>
+        </Card>
+        <Card className="p-5 shadow-soft sm:p-6">
+          <h2 className="text-xl font-semibold">Start here</h2>
+          <div className="mt-4 grid gap-3">
+            <StaffRoomAction title="Bring Teaching" detail="Upload syllabus, timetable, lesson plans, notes or photos." href="/teacher/resources#upload-resource" icon={Upload} />
+            <StaffRoomAction title="Attendance" detail="Present all, then mark exceptions in class." href={classrooms[0] ? `/classrooms/${classrooms[0].id}#attendance` : "/teacher/workspace/classrooms"} icon={ClipboardCheck} />
+            <StaffRoomAction title="Message parents" detail="Draft and copy for WhatsApp." href="/teacher/ai-studio/create/parent-communication" icon={MessageCircle} />
+            <StaffRoomAction title="Ask TeachX" detail="Prepare a lesson, worksheet or simple explanation." href="/tara" icon={Sparkles} />
+          </div>
+        </Card>
+      </section>
+
+      <nav className="grid grid-cols-2 gap-2 sm:grid-cols-5" aria-label="Save Time destinations">
+        {staffRoomTabs.map(([label, href, Icon]) => <a className="flex min-h-12 items-center justify-center gap-2 rounded-md border bg-surface px-3 text-sm font-semibold hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary" href={href} key={label}><Icon className="h-4 w-4" />{label}</a>)}
+      </nav>
+
+      <section className="grid gap-4 lg:grid-cols-3">
+        <Card className="p-5 shadow-soft lg:col-span-2" id="groups">
+          <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-sm font-semibold text-sky-700">Groups</p><h2 className="mt-1 text-2xl font-semibold">Walk into your classroom, batch or cohort</h2></div><Link className="text-sm font-semibold text-sky-700 hover:underline" href="/teacher/workspace/classrooms">All groups</Link></div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {classrooms.length ? classrooms.slice(0, 4).map((item) => <ClassRoomCard item={item} key={item.id} />) : <EmptyState description="Bring a timetable or class list and TeachX will help you start from attendance, lessons and homework." icon={<UsersRound className="h-5 w-5" />} title="Your classroom door is ready" />}
+          </div>
+        </Card>
+        <Card className="p-5 shadow-soft" id="learners">
+          <p className="text-sm font-semibold text-sky-700">Learners</p>
+          <h2 className="mt-1 text-2xl font-semibold">{students} learners</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">See learners through the groups you teach. Attendance, activities, notes and messages stay together.</p>
+          <div className="mt-5 space-y-2">
+            <StaffRoomAction title="Open learners" detail="Choose a group and see the people there." href="/teacher/workspace/classrooms" icon={UsersRound} />
+            <StaffRoomAction title="Review work" detail={`${pendingReviews} submissions need attention.`} href="/teacher/workspace/classrooms" icon={FileText} />
+          </div>
+        </Card>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[.9fr_1.1fr]" id="files">
+        <Card className="p-5 shadow-soft sm:p-6">
+          <p className="text-sm font-semibold text-sky-700">Bring Your Teaching</p>
+          <h2 className="mt-1 text-2xl font-semibold">My Teaching Bag</h2>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">This is where your teaching things live: PDFs, photos, worksheets, lesson plans, question papers, documents and links. TeachX can organize supported material through the existing upload flow.</p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <StaffRoomAction title="Upload" detail="PDF, Word, Excel, PPT, image, audio or video." href="/teacher/resources#upload-resource" icon={Upload} />
+            <StaffRoomAction title="Upload a photo" detail="Lesson plan, blackboard, question paper, student work." href="/teacher/resources#upload-resource" icon={Camera} />
+            <StaffRoomAction title="Tell TeachX" detail="Speak naturally in the assistant flow." href="/tara" icon={Mic} />
+            <StaffRoomAction title="Find material" detail="Search by topic, class, subject, or title." href="/teacher/workspace/search" icon={Search} />
+          </div>
+        </Card>
+        <Card className="p-5 shadow-soft sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="text-xl font-semibold">Recent materials</h2><p className="mt-1 text-sm text-muted-foreground">Organized by year, class, subject, and topic where data exists.</p></div><label className="flex min-h-11 items-center gap-2 rounded-md border bg-background px-3 sm:min-w-72"><Search className="h-4 w-4" /><span className="sr-only">Search staff room</span><Input className="border-0 px-0 focus-visible:ring-0" onChange={(event) => setQuery(event.target.value)} placeholder="Search fractions, 5A, science..." value={query} /></label></div>
+          <div className="mt-5 space-y-3">
+            {query ? results.map((item) => <ActionLink {...item} key={`${item.title}-${item.href}`} />) : materials.slice(0, 5).map((item) => <Link className="block rounded-md border bg-background px-4 py-3 hover:bg-sky-50" href="/teacher/workspace/resources" key={item.id}><strong className="text-sm">{item.title}</strong><span className="mt-1 block text-xs text-muted-foreground">{item.course}{item.subject ? ` - ${item.subject}` : ""} - {item.type.replaceAll("_", " ")}</span></Link>)}
+            {!query && !materials.length ? <EmptyState description="Upload or create your first material and it will appear here." icon={<FolderOpen className="h-5 w-5" />} title="No materials yet" /> : null}
+            {query && !results.length ? <EmptyState description="Try a class, subject, topic, or material name." icon={<Search className="h-5 w-5" />} title="Nothing matched" /> : null}
+          </div>
+        </Card>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Card className="p-5 shadow-soft" id="spaces"><p className="text-sm font-semibold text-sky-700">My Spaces</p><h2 className="mt-2 text-xl font-semibold">Schools, tuition centres, online academies and coaching spaces.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/workspace/classrooms">Open spaces</Link></Card>
+        <Card className="p-5 shadow-soft" id="programs"><p className="text-sm font-semibold text-sky-700">Programs</p><h2 className="mt-2 text-xl font-semibold">Subjects, courses, skills and training programs.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/workspace/resources">Open materials</Link></Card>
+        <Card className="p-5 shadow-soft" id="schedule"><p className="text-sm font-semibold text-sky-700">Schedule</p><h2 className="mt-2 text-xl font-semibold">Sessions, timetable uploads and reminders.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/workspace/planner">My plan</Link></Card>
+        <Card className="p-5 shadow-soft" id="communication"><p className="text-sm font-semibold text-sky-700">Communication</p><h2 className="mt-2 text-xl font-semibold">Prepare messages and use WhatsApp in your own flow.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/ai-studio/create/parent-communication">Prepare message</Link></Card>
+        <Card className="p-5 shadow-soft" id="learning-plan"><p className="text-sm font-semibold text-sky-700">Learning Plan</p><h2 className="mt-2 text-xl font-semibold">Bring syllabus, curriculum or training plans.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/resources#upload-resource">Upload plan</Link></Card>
+        <Card className="p-5 shadow-soft" id="activities"><p className="text-sm font-semibold text-sky-700">Activities</p><h2 className="mt-2 text-xl font-semibold">Assignments, homework, worksheets, projects and practice.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href="/teacher/workspace/classrooms">Open activities</Link></Card>
+        <Card className="p-5 shadow-soft md:col-span-2" id="progress"><p className="text-sm font-semibold text-sky-700">Attendance & Progress</p><h2 className="mt-2 text-xl font-semibold">Attendance, completion, session history, milestones and notes.</h2><Link className="mt-4 inline-flex text-sm font-semibold text-sky-700" href={classrooms[0] ? `/classrooms/${classrooms[0].id}#attendance` : "/teacher/workspace/classrooms"}>Open attendance</Link></Card>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[1fr_360px]" id="ask-teachx">
+        <Card className="p-5 shadow-soft sm:p-6">
+          <p className="text-sm font-semibold text-sky-700">Ask TeachX</p>
+          <h2 className="mt-1 text-2xl font-semibold">Quiet help when you ask</h2>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">Ask in normal teaching language. TeachX can prepare lessons, worksheets, parent messages and simple explanations using the existing assistant tools.</p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">{quietAIActions.map((item) => <ActionLink {...item} key={item.title} />)}</div>
+        </Card>
+        <Card className="p-5 shadow-soft sm:p-6">
+          <h2 className="text-xl font-semibold">Recently used</h2>
+          <div className="mt-4 space-y-3">
+            {data.recentItems.length ? data.recentItems.map((item) => <ActionLink detail={item.type} href={item.href} key={item.id} title={item.title} />) : <EmptyState description="Your recent teaching work will appear here automatically." icon={<Clock3 className="h-5 w-5" />} title="No recent teaching work yet" />}
+          </div>
+        </Card>
+      </section>
+      </div>
     </div>
   );
 }
@@ -171,14 +348,26 @@ function EnjoyMore() {
 }
 
 function TaraBridge({ pillar }: { pillar: TeacherLifePillar }) {
-  const copy: Record<TeacherLifePillar, string> = { "save-time": "Let TARA plan my day", "earn-more": "Let TARA improve my teaching profile", "learn-more": "Ask TARA what I should learn next", "enjoy-more": "Ask TARA what is coming" };
-  return <section className="flex flex-col gap-4 rounded-md border border-sky-200 bg-sky-50 p-5 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-sky-700 text-white"><Bot className="h-5 w-5" /></span><div><h2 className="font-semibold">TARA is with you here</h2><p className="mt-1 text-sm text-sky-950/70">One AI partner, connected to your authorized TeachX workflows.</p></div></div><Link className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-sky-700 px-4 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-sky-700 focus:ring-offset-2" href="/tara">{copy[pillar]}<ArrowRight className="h-4 w-4" /></Link></section>;
+  const copy: Record<TeacherLifePillar, string> = { "save-time": "Ask TeachX", "earn-more": "Let TARA improve my teaching profile", "learn-more": "Ask TARA what I should learn next", "enjoy-more": "Ask TARA what is coming" };
+  const title = pillar === "save-time" ? "Need something prepared?" : "TARA is with you here";
+  const detail = pillar === "save-time" ? "Tell TeachX what you need for class. Your existing assistant workspace will handle the request." : "One AI partner, connected to your authorized TeachX workflows.";
+  return <section className="flex flex-col gap-4 rounded-md border border-sky-200 bg-sky-50 p-5 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-sky-700 text-white"><Bot className="h-5 w-5" /></span><div><h2 className="font-semibold">{title}</h2><p className="mt-1 text-sm text-sky-950/70">{detail}</p></div></div><Link className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-sky-700 px-4 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-sky-700 focus:ring-offset-2" href="/tara">{copy[pillar]}<ArrowRight className="h-4 w-4" /></Link></section>;
 }
 
-export function TeacherLifePage({ pillar, data }: { pillar: TeacherLifePillar; data: Data }) {
+export function TeacherLifePage({ pillar, data, workspaceData }: { pillar: TeacherLifePillar; data: Data; workspaceData?: WorkspaceData }) {
   const current = pillarDetails[pillar];
   const Icon = current.icon;
+  if (pillar === "save-time") {
+    return (
+      <div className="min-w-0 space-y-7">
+        <nav className="text-sm text-muted-foreground" aria-label="Breadcrumb"><Link className="hover:text-foreground" href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span aria-current="page">Save Time</span></nav>
+        <SaveTime data={data} workspaceData={workspaceData} />
+        <TaraBridge pillar={pillar} />
+        <footer className="flex flex-wrap gap-x-5 gap-y-2 border-t pt-5 text-sm text-muted-foreground"><Link href="/teacher/life/earn-more">Earn More</Link><Link href="/teacher/life/learn-more">Learn More</Link><Link href="/teacher/workspace/notifications">Notifications</Link><Link href="/teacher/support">Help & support</Link></footer>
+      </div>
+    );
+  }
   return (
-    <div className="min-w-0 space-y-7"><nav className="text-sm text-muted-foreground" aria-label="Breadcrumb"><Link className="hover:text-foreground" href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span aria-current="page">{current.title}</span></nav><header className={`rounded-md border p-5 sm:p-7 ${current.tone}`}><div className="flex items-start gap-4"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-white/80"><Icon className="h-6 w-6" /></span><div><Badge>Teacher Life OS</Badge><h1 className="mt-3 text-3xl font-semibold sm:text-4xl">{current.title}</h1><p className="mt-2 max-w-3xl">{current.description}</p></div></div></header><PillarNav active={pillar} />{pillar === "save-time" ? <SaveTime data={data} /> : pillar === "earn-more" ? <EarnMore data={data} /> : pillar === "learn-more" ? <LearnMore data={data} /> : <EnjoyMore />}<TaraBridge pillar={pillar} /><footer className="flex flex-wrap gap-x-5 gap-y-2 border-t pt-5 text-sm text-muted-foreground"><Link href="/teacher/community/home">Community</Link><Link href="/teacher/workspace/notifications">Notifications</Link><Link href="/teacher/support">Help & support</Link><Link href="/teacher/settings">Settings</Link></footer></div>
+    <div className="min-w-0 space-y-7"><nav className="text-sm text-muted-foreground" aria-label="Breadcrumb"><Link className="hover:text-foreground" href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span aria-current="page">{current.title}</span></nav><header className={`rounded-md border p-5 sm:p-7 ${current.tone}`}><div className="flex items-start gap-4"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-white/80"><Icon className="h-6 w-6" /></span><div><Badge>Teacher Life OS</Badge><h1 className="mt-3 text-3xl font-semibold sm:text-4xl">{current.title}</h1><p className="mt-2 max-w-3xl">{current.description}</p></div></div></header><PillarNav active={pillar} />{pillar === "earn-more" ? <EarnMore data={data} /> : pillar === "learn-more" ? <LearnMore data={data} /> : <EnjoyMore />}<TaraBridge pillar={pillar} /><footer className="flex flex-wrap gap-x-5 gap-y-2 border-t pt-5 text-sm text-muted-foreground"><Link href="/teacher/community/home">Community</Link><Link href="/teacher/workspace/notifications">Notifications</Link><Link href="/teacher/support">Help & support</Link><Link href="/teacher/settings">Settings</Link></footer></div>
   );
 }

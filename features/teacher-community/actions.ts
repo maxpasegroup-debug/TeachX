@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db";
 import { universalSearch, type UniversalSearchResult } from "@/services/search-service";
 
@@ -20,16 +20,9 @@ function array(input: unknown) { return Array.isArray(input) ? input.map(String)
 function refresh() { revalidatePath("/teacher/community", "layout"); }
 
 async function current() {
-  const session = await auth();
-  if (!session?.user.id || !session.user.institutionId) throw new Error("Teacher community access is required.");
-  const actor = await prisma.user.findFirst({
-    where: {
-      id: session.user.id, institutionId: session.user.institutionId, status: "ACTIVE",
-      roles: { some: { role: { key: { in: teacherRoles } } } }
-    }, select: { id: true, name: true, institutionId: true }
-  });
-  if (!actor?.institutionId) throw new Error("Teacher community access is required.");
-  return actor as { id: string; name: string; institutionId: string };
+  const actor = await getCurrentUser();
+  if (!actor?.institutionId || !actor.roles.some((role) => teacherRoles.includes(role))) throw new Error("Teacher community access is required.");
+  return { id: actor.id, name: actor.name, institutionId: actor.institutionId, roles: actor.roles };
 }
 
 async function teacherTarget(actor: Awaited<ReturnType<typeof current>>, userId: string) {
@@ -453,7 +446,7 @@ export async function teacherCommunitySearchAction(_: CommunitySearchState, data
   const query = value(data, "query").slice(0, 100);
   if (query.length < 2) return { results: [], error: "Enter at least two characters." };
   const allowed = new Set(["Teacher", "Marketplace Teacher", "Learning Resource", "Discussion", "Community", "Message Thread", "Message", "Content"]);
-  const results = (await universalSearch(actor.institutionId, query, actor.id)).filter((item) => allowed.has(item.type)).map((item) => ({
+  const results = (await universalSearch(actor.institutionId, query, actor.id, actor.roles)).filter((item) => allowed.has(item.type)).map((item) => ({
     ...item,
     subtitle: item.type === "Teacher" ? "Teacher in your institution" : item.subtitle,
     href: item.type === "Discussion" ? "/teacher/community/discussions" : item.type === "Community" ? "/teacher/community/groups" : ["Message", "Message Thread"].includes(item.type) ? "/teacher/community/messages" : item.href

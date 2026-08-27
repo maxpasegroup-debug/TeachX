@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Award, CheckCircle2, Circle, Eye, GraduationCap, Languages, MapPin, ShieldCheck, Sparkles, Star, UserRound } from "lucide-react";
 
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -65,10 +65,10 @@ function ProfessionalBadge({ label, icon: Icon, active = false }: { label: strin
 }
 
 export default async function ProfilePage() {
-  const session = await auth();
-  const user = session?.user.id
+  const current = await getCurrentUser();
+  const user = current?.id
     ? await prisma.user.findUnique({
-        where: { id: session.user.id },
+        where: { id: current.id },
         include: { profile: true, teacherProfile: true, studentProfile: true, roles: { include: { role: true } } }
       })
     : null;

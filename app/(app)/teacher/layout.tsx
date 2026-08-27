@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { resolveNavigationWorkspace } from "@/lib/constants/navigation";
 
 // Teacher Workspace: TeachX Guru V1 owns this protected frontend surface.
@@ -9,8 +9,8 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 }
 
 async function TeacherGuard({ children }: { children: React.ReactNode }) {
-  const session = await auth();
-  if (resolveNavigationWorkspace(session?.user.roles ?? []) !== "teacher") redirect("/dashboard");
+  const user = await getCurrentUser();
+  if (resolveNavigationWorkspace(user?.roles ?? []) !== "teacher") redirect("/access-denied");
 
   return <div className="mx-auto w-full max-w-7xl">{children}</div>;
 }

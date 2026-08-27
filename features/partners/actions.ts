@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
-import { auth } from "@/auth";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db";
-import { userHasPermission } from "@/lib/rbac";
+import { requireAcademicReferences } from "@/services/academic-integrity-service";
 
 function optionalText(value: FormDataEntryValue | null) {
   const text = value?.toString().trim();
@@ -12,11 +12,9 @@ function optionalText(value: FormDataEntryValue | null) {
 }
 
 async function getPartnerSession() {
-  const session = await auth();
-  const institutionId = session?.user.institutionId;
-  if (!session?.user || !institutionId) throw new Error("Institution is required.");
-  if (!userHasPermission(session.user.roles, "partners.manage")) throw new Error("You do not have partner access.");
-  return { session, institutionId };
+  const user = await requireCurrentUser("partners.manage");
+  if (!user.institutionId) throw new Error("Institution is required.");
+  return { session: { user }, institutionId: user.institutionId };
 }
 
 export async function createPartnerAction(_: string | undefined, formData: FormData) {
@@ -41,14 +39,18 @@ export async function createPartnerAction(_: string | undefined, formData: FormD
 }
 
 export async function createCommissionAction(_: string | undefined, formData: FormData) {
-  await getPartnerSession();
+  const { institutionId } = await getPartnerSession();
   const partnerId = optionalText(formData.get("partnerId"));
   if (!partnerId) return "Partner is required.";
+  const courseId = optionalText(formData.get("courseId"));
+  const partner = await prisma.partner.findFirst({ where: { id: partnerId, institutionId }, select: { id: true } });
+  if (!partner) throw new Error("Partner was not found in your institution.");
+  await requireAcademicReferences(institutionId, { courseId });
 
   await prisma.partnerCommission.create({
     data: {
       partnerId,
-      courseId: optionalText(formData.get("courseId")),
+      courseId,
       type: (optionalText(formData.get("type")) ?? "FIXED") as never,
       amount: optionalText(formData.get("amount")) ?? "0",
       percentage: optionalText(formData.get("percentage")),

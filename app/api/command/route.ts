@@ -15,6 +15,6 @@ export async function GET(request: Request) {
   const { session } = access;
   const query = new URL(request.url).searchParams.get("q")?.trim() ?? "";
   const localCommands = commands.filter((command) => command.label.toLowerCase().includes(query.toLowerCase()));
-  const searchResults = session.user.institutionId && query ? await universalSearch(session.user.institutionId, query, session.user.id) : [];
+  const searchResults = session.user.institutionId && query ? await universalSearch(session.user.institutionId, query, session.user.id, session.user.roles) : [];
   return NextResponse.json({ commands: localCommands, results: searchResults.slice(0, 8) });
 }

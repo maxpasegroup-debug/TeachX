@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db";
 import { defaultWhiteLabelConfig, saveWhiteLabelConfig, whiteLabelSchema } from "@/services/white-label-service";
 
@@ -22,14 +22,14 @@ const institutionSchema = z.object({
 });
 
 export async function saveInstitutionSettings(_: string | undefined, formData: FormData) {
-  const session = await auth();
+  const user = await requireCurrentUser("settings.manage").catch(() => null);
   const parsed = institutionSchema.safeParse(Object.fromEntries(formData));
 
-  if (!session?.user.institutionId) return "Institution is not available for this account.";
+  if (!user?.institutionId) return "You do not have permission to manage institution settings.";
   if (!parsed.success) return "Please check the settings and try again.";
 
   await prisma.institution.update({
-    where: { id: session.user.institutionId },
+    where: { id: user.institutionId },
     data: {
       ...parsed.data,
       logoUrl: parsed.data.logoUrl || null,
@@ -63,7 +63,7 @@ export async function saveInstitutionSettings(_: string | undefined, formData: F
   });
 
   if (!whiteLabel.success) return "Institution saved, but branding details need review.";
-  await saveWhiteLabelConfig(session.user.institutionId, whiteLabel.data);
+  await saveWhiteLabelConfig(user.institutionId, whiteLabel.data);
 
   revalidatePath("/settings/institution");
   return "Settings saved.";

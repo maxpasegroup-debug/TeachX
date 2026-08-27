@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { TeacherOperatingDashboard } from "@/features/teachx/components/operating-dashboard";
+import { GuruHome } from "@/features/teachx/components/guru-home";
 import { getTeacherOperatingHome } from "@/services/teachx-operating-service";
 
 export default async function TeacherHomePage() {
@@ -11,18 +11,11 @@ export default async function TeacherHomePage() {
   });
 
   return (
-    <TeacherOperatingDashboard
+    <GuruHome
       name={home.user?.name ?? session?.user.name}
-      completion={home.completion}
-      plan={home.plan}
       aiCreditsRemaining={home.aiCreditsRemaining}
       stats={home.stats}
-      recentItems={home.preferences.recentItems.map((item) => ({ title: item.title, meta: item.type, href: item.link }))}
-      favorites={home.preferences.favoriteItems.map((item) => ({ title: item.title, meta: item.type, href: item.link }))}
-      savedDrafts={home.savedDrafts}
-      notifications={home.notifications.map((item) => ({ title: item.title, meta: item.body, href: item.link }))}
       daily={home.daily}
-      canAccessInstitution={session?.user.roles.some((role) => ["ADMIN", "DIRECTOR", "ACADEMIC_HEAD"].includes(role)) ?? false}
     />
   );
 }

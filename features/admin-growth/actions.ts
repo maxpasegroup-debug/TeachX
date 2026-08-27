@@ -2,20 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 
-import { auth } from "@/auth";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { writeAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
-import { userHasPermission } from "@/lib/rbac";
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
 async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user.id || !session.user.institutionId) throw new Error("Admin session required.");
-  if (!session.user.roles.includes("ADMIN") && !userHasPermission(session.user.roles, "settings.manage")) throw new Error("Admin access required.");
-  return session;
+  const user = await requireCurrentUser("settings.manage");
+  if (!user.institutionId) throw new Error("Admin institution is required.");
+  return { user };
 }
 
 export async function createSupportTicketAction(formData: FormData) {
@@ -46,8 +44,11 @@ export async function updateSupportTicketAction(formData: FormData) {
   const ticketId = value(formData, "ticketId");
   if (!ticketId) return;
 
-  await prisma.supportTicket.updateMany({
-    where: { id: ticketId, institutionId: session.user.institutionId },
+  const ticket = await prisma.supportTicket.findFirst({ where: { id: ticketId, institutionId: session.user.institutionId }, select: { id: true } });
+  if (!ticket) throw new Error("Authorized support ticket not found.");
+
+  await prisma.supportTicket.update({
+    where: { id: ticket.id },
     data: {
       status: (value(formData, "status") || "IN_REVIEW") as never,
       priority: (value(formData, "priority") || "NORMAL") as never
@@ -56,7 +57,7 @@ export async function updateSupportTicketAction(formData: FormData) {
 
   const reply = value(formData, "reply");
   if (reply) {
-    await prisma.supportReply.create({ data: { institutionId: session.user.institutionId, ticketId, authorId: session.user.id, body: reply, internal: formData.get("internal") === "on" } });
+    await prisma.supportReply.create({ data: { institutionId: session.user.institutionId, ticketId: ticket.id, authorId: session.user.id, body: reply, internal: formData.get("internal") === "on" } });
   }
 
   await writeAuditLog({ institutionId: session.user.institutionId, actorId: session.user.id, action: "UPDATE", entity: "SupportTicket", entityId: ticketId, message: "Updated support ticket" });

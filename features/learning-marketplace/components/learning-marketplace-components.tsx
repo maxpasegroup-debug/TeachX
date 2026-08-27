@@ -242,10 +242,10 @@ export function TeacherResourceLibrary({ data }: { data: TeacherLibrary }) {
   return (
     <div className="space-y-8">
       <section className="rounded-[2rem] border border-border bg-gradient-to-br from-sky-50 via-white to-blue-50 p-6 shadow-soft sm:p-8">
-        <Badge>Teacher Resources</Badge>
-        <h1 className="mt-6 text-4xl font-semibold tracking-tight">One home for your teaching content.</h1>
-        <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">Create, securely upload, organize, use in teaching, publish, and track your existing resources.</p>
-        <div className="mt-6 flex flex-wrap gap-3"><a className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground" href="#create-resource">Create Resource</a><a className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium" href="#upload-resource">Upload Resource</a><Link className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium" href="/teacher/ai-studio">Open AI Studio</Link></div>
+        <Badge>My Teaching Bag</Badge>
+        <h1 className="mt-6 text-4xl font-semibold tracking-tight">Bring your teaching into TeachX.</h1>
+        <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">Upload syllabus, timetable, lesson plans, PDFs, photos, worksheets, question papers, documents and links. TeachX keeps them in your teaching workspace using the existing secure upload flow.</p>
+        <div className="mt-6 flex flex-wrap gap-3"><a className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground" href="#upload-resource">Upload teaching material</a><a className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium" href="#create-resource">Create material</a><Link className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium" href="/teacher/workspace/resources">My materials</Link></div>
       </section>
       <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
         <StatMini label="Published" value={data.stats.published.toString()} />
@@ -257,7 +257,7 @@ export function TeacherResourceLibrary({ data }: { data: TeacherLibrary }) {
       </div>
       <div id="create-resource"><ResourcePublisher data={data} /></div>
       <AIToResourceForm data={data} />
-      <section id="upload-resource" className="rounded-2xl border border-border bg-surface p-5 shadow-soft"><div className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-xl font-semibold">Secure file upload</h2><p className="mt-2 max-w-2xl text-sm text-muted-foreground">Use the existing private upload workflow for files. It verifies the file and keeps storage in the shared document system.</p></div><Link className="rounded-xl border border-border px-4 py-2 text-sm font-medium hover:bg-sky-50" href="/content-studio">Open secure upload</Link></div></section>
+      <section id="upload-resource" className="rounded-2xl border border-border bg-surface p-5 shadow-soft"><div className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-xl font-semibold">Upload teaching material</h2><p className="mt-2 max-w-2xl text-sm text-muted-foreground">Bring PDFs, Word documents, spreadsheets, presentations, photos, audio, video, notes, worksheets and question papers. The existing private upload flow verifies the file and saves it safely.</p></div><Link className="rounded-xl border border-border px-4 py-2 text-sm font-medium hover:bg-sky-50" href="/content-studio">Choose file</Link></div></section>
       <TeacherResourceStudio downloads={downloadRows} resources={toRows(data.resources)} savedResources={toRows(data.savedResources)} />
     </div>
   );

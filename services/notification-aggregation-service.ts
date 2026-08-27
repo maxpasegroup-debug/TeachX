@@ -7,7 +7,7 @@ export async function getNotificationCenter(userId?: string, institutionId?: str
 
   const [unread, recent, preferences] = await Promise.all([
     prisma.notification.findMany({ where: { userId, status: "UNREAD" }, orderBy: { createdAt: "desc" }, take: 12 }),
-    prisma.notification.findMany({ where: { OR: [{ userId }, { userId: null, institutionId }] }, orderBy: { createdAt: "desc" }, take: 20 }),
+    prisma.notification.findMany({ where: { OR: [{ userId }, ...(institutionId ? [{ userId: null, institutionId }] : [])] }, orderBy: { createdAt: "desc" }, take: 20 }),
     prisma.notificationPreference.findMany({ where: { userId } })
   ]);
 

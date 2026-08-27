@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db";
-import { userHasPermission } from "@/lib/rbac";
 import { writeAuditLog } from "@/lib/audit";
+import { requireAcademicReferences } from "@/services/academic-integrity-service";
 
 function optionalText(value: FormDataEntryValue | null) {
   const text = value?.toString().trim();
@@ -14,11 +14,15 @@ function optionalText(value: FormDataEntryValue | null) {
 }
 
 async function getAdmissionSession() {
-  const session = await auth();
-  const institutionId = session?.user.institutionId;
-  if (!session?.user || !institutionId) throw new Error("Institution is required.");
-  if (!userHasPermission(session.user.roles, "admissions.manage")) throw new Error("You do not have admission access.");
-  return { session, institutionId };
+  const user = await requireCurrentUser("admissions.manage");
+  if (!user.institutionId) throw new Error("Institution is required.");
+  return { session: { user }, institutionId: user.institutionId };
+}
+
+async function requireLead(institutionId: string, leadId: string) {
+  const lead = await prisma.lead.findFirst({ where: { id: leadId, institutionId }, select: { id: true } });
+  if (!lead) throw new Error("Lead was not found in your institution.");
+  return lead;
 }
 
 const leadSchema = z.object({
@@ -55,6 +59,7 @@ export async function createLeadAction(_: string | undefined, formData: FormData
     remarks: optionalText(formData.get("remarks"))
   });
   if (!parsed.success) return "Please enter lead details.";
+  await requireAcademicReferences(institutionId, { courseId: parsed.data.interestedCourseId, batchId: parsed.data.preferredBatchId });
 
   const lead = await prisma.lead.create({
     data: {
@@ -84,11 +89,12 @@ export async function updateLeadStageAction(_: string | undefined, formData: For
 }
 
 export async function createFollowUpAction(_: string | undefined, formData: FormData) {
-  const { session } = await getAdmissionSession();
+  const { session, institutionId } = await getAdmissionSession();
   const leadId = optionalText(formData.get("leadId"));
   const type = optionalText(formData.get("type")) ?? "CALL";
   const scheduledAt = optionalText(formData.get("scheduledAt"));
   if (!leadId || !scheduledAt) return "Please schedule a follow-up.";
+  await requireLead(institutionId, leadId);
 
   await prisma.leadFollowUp.create({ data: { leadId, type: type as never, scheduledAt: new Date(scheduledAt), notes: optionalText(formData.get("notes")) } });
   await prisma.leadActivity.create({ data: { leadId, actorId: session.user.id, title: "Follow-up Scheduled", body: type } });
@@ -97,10 +103,11 @@ export async function createFollowUpAction(_: string | undefined, formData: Form
 }
 
 export async function createLeadTaskAction(_: string | undefined, formData: FormData) {
-  const { session } = await getAdmissionSession();
+  const { session, institutionId } = await getAdmissionSession();
   const leadId = optionalText(formData.get("leadId"));
   const title = optionalText(formData.get("title"));
   if (!leadId || !title) return "Task title is required.";
+  await requireLead(institutionId, leadId);
 
   await prisma.leadTask.create({ data: { leadId, ownerId: session.user.id, title, deadline: optionalText(formData.get("deadline")) ? new Date(optionalText(formData.get("deadline")) as string) : undefined } });
   await prisma.leadActivity.create({ data: { leadId, actorId: session.user.id, title: "Task Assigned", body: title } });
@@ -112,13 +119,17 @@ export async function createApplicationAction(_: string | undefined, formData: F
   const { session, institutionId } = await getAdmissionSession();
   const leadId = optionalText(formData.get("leadId"));
   if (!leadId) return "Lead is required.";
+  const courseId = optionalText(formData.get("courseId"));
+  const batchId = optionalText(formData.get("batchId"));
+  await requireLead(institutionId, leadId);
+  await requireAcademicReferences(institutionId, { courseId, batchId });
 
   const application = await prisma.application.create({
     data: {
       institutionId,
       leadId,
-      courseId: optionalText(formData.get("courseId")),
-      batchId: optionalText(formData.get("batchId")),
+      courseId,
+      batchId,
       status: "SUBMITTED",
       formData: { note: optionalText(formData.get("note")) }
     }
@@ -133,14 +144,23 @@ export async function createAdmissionAction(_: string | undefined, formData: For
   const { session, institutionId } = await getAdmissionSession();
   const leadId = optionalText(formData.get("leadId"));
   if (!leadId) return "Lead is required.";
+  const applicationId = optionalText(formData.get("applicationId"));
+  const courseId = optionalText(formData.get("courseId"));
+  const batchId = optionalText(formData.get("batchId"));
+  await requireLead(institutionId, leadId);
+  await requireAcademicReferences(institutionId, { courseId, batchId });
+  if (applicationId) {
+    const application = await prisma.application.findFirst({ where: { id: applicationId, institutionId, leadId }, select: { id: true } });
+    if (!application) throw new Error("Application was not found in your institution.");
+  }
 
   const admission = await prisma.admission.create({
     data: {
       institutionId,
       leadId,
-      applicationId: optionalText(formData.get("applicationId")),
-      courseId: optionalText(formData.get("courseId")),
-      batchId: optionalText(formData.get("batchId")),
+      applicationId,
+      courseId,
+      batchId,
       status: "APPROVED",
       approvedAt: new Date()
     }

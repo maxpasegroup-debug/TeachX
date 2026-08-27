@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { requireAcademicReferences } from "@/services/academic-integrity-service";
 
 export async function getFeeOverview(institutionId?: string | null) {
   if (!institutionId) {
@@ -54,6 +55,7 @@ export async function createFeePlan(input: {
   discount?: string;
   scholarship?: string;
 }) {
+  await requireAcademicReferences(input.institutionId, input);
   return prisma.feePlan.create({
     data: {
       institutionId: input.institutionId,
@@ -80,5 +82,15 @@ export async function assignStudentFee(input: {
   installmentId?: string;
   dueDate?: Date;
 }) {
+  await requireAcademicReferences(input.institutionId, input);
+  const [student, feePlan, feeHead, installment] = await Promise.all([
+    prisma.user.findFirst({ where: { id: input.studentId, institutionId: input.institutionId, status: "ACTIVE", roles: { some: { role: { key: "STUDENT" } } } }, select: { id: true } }),
+    input.feePlanId ? prisma.feePlan.findFirst({ where: { id: input.feePlanId, institutionId: input.institutionId }, select: { id: true } }) : null,
+    input.feeHeadId ? prisma.feeHead.findFirst({ where: { id: input.feeHeadId, institutionId: input.institutionId }, select: { id: true } }) : null,
+    input.installmentId ? prisma.feeInstallment.findFirst({ where: { id: input.installmentId, feePlan: { institutionId: input.institutionId } }, select: { id: true } }) : null
+  ]);
+  if (!student || input.feePlanId && !feePlan || input.feeHeadId && !feeHead || input.installmentId && !installment) {
+    throw new Error("The selected fee relationship is outside your institution.");
+  }
   return prisma.studentFee.create({ data: input });
 }

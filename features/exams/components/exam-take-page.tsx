@@ -12,7 +12,7 @@ export function ExamTakePage({ exam }: { exam: ExamWithDetails }) {
   const [attemptId, setAttemptId] = useState(exam.attempts[0]?.id ?? "");
   const [startMessage, startAction, startPending] = useActionState(async (_: string | undefined, formData: FormData) => {
     const id = await startExamAttemptAction(undefined, formData);
-    setAttemptId(id);
+    if (!id.startsWith("ERROR:")) setAttemptId(id);
     return id;
   }, undefined);
   const [saveMessage, saveAction, savePending] = useActionState(saveExamAnswerAction, undefined);

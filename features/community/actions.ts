@@ -3,11 +3,12 @@
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
-import { userHasPermission } from "@/lib/rbac";
 import { recordActivity } from "@/services/activity-service";
-import { createCommunity, createDirectConversation, createDiscussion, createNotificationTemplate, ensureCanAccessConversation } from "@/services/community-service";
+import { createCommunity, createDirectConversation, createDiscussion, createDiscussionReply, createNotificationTemplate, ensureCanAccessConversation, requireCommunityActor } from "@/services/community-service";
 import { createCommunication } from "@/services/communication-service";
 import { prisma } from "@/lib/db";
+import { requireCurrentUser } from "@/lib/auth/current-user";
+import { userHasPermission } from "@/lib/rbac";
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -24,11 +25,11 @@ async function requireSession() {
 }
 
 export async function publishCommunityAnnouncementAction(formData: FormData) {
-  const session = await requireSession();
-  const institutionId = session.user.institutionId;
+  const actor = await requireCurrentUser();
+  const institutionId = actor.institutionId;
   const title = value(formData, "title");
   const body = value(formData, "body");
-  if (!institutionId || !title || !body) return;
+  if (!institutionId || (!userHasPermission(actor.roles, "operations.view") && !userHasPermission(actor.roles, "classrooms.manage")) || !title || !body) throw new Error("Announcement publishing permission is required.");
 
   const audience = value(formData, "audience") || "Everyone";
   const status = value(formData, "intent") === "draft" ? "DRAFT" : value(formData, "intent") === "archive" ? "EXPIRED" : "SENT";
@@ -36,7 +37,7 @@ export async function publishCommunityAnnouncementAction(formData: FormData) {
 
   const communication = await createCommunication({
     institutionId,
-    createdById: session.user.id,
+    createdById: actor.id,
     kind: "ANNOUNCEMENT",
     title,
     body,
@@ -50,50 +51,53 @@ export async function publishCommunityAnnouncementAction(formData: FormData) {
   });
 
   await prisma.communication.update({ where: { id: communication.id }, data: { status: status as never, metadata: { audience, pinned: formData.get("pinned") === "on", attachmentsPlaceholder: true } } });
-  await recordActivity({ institutionId, actorId: session.user.id, type: "ANNOUNCEMENT", title: `Announcement ${status.toLowerCase()}: ${title}`, entity: "Communication", entityId: communication.id, link: "/communication" });
+  await recordActivity({ institutionId, actorId: actor.id, type: "ANNOUNCEMENT", title: `Announcement ${status.toLowerCase()}: ${title}`, entity: "Communication", entityId: communication.id, link: "/communication" });
 
   revalidatePath("/communication");
   revalidatePath("/admin/announcements");
 }
 
 export async function updateBookingWorkflowAction(formData: FormData) {
-  const session = await requireSession();
+  const actor = await requireCurrentUser();
+  if (!actor.institutionId) throw new Error("Institution context is required.");
   const requestId = value(formData, "requestId");
   const status = value(formData, "status");
   if (!requestId || !status) return;
 
-  const request = await prisma.teacherBookingRequest.findFirst({ where: { id: requestId, OR: [{ teacherId: session.user.id }, { studentId: session.user.id }] } });
-  if (!request) return;
+  const request = await prisma.teacherBookingRequest.findFirst({ where: { id: requestId, teacherProfile: { user: { institutionId: actor.institutionId } }, OR: [{ teacherId: actor.id }, { studentId: actor.id }] } });
+  if (!request) throw new Error("Authorized booking request not found.");
+  const isTeacher = actor.id === request.teacherId;
+  const transitions: Record<string, string[]> = isTeacher
+    ? { PENDING: ["ACCEPTED", "REJECTED"], ACCEPTED: ["COMPLETED", "CANCELLED"] }
+    : { PENDING: ["CANCELLED"], ACCEPTED: ["CANCELLED"] };
+  if (!transitions[request.status]?.includes(status)) throw new Error("This booking status change is not allowed.");
 
   const history = Array.isArray(request.history) ? request.history : [];
-  const nextHistory = [...history, { status, actorId: session.user.id, at: new Date().toISOString(), note: value(formData, "note") || undefined }];
+  const nextHistory = [...history, { status, actorId: actor.id, at: new Date().toISOString(), note: value(formData, "note") || undefined }];
   await prisma.teacherBookingRequest.update({
     where: { id: request.id },
     data: {
       status,
-      teacherNotes: value(formData, "teacherNotes") || request.teacherNotes,
-      studentNotes: value(formData, "studentNotes") || request.studentNotes,
+      teacherNotes: isTeacher ? value(formData, "teacherNotes") || request.teacherNotes : request.teacherNotes,
+      studentNotes: isTeacher ? request.studentNotes : value(formData, "studentNotes") || request.studentNotes,
       history: nextHistory
     }
   });
 
-  const recipientId = session.user.id === request.teacherId ? request.studentId : request.teacherId;
-  await prisma.notification.create({ data: { userId: recipientId, institutionId: session.user.institutionId, title: "Booking request updated", body: `${request.subject} is now ${status}.`, link: "/communication", metadata: { category: "BOOKING", priority: "HIGH" } } });
-  await recordActivity({ institutionId: session.user.institutionId, actorId: session.user.id, type: "SYSTEM", title: `Booking ${status.toLowerCase()}`, body: request.subject, entity: "TeacherBookingRequest", entityId: request.id, link: "/communication" });
+  const recipientId = actor.id === request.teacherId ? request.studentId : request.teacherId;
+  await prisma.notification.create({ data: { userId: recipientId, institutionId: actor.institutionId, title: "Booking request updated", body: `${request.subject} is now ${status}.`, link: "/communication", metadata: { category: "BOOKING", priority: "HIGH" } } });
+  await recordActivity({ institutionId: actor.institutionId, actorId: actor.id, type: "SYSTEM", title: `Booking ${status.toLowerCase()}`, body: request.subject, entity: "TeacherBookingRequest", entityId: request.id, link: "/communication" });
   revalidatePath("/communication");
   revalidatePath("/teacher/business/marketplace");
   revalidatePath("/student/teachers");
 }
 
 export async function createMessageRequestAction(formData: FormData) {
-  const session = await requireSession();
   const participantIds = values(formData, "participantIds");
   const title = value(formData, "title") || "TeachX conversation";
   if (!participantIds.length) return;
 
   await createDirectConversation({
-    institutionId: session.user.institutionId,
-    createdById: session.user.id,
     participantIds,
     title,
     body: value(formData, "body") || undefined,
@@ -103,31 +107,28 @@ export async function createMessageRequestAction(formData: FormData) {
 }
 
 export async function sendDirectMessageAction(formData: FormData) {
-  const session = await requireSession();
+  const actor = await requireCommunityActor();
   const conversationId = value(formData, "conversationId");
   const body = value(formData, "body");
   if (!conversationId || !body) return;
 
-  const conversation = await ensureCanAccessConversation(session.user.id, conversationId);
+  const conversation = await ensureCanAccessConversation(conversationId);
   if (!conversation) return;
 
-  await prisma.directMessage.create({ data: { conversationId, senderId: session.user.id, body, attachments: { placeholder: value(formData, "attachmentUrl") || undefined } } });
-  await prisma.directConversation.update({ where: { id: conversationId }, data: { status: "ACTIVE" } });
-  const recipients = conversation.participants.filter((item) => item.userId !== session.user.id);
+  await prisma.directMessage.create({ data: { conversationId, senderId: actor.id, body, attachments: { placeholder: value(formData, "attachmentUrl") || undefined } } });
+  await prisma.directConversation.updateMany({ where: { id: conversationId, institutionId: actor.institutionId }, data: { status: "ACTIVE" } });
+  const recipients = conversation.participants.filter((item) => item.userId !== actor.id);
   await prisma.notification.createMany({
-    data: recipients.map((item) => ({ userId: item.userId, institutionId: session.user.institutionId, title: "New message", body: conversation.title, link: "/communication", metadata: { category: "MESSAGE", priority: "NORMAL" } }))
+    data: recipients.map((item) => ({ userId: item.userId, institutionId: actor.institutionId, title: "New message", body: conversation.title, link: "/communication", metadata: { category: "MESSAGE", priority: "NORMAL" } }))
   });
   revalidatePath("/communication");
 }
 
 export async function createDiscussionAction(formData: FormData) {
-  const session = await requireSession();
   const title = value(formData, "title");
   if (!title) return;
 
   await createDiscussion({
-    institutionId: session.user.institutionId,
-    authorId: session.user.id,
     title,
     body: value(formData, "body") || undefined,
     scope: (value(formData, "scope") || "INSTITUTION") as never,
@@ -139,26 +140,19 @@ export async function createDiscussionAction(formData: FormData) {
 }
 
 export async function replyToDiscussionAction(formData: FormData) {
-  const session = await requireSession();
   const discussionId = value(formData, "discussionId");
   const body = value(formData, "body");
   if (!discussionId || !body) return;
 
-  const discussion = await prisma.genericDiscussion.findFirst({ where: { id: discussionId, isLocked: false, status: { not: "ARCHIVED" } } });
-  if (!discussion) return;
-  await prisma.genericDiscussionReply.create({ data: { discussionId, authorId: session.user.id, body } });
-  await prisma.genericDiscussion.update({ where: { id: discussionId }, data: { updatedAt: new Date() } });
+  await createDiscussionReply({ discussionId, body });
   revalidatePath("/communication");
 }
 
 export async function createCommunityAction(formData: FormData) {
-  const session = await requireSession();
   const name = value(formData, "name");
   if (!name) return;
 
   await createCommunity({
-    institutionId: session.user.institutionId,
-    createdById: session.user.id,
     name,
     description: value(formData, "description") || undefined,
     type: (value(formData, "type") || "INTEREST") as never,
@@ -169,15 +163,11 @@ export async function createCommunityAction(formData: FormData) {
 }
 
 export async function createNotificationTemplateAction(formData: FormData) {
-  const session = await requireSession();
-  if (!userHasPermission(session.user.roles, "settings.manage") && !session.user.roles.includes("ADMIN")) return;
   const key = value(formData, "key");
   const body = value(formData, "body");
   if (!key || !body) return;
 
   await createNotificationTemplate({
-    institutionId: session.user.institutionId,
-    createdById: session.user.id,
     key,
     name: value(formData, "name") || key,
     category: value(formData, "category") || "System",

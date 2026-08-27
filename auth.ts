@@ -172,13 +172,28 @@ export const authConfig = {
         return baseUrl;
       }
     },
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id ?? token.sub ?? "";
         token.institutionId = user.institutionId;
         token.roles = user.roles;
         token.authMethod = user.authMethod;
         token.authSessionVersion = user.authSessionVersion;
+      } else if (typeof token.id === "string") {
+        const sessionVersion = typeof token.authSessionVersion === "number" ? token.authSessionVersion : null;
+        const current = sessionVersion === null ? null : await prisma.user.findUnique({
+          where: { id: token.id },
+          select: { institutionId: true, status: true, authSessionVersion: true, roles: { select: { role: { select: { key: true } } } } }
+        }).catch(() => null);
+        if (!current || current.status !== "ACTIVE" || current.authSessionVersion !== sessionVersion) {
+          token.id = "";
+          token.institutionId = null;
+          token.roles = [];
+          token.authSessionVersion = -1;
+        } else {
+          token.institutionId = current.institutionId;
+          token.roles = current.roles.map(({ role }) => role.key as RoleKey);
+        }
       }
 
       return token;

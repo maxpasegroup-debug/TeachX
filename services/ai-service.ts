@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db";
 import { universalSearch } from "@/services/search-service";
 import { runOpenAICompletion } from "@/services/openai-service";
 import { getAICreditSummary } from "@/services/commerce-service";
+import { authorizeAIScope } from "@/lib/ai-authorization";
+import type { RoleKey } from "@/lib/constants/roles";
 
 const systemPrompts: Record<AIConversationScope, string> = {
   TEACHER: "You help teachers worldwide prepare clear lessons, assignments, homework, exams and communication. Follow the requested language and local teaching context.",
@@ -21,9 +23,9 @@ export async function getPromptTemplate(institutionId: string | null | undefined
   return template ?? { systemPrompt: systemPrompts[scope], userPrompt: "{{prompt}}", model: process.env.OPENAI_MODEL ?? "gpt-4.1-mini" };
 }
 
-export async function buildAIContext(input: { institutionId?: string | null; userId?: string; scope: AIConversationScope; prompt: string }) {
+export async function buildAIContext(input: { institutionId?: string | null; userId?: string; roles?: RoleKey[]; scope: AIConversationScope; prompt: string }) {
   if (input.scope === "SEARCH" && input.institutionId) {
-    const results = await universalSearch(input.institutionId, input.prompt);
+    const results = await universalSearch(input.institutionId, input.prompt, input.userId, input.roles ?? []);
     return { searchResults: results.slice(0, 10) };
   }
 
@@ -35,17 +37,14 @@ export async function buildAIContext(input: { institutionId?: string | null; use
 }
 
 export async function runAI(input: { institutionId?: string | null; userId?: string; scope: AIConversationScope; feature: string; prompt: string; context?: Prisma.InputJsonValue; conversationId?: string; title?: string; messagePrompt?: string }) {
-  if (input.scope !== "TEACHER" && input.userId && input.institutionId) {
-    const teacher = await prisma.user.count({
-      where: {
-        id: input.userId,
-        institutionId: input.institutionId,
-        status: "ACTIVE",
-        roles: { some: { role: { key: { in: ["ACADEMIC_HEAD", "ACADEMIC_FACULTY", "PHYSICAL_TRAINER", "PART_TIME_TUTOR"] } } } }
-      }
-    });
-    if (teacher) throw new Error("AI_SCOPE_FORBIDDEN");
-  }
+  if (!input.userId || !input.institutionId) throw new Error("Complete workspace setup before using AI.");
+  const actor = await prisma.user.findFirst({
+    where: { id: input.userId, institutionId: input.institutionId, status: "ACTIVE" },
+    select: { roles: { select: { role: { select: { key: true } } } } }
+  });
+  if (!actor) throw new Error("AI_SCOPE_FORBIDDEN");
+  const roles = actor.roles.map(({ role }) => role.key as RoleKey);
+  authorizeAIScope(roles, input.scope);
   if (input.scope === "TEACHER") {
     if (!input.userId || !input.institutionId) {
       throw new Error("Complete workspace setup before using AI Studio.");
@@ -65,7 +64,7 @@ export async function runAI(input: { institutionId?: string | null; userId?: str
     }
   }
   const template = await getPromptTemplate(input.institutionId, input.feature, input.scope);
-  const context = input.context ?? await buildAIContext(input);
+  const context = input.context ?? await buildAIContext({ ...input, roles });
   const existing = input.conversationId ? await prisma.aIConversation.findFirst({ where: { id: input.conversationId, userId: input.userId, institutionId: input.institutionId ?? null, scope: input.scope } }) : null;
   if (input.conversationId && !existing) throw new Error("AI_CONVERSATION_FORBIDDEN");
   const finalPrompt = `${template.userPrompt.replace("{{prompt}}", input.prompt)}\n\nContext:\n${JSON.stringify(context)}`;

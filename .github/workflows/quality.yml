@@ -18,6 +18,51 @@ env:
   SETUP_SECRET: quality-only-setup-secret-longer-than-thirty-two-characters
 
 jobs:
+  qa001-tenant-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: teachx_qa
+          POSTGRES_PASSWORD: teachx_qa_ci_only
+          POSTGRES_DB: teachx_qa_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U teachx_qa -d teachx_qa_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      QA_DATABASE_URL: postgresql://teachx_qa:teachx_qa_ci_only@127.0.0.1:5432/teachx_qa_ci
+      QA_DATABASE_CONFIRM: TEACHX_QA_ONLY
+      QA_DATABASE_INITIALIZE: "true"
+      QA_ALLOW_DATABASE_WRITES: "true"
+      QA_REDIS_URL: redis://127.0.0.1:6379
+      AUTH_SECRET: qa-ci-auth-secret-that-is-longer-than-thirty-two-characters
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run qa:migrations:validate
+      - run: npm run qa:db:prepare
+      - run: npm run test:qa
+
   static-quality:
     runs-on: ubuntu-latest
     timeout-minutes: 20

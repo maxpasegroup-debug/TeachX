@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CreditCard, Lock, ShieldCheck } from "lucide-react";
 
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { CheckoutPaymentActions } from "@/components/commerce/checkout-payment-actions";
@@ -20,17 +20,17 @@ function providerState() {
 }
 
 export default async function CheckoutPage({ params, searchParams }: { params: Promise<{ orderId: string }>; searchParams: Promise<{ payment?: string }> }) {
-  const session = await auth();
-  if (!session?.user.id) redirect("/login");
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
 
   const { orderId } = await params;
-  const canReviewInstitutionOrders = session.user.roles.some((role) => ["ADMIN", "DIRECTOR"].includes(role));
+  const canReviewInstitutionOrders = user.roles.some((role) => ["ADMIN", "DIRECTOR"].includes(role));
   const order = await prisma.commerceOrder.findFirst({
     where: {
       id: orderId,
       OR: [
-        { buyerId: session.user.id },
-        ...(canReviewInstitutionOrders ? [{ institutionId: session.user.institutionId }] : [])
+        { buyerId: user.id },
+        ...(canReviewInstitutionOrders && user.institutionId ? [{ institutionId: user.institutionId }] : [])
       ]
     },
     include: { buyer: true, items: { include: { plan: true } }, invoices: true, paymentEvents: { orderBy: { receivedAt: "desc" }, take: 5 } }

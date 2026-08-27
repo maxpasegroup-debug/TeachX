@@ -11,5 +11,5 @@ export async function GET(request: Request) {
   if (!session.user.institutionId) return NextResponse.json({ results: [] });
   const query = new URL(request.url).searchParams.get("q")?.trim();
   if (!query) return NextResponse.json({ results: [] });
-  return NextResponse.json({ results: await universalSearch(session.user.institutionId, query, session.user.id) });
+  return NextResponse.json({ results: await universalSearch(session.user.institutionId, query, session.user.id, session.user.roles) });
 }

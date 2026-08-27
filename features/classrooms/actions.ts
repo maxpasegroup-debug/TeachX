@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { auth } from "@/auth";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db";
 import { writeAuditLog } from "@/lib/audit";
 import { userHasPermission } from "@/lib/rbac";
@@ -13,6 +14,7 @@ import { createModuleNotification } from "@/services/notification-aggregation-se
 import { createContentUpload } from "@/services/upload-service";
 import { reviewAssignmentSubmission, transitionAssignmentStatus, getTeacherReviewPayload, replyAssignmentDoubt } from "@/services/assignment-workflow-service";
 import { addStandaloneStudent, createStandaloneClass, removeStandaloneStudent, updateStandaloneStudent } from "@/services/standalone-teacher-service";
+import { requireAcademicReferences } from "@/services/academic-integrity-service";
 
 function optionalText(value: FormDataEntryValue | null) {
   const text = value?.toString().trim();
@@ -103,10 +105,10 @@ export async function removeStandaloneStudentAction(_: string | undefined, formD
 }
 
 async function getClassroomAccess(classroomId: string) {
-  const session = await auth();
-  const institutionId = session?.user.institutionId;
-  if (!session?.user || !institutionId) throw new Error("Institution is required.");
-  if (!userHasPermission(session.user.roles, "classrooms.own.manage") && !userHasPermission(session.user.roles, "classrooms.manage")) {
+  const user = await requireCurrentUser();
+  const institutionId = user.institutionId;
+  if (!institutionId) throw new Error("Institution is required.");
+  if (!userHasPermission(user.roles, "classrooms.own.manage") && !userHasPermission(user.roles, "classrooms.manage")) {
     throw new Error("You do not have classroom access.");
   }
 
@@ -114,11 +116,11 @@ async function getClassroomAccess(classroomId: string) {
     where: {
       id: classroomId,
       institutionId,
-      ...(canManageAllClassrooms(session.user.roles)
+      ...(canManageAllClassrooms(user.roles)
         ? {}
         : {
             batch: {
-              faculty: { some: { facultyId: session.user.id } }
+              faculty: { some: { facultyId: user.id } }
             }
           })
     },
@@ -126,7 +128,7 @@ async function getClassroomAccess(classroomId: string) {
   });
 
   if (!classroom) throw new Error("Classroom was not found.");
-  return { session, institutionId, classroom };
+  return { session: { user }, institutionId, classroom };
 }
 
 const announcementSchema = z.object({
@@ -196,6 +198,7 @@ export async function createMaterialAction(_: string | undefined, formData: Form
   if (!parsed.success) return "Please enter material details.";
 
   const { session, institutionId, classroom } = await getClassroomAccess(parsed.data.classroomId);
+  await requireAcademicReferences(institutionId, { courseId: classroom.courseId, subjectId: parsed.data.subjectId });
   const material = await prisma.studyMaterial.create({
     data: {
       ...parsed.data,
@@ -255,6 +258,7 @@ export async function createAssignmentAction(_: string | undefined, formData: Fo
   if (!parsed.success) return "Please enter assignment details.";
 
   const { session, institutionId, classroom } = await getClassroomAccess(parsed.data.classroomId);
+  await requireAcademicReferences(institutionId, { courseId: classroom.courseId, subjectId: parsed.data.subjectId });
   const assignment = await prisma.$transaction(async tx=>{const created=await tx.assignment.create({data:{...parsed.data,createdById:session.user.id}});if(parsed.data.status==="PUBLISHED"){for(const item of classroom.batch.students){await tx.assignmentSubmission.upsert({where:{assignmentId_studentId:{assignmentId:created.id,studentId:item.studentId}},update:{},create:{assignmentId:created.id,studentId:item.studentId}});await tx.notification.upsert({where:{id:`assignment-published-${created.id}-${item.studentId}`},create:{id:`assignment-published-${created.id}-${item.studentId}`,institutionId,userId:item.studentId,title:"New assignment",body:created.title,link:`/student/assignments?assignmentId=${created.id}`,metadata:{assignmentId:created.id,classroomId:classroom.id}},update:{}})}}return created});
 
   await Promise.allSettled([writeAuditLog({ institutionId, actorId: session.user.id, action: "CREATE", entity: "Assignment", entityId: assignment.id, message: `Created assignment in ${classroom.title}` }),recordActivity({ institutionId, actorId: session.user.id, type: "ASSIGNMENT", title: `Assignment created: ${assignment.title}`, entity: "Assignment", entityId: assignment.id, link: `/classrooms/${classroom.id}` })]);

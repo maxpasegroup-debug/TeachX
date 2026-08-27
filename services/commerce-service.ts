@@ -315,16 +315,17 @@ export async function getStudentCommerceDashboard(userId?: string, institutionId
 }
 
 export async function getAdminCommerceDashboard(institutionId?: string | null) {
+  if (!institutionId) throw new Error("Institution scope is required for commerce administration.");
   const paymentConfig = getPaymentConfig();
   const [plans, orders, wallets, transactions, coupons, aiUsage, subscriptions, invoices] = await Promise.all([
     ensureDefaultSubscriptionPlans(institutionId),
-    prisma.commerceOrder.findMany({ where: { institutionId: institutionId ?? undefined }, include: { buyer: true, items: { include: { seller: true, resource: true, plan: true } }, invoices: true }, orderBy: { createdAt: "desc" }, take: 60 }),
-    prisma.wallet.findMany({ where: { institutionId: institutionId ?? undefined }, include: { user: true }, orderBy: { updatedAt: "desc" }, take: 60 }),
-    prisma.walletTransaction.findMany({ where: { institutionId: institutionId ?? undefined }, include: { user: true, order: true }, orderBy: { createdAt: "desc" }, take: 60 }),
-    prisma.coupon.findMany({ where: { institutionId: institutionId ?? undefined }, orderBy: { createdAt: "desc" }, take: 60 }),
-    prisma.aIUsage.groupBy({ by: ["feature"], where: { institutionId: institutionId ?? undefined }, _sum: { totalTokens: true, costEstimate: true }, _count: true }),
-    prisma.userSubscription.findMany({ where: { institutionId: institutionId ?? undefined }, include: { user: true, plan: true }, orderBy: { updatedAt: "desc" }, take: 60 }),
-    prisma.commerceInvoice.findMany({ where: { institutionId: institutionId ?? undefined }, include: { buyer: true, order: true }, orderBy: { createdAt: "desc" }, take: 60 })
+    prisma.commerceOrder.findMany({ where: { institutionId }, include: { buyer: true, items: { include: { seller: true, resource: true, plan: true } }, invoices: true }, orderBy: { createdAt: "desc" }, take: 60 }),
+    prisma.wallet.findMany({ where: { institutionId }, include: { user: true }, orderBy: { updatedAt: "desc" }, take: 60 }),
+    prisma.walletTransaction.findMany({ where: { institutionId }, include: { user: true, order: true }, orderBy: { createdAt: "desc" }, take: 60 }),
+    prisma.coupon.findMany({ where: { institutionId }, orderBy: { createdAt: "desc" }, take: 60 }),
+    prisma.aIUsage.groupBy({ by: ["feature"], where: { institutionId }, _sum: { totalTokens: true, costEstimate: true }, _count: true }),
+    prisma.userSubscription.findMany({ where: { institutionId }, include: { user: true, plan: true }, orderBy: { updatedAt: "desc" }, take: 60 }),
+    prisma.commerceInvoice.findMany({ where: { institutionId }, include: { buyer: true, order: true }, orderBy: { createdAt: "desc" }, take: 60 })
   ]);
 
   const paidOrders = orders.filter((order) => order.status === "PAID" || order.status === "FULFILLED");

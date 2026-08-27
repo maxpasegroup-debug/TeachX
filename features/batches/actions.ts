@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db";
-import { userHasPermission } from "@/lib/rbac";
 import { writeAuditLog } from "@/lib/audit";
+import { requireAcademicReferences } from "@/services/academic-integrity-service";
 
 function optionalText(value: FormDataEntryValue | null) {
   const text = value?.toString().trim();
@@ -14,11 +14,9 @@ function optionalText(value: FormDataEntryValue | null) {
 }
 
 async function getBatchSession() {
-  const session = await auth();
-  const institutionId = session?.user.institutionId;
-  if (!session?.user || !institutionId) throw new Error("Institution is required.");
-  if (!userHasPermission(session.user.roles, "batches.manage")) throw new Error("You do not have access to manage batches.");
-  return { session, institutionId };
+  const user = await requireCurrentUser("batches.manage");
+  if (!user.institutionId) throw new Error("Institution is required.");
+  return { user, institutionId: user.institutionId };
 }
 
 const batchSchema = z.object({
@@ -36,7 +34,7 @@ const batchSchema = z.object({
 });
 
 export async function createBatchAction(_: string | undefined, formData: FormData) {
-  const { session, institutionId } = await getBatchSession();
+  const { user, institutionId } = await getBatchSession();
   const parsed = batchSchema.safeParse({
     name: optionalText(formData.get("name")),
     courseId: optionalText(formData.get("courseId")),
@@ -53,14 +51,7 @@ export async function createBatchAction(_: string | undefined, formData: FormDat
 
   if (!parsed.success) return "Please enter valid batch details.";
 
-  const course = await prisma.course.findFirst({
-    where: {
-      id: parsed.data.courseId,
-      institutionId
-    }
-  });
-
-  if (!course) return "Course was not found.";
+  await requireAcademicReferences(institutionId, parsed.data);
 
   const batch = await prisma.batch.create({
     data: parsed.data
@@ -68,7 +59,7 @@ export async function createBatchAction(_: string | undefined, formData: FormDat
 
   await writeAuditLog({
     institutionId,
-    actorId: session.user.id,
+    actorId: user.id,
     action: "CREATE",
     entity: "Batch",
     entityId: batch.id,
@@ -86,7 +77,7 @@ const facultySchema = z.object({
 });
 
 export async function assignFacultyAction(_: string | undefined, formData: FormData) {
-  const { session, institutionId } = await getBatchSession();
+  const { user, institutionId } = await getBatchSession();
   const parsed = facultySchema.safeParse({
     batchId: optionalText(formData.get("batchId")),
     facultyId: optionalText(formData.get("facultyId")),
@@ -95,14 +86,7 @@ export async function assignFacultyAction(_: string | undefined, formData: FormD
 
   if (!parsed.success) return "Please select a batch and faculty member.";
 
-  const batch = await prisma.batch.findFirst({
-    where: {
-      id: parsed.data.batchId,
-      course: { institutionId }
-    }
-  });
-
-  if (!batch) return "Batch was not found.";
+  await requireAcademicReferences(institutionId, parsed.data);
 
   await prisma.batchFaculty.upsert({
     where: {
@@ -117,7 +101,7 @@ export async function assignFacultyAction(_: string | undefined, formData: FormD
 
   await writeAuditLog({
     institutionId,
-    actorId: session.user.id,
+    actorId: user.id,
     action: "UPDATE",
     entity: "Batch",
     entityId: parsed.data.batchId,

@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db";
+import { getAICreditPackage } from "@/lib/payments/ai-credit-catalog";
+import { userHasPermission } from "@/lib/rbac";
 import { createCommerceOrder, ensureWallet } from "@/services/commerce-service";
 import { getLearningResource } from "@/services/learning-marketplace-service";
 
@@ -226,52 +229,52 @@ export async function changeSubscriptionAction(formData: FormData) {
 }
 
 export async function createAICreditPackOrderAction(formData: FormData) {
-  const session = await auth();
-  const credits = numberValue(formData, "credits") || 500;
-  const amount = numberValue(formData, "amount") || 99;
-  if (!session?.user.id) return;
+  const user = await requireCurrentUser();
+  const creditPack = getAICreditPackage(value(formData, "packageId"));
+  if (!user.institutionId || !creditPack) throw new Error("The selected AI credit package is unavailable.");
 
-  const wallet = await ensureWallet(session.user.id, session.user.institutionId);
+  const wallet = await ensureWallet(user.id, user.institutionId);
   const order = await createCommerceOrder({
-    buyerId: session.user.id,
-    institutionId: session.user.institutionId,
+    buyerId: user.id,
+    institutionId: user.institutionId,
     type: "AI_CREDIT_PACK",
-    title: `${credits} AI Credits`,
+    title: `${creditPack.credits} AI Credits`,
     itemType: "AI_CREDITS",
-    amount,
-    metadata: { credits, provider: "future" }
+    amount: creditPack.amount,
+    currency: creditPack.currency,
+    metadata: { packageId: creditPack.id, provider: "checkout-ready" }
   });
 
   await prisma.walletTransaction.create({
     data: {
-      institutionId: session.user.institutionId,
+      institutionId: user.institutionId,
       walletId: wallet.id,
-      userId: session.user.id,
+      userId: user.id,
       orderId: order.id,
       type: "HOLD",
-      amount: credits,
+      amount: creditPack.credits,
       pending: true,
-      description: `${credits} AI credits pending payment`,
-      metadata: { creditType: "AI", provider: "future" }
+      description: `${creditPack.credits} AI credits pending payment`,
+      metadata: { creditType: "AI", packageId: creditPack.id, provider: "checkout-ready" }
     }
   });
 
-  await prisma.notification.create({ data: { userId: session.user.id, institutionId: session.user.institutionId, title: "AI credit order created", body: "Checkout provider integration is prepared for a later phase.", link: "/student/purchases" } });
+  await prisma.notification.create({ data: { userId: user.id, institutionId: user.institutionId, title: "AI credit order created", body: "Your AI credit package is ready for secure checkout.", link: `/checkout/${order.id}` } });
   revalidatePath("/teacher/business/wallet");
   revalidatePath("/student/purchases");
 }
 
 export async function createBookingReservationOrderAction(formData: FormData) {
-  const session = await auth();
+  const user = await requireCurrentUser();
   const bookingRequestId = value(formData, "bookingRequestId");
-  if (!session?.user.id || !bookingRequestId) return;
+  if (!user.institutionId || !bookingRequestId) return;
 
-  const booking = await prisma.teacherBookingRequest.findFirst({ where: { id: bookingRequestId, OR: [{ studentId: session.user.id }, { teacherId: session.user.id }] } });
+  const booking = await prisma.teacherBookingRequest.findFirst({ where: { id: bookingRequestId, teacherProfile: { user: { institutionId: user.institutionId } }, OR: [{ studentId: user.id }, { teacherId: user.id }] } });
   if (!booking) return;
 
   await createCommerceOrder({
     buyerId: booking.studentId,
-    institutionId: session.user.institutionId,
+    institutionId: user.institutionId,
     type: "BOOKING_RESERVATION",
     title: `Booking reservation: ${booking.subject}`,
     itemType: "BOOKING",
@@ -317,11 +320,12 @@ export async function createCouponAction(formData: FormData) {
 }
 
 export async function createCommerceInvoicePlaceholderAction(formData: FormData) {
-  const session = await auth();
+  const user = await requireCurrentUser();
   const orderId = value(formData, "orderId");
-  if (!session?.user.id || !orderId) return;
+  if (!user.institutionId || !orderId) return;
 
-  const order = await prisma.commerceOrder.findFirst({ where: { id: orderId, OR: [{ buyerId: session.user.id }, { institutionId: session.user.institutionId, buyer: { roles: { some: { role: { key: "STUDENT" } } } } }] }, include: { buyer: true } });
+  const canManageFinance = userHasPermission(user.roles, "finance.manage");
+  const order = await prisma.commerceOrder.findFirst({ where: { id: orderId, institutionId: user.institutionId, ...(canManageFinance ? {} : { buyerId: user.id }) }, include: { buyer: true } });
   if (!order) return;
 
   await createDraftCommerceInvoice({

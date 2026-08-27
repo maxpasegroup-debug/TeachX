@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db";
-import { userHasPermission } from "@/lib/rbac";
+import { requireAcademicReferences } from "@/services/academic-integrity-service";
+import { saveStudentExamAnswer, startStudentExamAttempt, submitStudentExamAttempt } from "@/services/exam-service";
 import { parseQuestionImport } from "@/services/question-import-service";
-import { evaluateAttempt } from "@/services/evaluation-service";
 import { rebuildLeaderboard } from "@/services/leaderboard-service";
 
 function optionalText(value: FormDataEntryValue | null) {
@@ -16,11 +16,9 @@ function optionalText(value: FormDataEntryValue | null) {
 }
 
 async function getExamManager() {
-  const session = await auth();
-  const institutionId = session?.user.institutionId;
-  if (!session?.user || !institutionId) throw new Error("Institution is required.");
-  if (!userHasPermission(session.user.roles, "exams.manage")) throw new Error("You do not have exam access.");
-  return { session, institutionId };
+  const user = await requireCurrentUser("exams.manage");
+  if (!user.institutionId) throw new Error("Institution is required.");
+  return { user, institutionId: user.institutionId };
 }
 
 const questionSchema = z.object({
@@ -39,7 +37,7 @@ const questionSchema = z.object({
 });
 
 export async function createQuestionAction(_: string | undefined, formData: FormData) {
-  const { session } = await getExamManager();
+  const { user, institutionId } = await getExamManager();
   const parsed = questionSchema.safeParse({
     courseId: optionalText(formData.get("courseId")),
     subjectId: optionalText(formData.get("subjectId")),
@@ -55,11 +53,12 @@ export async function createQuestionAction(_: string | undefined, formData: Form
     negativeMarks: optionalText(formData.get("negativeMarks"))
   });
   if (!parsed.success) return "Please enter question details.";
+  await requireAcademicReferences(institutionId, parsed.data);
 
   const question = await prisma.question.create({
     data: {
       ...parsed.data,
-      authorId: session.user.id,
+      authorId: user.id,
       marks: parsed.data.marks ?? "1",
       negativeMarks: parsed.data.negativeMarks ?? "0",
       options: {
@@ -78,17 +77,18 @@ export async function createQuestionAction(_: string | undefined, formData: Form
 }
 
 export async function importQuestionsAction(_: string | undefined, formData: FormData) {
-  const { session, institutionId } = await getExamManager();
+  const { user, institutionId } = await getExamManager();
   const courseId = optionalText(formData.get("courseId"));
   const subjectId = optionalText(formData.get("subjectId"));
   const rawText = optionalText(formData.get("rawText"));
   if (!courseId || !subjectId || !rawText) return "Course, subject and pasted questions are required.";
+  await requireAcademicReferences(institutionId, { courseId, subjectId });
 
   const parsed = parseQuestionImport(rawText);
   await prisma.questionImport.create({
     data: {
       institutionId,
-      uploadedById: session.user.id,
+      uploadedById: user.id,
       sourceType: "BULK_PASTE",
       rawText,
       parsedCount: parsed.length,
@@ -101,7 +101,7 @@ export async function importQuestionsAction(_: string | undefined, formData: For
       data: {
         courseId,
         subjectId,
-        authorId: session.user.id,
+        authorId: user.id,
         type: "MCQ",
         difficulty: "MEDIUM",
         visibility: "DRAFT",
@@ -128,7 +128,7 @@ export async function importQuestionsAction(_: string | undefined, formData: For
 }
 
 export async function createExamAction(_: string | undefined, formData: FormData) {
-  const { session, institutionId } = await getExamManager();
+  const { user, institutionId } = await getExamManager();
   const courseId = optionalText(formData.get("courseId"));
   const name = optionalText(formData.get("name"));
   if (!courseId || !name) return "Exam name and course are required.";
@@ -136,29 +136,39 @@ export async function createExamAction(_: string | undefined, formData: FormData
   const duration = optionalText(formData.get("duration")) ?? "00:30:00";
   const [hours = "0", minutes = "30", seconds = "0"] = duration.split(":");
   const durationSeconds = Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds);
+  const subjectId = optionalText(formData.get("subjectId"));
+  const chapterId = optionalText(formData.get("chapterId"));
+  const topicId = optionalText(formData.get("topicId"));
+  const batchId = optionalText(formData.get("batchId"));
+  const startsAt = optionalText(formData.get("startsAt"));
+  const endsAt = optionalText(formData.get("endsAt"));
+  const attemptsAllowed = Number(optionalText(formData.get("attemptsAllowed")) ?? "1");
+  if (!Number.isInteger(durationSeconds) || durationSeconds <= 0 || !Number.isInteger(attemptsAllowed) || attemptsAllowed <= 0) return "Duration and attempt limit must be positive.";
+  if (startsAt && endsAt && new Date(startsAt) >= new Date(endsAt)) return "Exam end time must be after its start time.";
+  await requireAcademicReferences(institutionId, { courseId, subjectId, chapterId, topicId, batchId });
 
   const exam = await prisma.exam.create({
     data: {
       institutionId,
-      createdById: session.user.id,
+      createdById: user.id,
       courseId,
-      subjectId: optionalText(formData.get("subjectId")),
-      chapterId: optionalText(formData.get("chapterId")),
-      topicId: optionalText(formData.get("topicId")),
-      batchId: optionalText(formData.get("batchId")),
+      subjectId,
+      chapterId,
+      topicId,
+      batchId,
       name,
       description: optionalText(formData.get("description")),
       instructions: optionalText(formData.get("instructions")),
       durationSeconds,
       totalMarks: optionalText(formData.get("totalMarks")) ?? "0",
       negativeMarks: optionalText(formData.get("negativeMarks")) ?? "0",
-      attemptsAllowed: Number(optionalText(formData.get("attemptsAllowed")) ?? "1"),
+      attemptsAllowed,
       passingMarks: optionalText(formData.get("passingMarks")) ?? "0",
       type: (optionalText(formData.get("type")) ?? "PRACTICE") as never,
       status: (optionalText(formData.get("status")) ?? "DRAFT") as never,
       selectionMode: (optionalText(formData.get("selectionMode")) ?? "MANUAL") as never,
-      startsAt: optionalText(formData.get("startsAt")) ? new Date(optionalText(formData.get("startsAt")) as string) : undefined,
-      endsAt: optionalText(formData.get("endsAt")) ? new Date(optionalText(formData.get("endsAt")) as string) : undefined,
+      startsAt: startsAt ? new Date(startsAt) : undefined,
+      endsAt: endsAt ? new Date(endsAt) : undefined,
       publishedAt: formData.get("status") === "PUBLISHED" ? new Date() : undefined
     }
   });
@@ -168,10 +178,11 @@ export async function createExamAction(_: string | undefined, formData: FormData
 }
 
 export async function addQuestionToExamAction(_: string | undefined, formData: FormData) {
-  await getExamManager();
+  const { institutionId } = await getExamManager();
   const examId = optionalText(formData.get("examId"));
   const questionId = optionalText(formData.get("questionId"));
   if (!examId || !questionId) return "Exam and question are required.";
+  await requireAcademicReferences(institutionId, { examId, questionId });
 
   await prisma.examQuestion.upsert({
     where: { examId_questionId: { examId, questionId } },
@@ -189,36 +200,43 @@ export async function addQuestionToExamAction(_: string | undefined, formData: F
 }
 
 export async function startExamAttemptAction(_: string | undefined, formData: FormData) {
-  const session = await auth();
-  if (!session?.user) return "Please sign in.";
-  const examId = optionalText(formData.get("examId"));
-  if (!examId) return "Exam is required.";
-
-  const attempt = await prisma.examAttempt.create({ data: { examId, studentId: session.user.id } });
-  revalidatePath(`/exams/${examId}/take`);
-  return attempt.id;
+  try {
+    const user = await requireCurrentUser("exams.attempt");
+    const examId = optionalText(formData.get("examId"));
+    if (!examId) return "ERROR: Exam is required.";
+    const attempt = await startStudentExamAttempt({ examId, studentId: user.id });
+    revalidatePath(`/exams/${examId}/take`);
+    return attempt.id;
+  } catch (error) {
+    return `ERROR: ${error instanceof Error ? error.message : "Exam could not be started."}`;
+  }
 }
 
 export async function saveExamAnswerAction(_: string | undefined, formData: FormData) {
-  const session = await auth();
-  if (!session?.user) return "Please sign in.";
-  const attemptId = optionalText(formData.get("attemptId"));
-  const questionId = optionalText(formData.get("questionId"));
-  if (!attemptId || !questionId) return "Attempt and question are required.";
-
-  await prisma.examAnswer.upsert({
-    where: { attemptId_questionId: { attemptId, questionId } },
-    update: { answer: optionalText(formData.get("answer")), status: (optionalText(formData.get("status")) ?? "ANSWERED") as never },
-    create: { attemptId, questionId, answer: optionalText(formData.get("answer")), status: (optionalText(formData.get("status")) ?? "ANSWERED") as never }
-  });
-  return "Saved.";
+  try {
+    const user = await requireCurrentUser("exams.attempt");
+    const attemptId = optionalText(formData.get("attemptId"));
+    const questionId = optionalText(formData.get("questionId"));
+    if (!attemptId || !questionId) return "Attempt and question are required.";
+    const status = z.enum(["NOT_VISITED", "ANSWERED", "SKIPPED", "MARKED_REVIEW"]).parse(optionalText(formData.get("status")) ?? "ANSWERED");
+    await saveStudentExamAnswer({ studentId: user.id, attemptId, questionId, answer: optionalText(formData.get("answer")), status });
+    return "Saved.";
+  } catch (error) {
+    return error instanceof Error ? error.message : "Answer could not be saved.";
+  }
 }
 
 export async function submitExamAttemptAction(_: string | undefined, formData: FormData) {
-  const attemptId = optionalText(formData.get("attemptId"));
-  if (!attemptId) return "Attempt is required.";
-  const result = await evaluateAttempt(attemptId);
-  await rebuildLeaderboard(result.examId);
-  revalidatePath(`/exams/${result.examId}/result`);
-  return "Exam submitted.";
+  try {
+    const user = await requireCurrentUser("exams.attempt");
+    const attemptId = optionalText(formData.get("attemptId"));
+    if (!attemptId) return "Attempt is required.";
+    if (!user.institutionId) throw new Error("Institution is required.");
+    const result = await submitStudentExamAttempt({ studentId: user.id, attemptId });
+    await rebuildLeaderboard(result.examId, user.institutionId);
+    revalidatePath(`/exams/${result.examId}/result`);
+    return result.idempotent ? "Exam was already submitted." : "Exam submitted.";
+  } catch (error) {
+    return error instanceof Error ? error.message : "Exam could not be submitted.";
+  }
 }

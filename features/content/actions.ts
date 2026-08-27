@@ -3,15 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { auth } from "@/auth";
+import { requireCurrentUser } from "@/lib/auth/current-user";
 import { writeAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
-import { userHasPermission } from "@/lib/rbac";
 import { recordActivity } from "@/services/activity-service";
 import { createModuleNotification } from "@/services/notification-aggregation-service";
 import { archiveContent, duplicateContent, publishContent } from "@/services/publishing-service";
 import { approveContent, reviewContent } from "@/services/review-service";
 import { createContentUpload } from "@/services/upload-service";
+import { requireAcademicReferences } from "@/services/academic-integrity-service";
 
 function text(value: FormDataEntryValue | null) {
   const data = value?.toString().trim();
@@ -19,11 +19,9 @@ function text(value: FormDataEntryValue | null) {
 }
 
 async function getContentSession(manage = true) {
-  const session = await auth();
-  const institutionId = session?.user.institutionId;
-  if (!session?.user || !institutionId) throw new Error("Institution is required.");
-  if (manage && !userHasPermission(session.user.roles, "content.manage")) throw new Error("You do not have content access.");
-  return { session, institutionId };
+  const user = await requireCurrentUser(manage ? "content.manage" : undefined);
+  if (!user.institutionId) throw new Error("Institution is required.");
+  return { session: { user }, institutionId: user.institutionId };
 }
 
 const uploadSchema = z.object({
@@ -69,15 +67,14 @@ export async function createContentFolderAction(_: string | undefined, formData:
   const { institutionId } = await getContentSession();
   const name = text(formData.get("name"));
   if (!name) return "Folder name is required.";
+  const refs = { courseId: text(formData.get("courseId")), subjectId: text(formData.get("subjectId")), chapterId: text(formData.get("chapterId")), topicId: text(formData.get("topicId")) };
+  await requireAcademicReferences(institutionId, refs);
 
   await prisma.contentFolder.create({
     data: {
       institutionId,
       name,
-      courseId: text(formData.get("courseId")),
-      subjectId: text(formData.get("subjectId")),
-      chapterId: text(formData.get("chapterId")),
-      topicId: text(formData.get("topicId"))
+      ...refs
     }
   });
   revalidatePath("/content-studio");
