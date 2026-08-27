@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 export function AppShellFrame({ sidebar, topHeader, children }: { sidebar: ReactNode; topHeader: ReactNode; children: ReactNode }) {
   const pathname = usePathname();
-  const immersiveTeacherExperience = pathname === "/teacher" || pathname === "/teacher/life/save-time";
+  const immersiveTeacherExperience = pathname === "/teacher" || pathname.startsWith("/teacher/life/");
 
   if (immersiveTeacherExperience) {
     return <main className="min-h-screen bg-[#f7f4ec] text-[#111714]">{children}</main>;
