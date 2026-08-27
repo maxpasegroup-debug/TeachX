@@ -165,7 +165,7 @@ test.describe.serial("QA-001 real community notification tenant isolation", () =
   test("QA001-05 notification metadata is not part of notification search", async ({ page }) => {
     await login(page, fixture.emailA);
     await page.goto(`/communication?notificationQuery=${encodeURIComponent(`${fixture.secretA}_META`)}`);
-    await expect(page.getByText("Teacher A metadata evidence", { exact: true })).toHaveCount(0);
+    await expect(page.getByLabel("Communication notification center").getByText("Teacher A metadata evidence", { exact: true })).toHaveCount(0);
   });
 
   test("QA001-06 reverse-direction foreign search must not cross tenants", async ({ page }) => {
