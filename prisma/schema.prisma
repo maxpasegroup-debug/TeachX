@@ -3875,125 +3875,125 @@ enum StudentCommunityReportStatus {
 model StudentCommunityRequest {
   id            String                        @id @default(cuid())
   institutionId String
-  institution   Institution                   @relation("StudentCommunityRequestInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
+  institution   Institution                   @relation("StudentCommunityRequestInstitution", fields: [institutionId], references: [id], onDelete: Cascade, map: "StudentCommunityRequest_institution_fkey")
   kind          StudentCommunityRequestKind
   requesterId   String
-  requester     User                          @relation("StudentCommunityRequestRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  requester     User                          @relation("StudentCommunityRequestRequester", fields: [requesterId], references: [id], onDelete: Cascade, map: "StudentCommunityRequest_requester_fkey")
   recipientId   String?
-  recipient     User?                         @relation("StudentCommunityRequestRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipient     User?                         @relation("StudentCommunityRequestRecipient", fields: [recipientId], references: [id], onDelete: Cascade, map: "StudentCommunityRequest_recipient_fkey")
   communityId   String?
-  community     Community?                    @relation("StudentCommunityRequestCommunity", fields: [communityId], references: [id], onDelete: Cascade)
+  community     Community?                    @relation("StudentCommunityRequestCommunity", fields: [communityId], references: [id], onDelete: Cascade, map: "StudentCommunityRequest_community_fkey")
   subjectId     String
-  subject       Subject                       @relation("StudentCommunityRequestSubject", fields: [subjectId], references: [id], onDelete: Cascade)
+  subject       Subject                       @relation("StudentCommunityRequestSubject", fields: [subjectId], references: [id], onDelete: Cascade, map: "StudentCommunityRequest_subject_fkey")
   status        StudentCommunityRequestStatus @default(PENDING)
   expiresAt     DateTime?
   respondedAt   DateTime?
   createdAt     DateTime                      @default(now())
   updatedAt     DateTime                      @updatedAt
 
-  @@unique([kind, requesterId, recipientId, communityId, subjectId])
-  @@index([institutionId, recipientId, status, createdAt])
+  @@unique([kind, requesterId, recipientId, communityId, subjectId], map: "StudentCommunityRequest_unique")
+  @@index([institutionId, recipientId, status, createdAt], map: "StudentCommunityRequest_inbox_idx")
 }
 
 model StudentCommunityVote {
   id            String                     @id @default(cuid())
   institutionId String
-  institution   Institution                @relation("StudentCommunityVoteInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
+  institution   Institution                @relation("StudentCommunityVoteInstitution", fields: [institutionId], references: [id], onDelete: Cascade, map: "StudentCommunityVote_institution_fkey")
   userId        String
-  user          User                       @relation("StudentCommunityVoteUser", fields: [userId], references: [id], onDelete: Cascade)
+  user          User                       @relation("StudentCommunityVoteUser", fields: [userId], references: [id], onDelete: Cascade, map: "StudentCommunityVote_user_fkey")
   targetType    StudentCommunityVoteTarget
   targetId      String
   value         Int                        @default(1)
   createdAt     DateTime                   @default(now())
 
-  @@unique([userId, targetType, targetId])
-  @@index([institutionId, targetType, targetId])
+  @@unique([userId, targetType, targetId], map: "StudentCommunityVote_unique")
+  @@index([institutionId, targetType, targetId], map: "StudentCommunityVote_target_idx")
 }
 
 model StudentAcceptedAnswer {
   id            String   @id @default(cuid())
   institutionId String
-  institution   Institution            @relation("StudentAcceptedAnswerInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
-  discussionId  String   @unique
-  discussion    GenericDiscussion       @relation("StudentAcceptedAnswerDiscussion", fields: [discussionId], references: [id], onDelete: Cascade)
-  replyId       String   @unique
-  reply         GenericDiscussionReply  @relation("StudentAcceptedAnswerReply", fields: [replyId], references: [id], onDelete: Cascade)
+  institution   Institution            @relation("StudentAcceptedAnswerInstitution", fields: [institutionId], references: [id], onDelete: Cascade, map: "StudentAcceptedAnswer_institution_fkey")
+  discussionId  String   @unique(map: "StudentAcceptedAnswer_discussion_key")
+  discussion    GenericDiscussion       @relation("StudentAcceptedAnswerDiscussion", fields: [discussionId], references: [id], onDelete: Cascade, map: "StudentAcceptedAnswer_discussion_fkey")
+  replyId       String   @unique(map: "StudentAcceptedAnswer_reply_key")
+  reply         GenericDiscussionReply  @relation("StudentAcceptedAnswerReply", fields: [replyId], references: [id], onDelete: Cascade, map: "StudentAcceptedAnswer_reply_fkey")
   acceptedById  String
-  acceptedBy    User                     @relation("StudentAcceptedAnswerActor", fields: [acceptedById], references: [id], onDelete: Cascade)
+  acceptedBy    User                     @relation("StudentAcceptedAnswerActor", fields: [acceptedById], references: [id], onDelete: Cascade, map: "StudentAcceptedAnswer_actor_fkey")
   acceptedAt    DateTime @default(now())
 }
 
 model StudentCommunityReport {
   id            String                       @id @default(cuid())
   institutionId String
-  institution   Institution                  @relation("StudentCommunityReportInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
+  institution   Institution                  @relation("StudentCommunityReportInstitution", fields: [institutionId], references: [id], onDelete: Cascade, map: "StudentCommunityReport_institution_fkey")
   reporterId    String
-  reporter      User                         @relation("StudentCommunityReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reporter      User                         @relation("StudentCommunityReportReporter", fields: [reporterId], references: [id], onDelete: Cascade, map: "StudentCommunityReport_reporter_fkey")
   targetType    StudentCommunityReportTarget
   targetId      String
   reason        String
   status        StudentCommunityReportStatus @default(REPORTED)
   moderatorId   String?
-  moderator     User?                        @relation("StudentCommunityReportModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
+  moderator     User?                        @relation("StudentCommunityReportModerator", fields: [moderatorId], references: [id], onDelete: SetNull, map: "StudentCommunityReport_moderator_fkey")
   resolution    String?
   resolvedAt    DateTime?
   createdAt     DateTime                     @default(now())
   updatedAt     DateTime                     @updatedAt
 
-  @@unique([reporterId, targetType, targetId])
-  @@index([institutionId, status, createdAt])
+  @@unique([reporterId, targetType, targetId], map: "StudentCommunityReport_unique")
+  @@index([institutionId, status, createdAt], map: "StudentCommunityReport_queue_idx")
 }
 
 model StudentCommunityBlock {
   id            String   @id @default(cuid())
   institutionId String
-  institution   Institution @relation("StudentCommunityBlockInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
+  institution   Institution @relation("StudentCommunityBlockInstitution", fields: [institutionId], references: [id], onDelete: Cascade, map: "StudentCommunityBlock_institution_fkey")
   blockerId     String
-  blocker       User        @relation("StudentCommunityBlockBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocker       User        @relation("StudentCommunityBlockBlocker", fields: [blockerId], references: [id], onDelete: Cascade, map: "StudentCommunityBlock_blocker_fkey")
   blockedId     String
-  blocked       User        @relation("StudentCommunityBlockBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  blocked       User        @relation("StudentCommunityBlockBlocked", fields: [blockedId], references: [id], onDelete: Cascade, map: "StudentCommunityBlock_blocked_fkey")
   createdAt     DateTime @default(now())
 
-  @@unique([blockerId, blockedId])
-  @@index([institutionId, blockedId])
+  @@unique([blockerId, blockedId], map: "StudentCommunityBlock_unique")
+  @@index([institutionId, blockedId], map: "StudentCommunityBlock_reverse_idx")
 }
 
 model StudentCommunityResourceShare {
   id             String   @id @default(cuid())
   institutionId  String
-  institution    Institution                     @relation("StudentCommunityResourceShareInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
+  institution    Institution                     @relation("StudentCommunityResourceShareInstitution", fields: [institutionId], references: [id], onDelete: Cascade, map: "StudentCommunityResourceShare_institution_fkey")
   ownerId        String
-  owner          User                            @relation("StudentCommunityResourceShareOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  owner          User                            @relation("StudentCommunityResourceShareOwner", fields: [ownerId], references: [id], onDelete: Cascade, map: "StudentCommunityResourceShare_owner_fkey")
   communityId    String?
-  community      Community?                      @relation("StudentCommunityResourceShareCommunity", fields: [communityId], references: [id], onDelete: Cascade)
+  community      Community?                      @relation("StudentCommunityResourceShareCommunity", fields: [communityId], references: [id], onDelete: Cascade, map: "StudentCommunityResourceShare_community_fkey")
   conversationId String?
-  conversation   DirectConversation?             @relation("StudentCommunityResourceShareConversation", fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation   DirectConversation?             @relation("StudentCommunityResourceShareConversation", fields: [conversationId], references: [id], onDelete: Cascade, map: "StudentCommunityResourceShare_conversation_fkey")
   contentItemId  String?
-  contentItem    ContentItem?                    @relation("StudentCommunityResourceShareContent", fields: [contentItemId], references: [id], onDelete: SetNull)
+  contentItem    ContentItem?                    @relation("StudentCommunityResourceShareContent", fields: [contentItemId], references: [id], onDelete: SetNull, map: "StudentCommunityResourceShare_content_fkey")
   snapshotType   String
   title          String
   snapshot       Json
-  supersedesId   String?                         @unique
-  supersedes     StudentCommunityResourceShare?  @relation("StudentCommunityResourceShareSupersession", fields: [supersedesId], references: [id], onDelete: SetNull)
+  supersedesId   String?                         @unique(map: "StudentCommunityResourceShare_supersedes_key")
+  supersedes     StudentCommunityResourceShare?  @relation("StudentCommunityResourceShareSupersession", fields: [supersedesId], references: [id], onDelete: SetNull, map: "StudentCommunityResourceShare_supersedes_fkey")
   supersededBy   StudentCommunityResourceShare?  @relation("StudentCommunityResourceShareSupersession")
   version        Int      @default(1)
   status         String   @default("PUBLISHED")
   createdAt      DateTime @default(now())
 
-  @@index([institutionId, communityId, createdAt])
-  @@index([conversationId, createdAt])
+  @@index([institutionId, communityId, createdAt], map: "StudentCommunityResourceShare_group_idx")
+  @@index([conversationId, createdAt], map: "StudentCommunityResourceShare_chat_idx")
 }
 
 model StudentGroupEvent {
   id            String   @id @default(cuid())
   institutionId String
-  institution   Institution             @relation("StudentGroupEventInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
+  institution   Institution             @relation("StudentGroupEventInstitution", fields: [institutionId], references: [id], onDelete: Cascade, map: "StudentGroupEvent_institution_fkey")
   communityId   String
-  community     Community               @relation("StudentGroupEventCommunity", fields: [communityId], references: [id], onDelete: Cascade)
+  community     Community               @relation("StudentGroupEventCommunity", fields: [communityId], references: [id], onDelete: Cascade, map: "StudentGroupEvent_community_fkey")
   subjectId     String
-  subject       Subject                 @relation("StudentGroupEventSubject", fields: [subjectId], references: [id], onDelete: Cascade)
+  subject       Subject                 @relation("StudentGroupEventSubject", fields: [subjectId], references: [id], onDelete: Cascade, map: "StudentGroupEvent_subject_fkey")
   createdById   String
-  createdBy     User                    @relation("StudentGroupEventCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy     User                    @relation("StudentGroupEventCreator", fields: [createdById], references: [id], onDelete: Cascade, map: "StudentGroupEvent_creator_fkey")
   kind          String
   title         String
   description   String?
@@ -4004,31 +4004,31 @@ model StudentGroupEvent {
   updatedAt     DateTime @updatedAt
   rsvps         StudentGroupEventRsvp[]
 
-  @@index([institutionId, communityId, startsAt])
+  @@index([institutionId, communityId, startsAt], map: "StudentGroupEvent_scope_idx")
 }
 
 model StudentGroupEventRsvp {
   id        String   @id @default(cuid())
   eventId   String
-  event     StudentGroupEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event     StudentGroupEvent @relation(fields: [eventId], references: [id], onDelete: Cascade, map: "StudentGroupEventRsvp_event_fkey")
   userId    String
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade, map: "StudentGroupEventRsvp_user_fkey")
   status    String   @default("GOING")
   createdAt DateTime @default(now())
 
-  @@unique([eventId, userId])
+  @@unique([eventId, userId], map: "StudentGroupEventRsvp_unique")
 }
 
 model StudentGroupChallenge {
   id            String   @id @default(cuid())
   institutionId String
-  institution   Institution                        @relation("StudentGroupChallengeInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
+  institution   Institution                        @relation("StudentGroupChallengeInstitution", fields: [institutionId], references: [id], onDelete: Cascade, map: "StudentGroupChallenge_institution_fkey")
   communityId   String
-  community     Community                          @relation("StudentGroupChallengeCommunity", fields: [communityId], references: [id], onDelete: Cascade)
+  community     Community                          @relation("StudentGroupChallengeCommunity", fields: [communityId], references: [id], onDelete: Cascade, map: "StudentGroupChallenge_community_fkey")
   subjectId     String
-  subject       Subject                            @relation("StudentGroupChallengeSubject", fields: [subjectId], references: [id], onDelete: Cascade)
+  subject       Subject                            @relation("StudentGroupChallengeSubject", fields: [subjectId], references: [id], onDelete: Cascade, map: "StudentGroupChallenge_subject_fkey")
   createdById   String
-  createdBy     User                               @relation("StudentGroupChallengeCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy     User                               @relation("StudentGroupChallengeCreator", fields: [createdById], references: [id], onDelete: Cascade, map: "StudentGroupChallenge_creator_fkey")
   kind          String
   title         String
   description   String?
@@ -4040,53 +4040,53 @@ model StudentGroupChallenge {
   updatedAt     DateTime @updatedAt
   participants  StudentGroupChallengeParticipant[]
 
-  @@index([institutionId, communityId, status, endsAt])
+  @@index([institutionId, communityId, status, endsAt], map: "StudentGroupChallenge_scope_idx")
 }
 
 model StudentGroupChallengeParticipant {
   id          String    @id @default(cuid())
   challengeId String
-  challenge   StudentGroupChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  challenge   StudentGroupChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade, map: "StudentGroupChallengeParticipant_challenge_fkey")
   userId      String
-  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade, map: "StudentGroupChallengeParticipant_user_fkey")
   progress    Int       @default(0)
   completedAt DateTime?
   createdAt   DateTime  @default(now())
 
-  @@unique([challengeId, userId])
+  @@unique([challengeId, userId], map: "StudentGroupChallengeParticipant_unique")
 }
 
 model StudentCommunityReputation {
   id            String   @id @default(cuid())
   institutionId String
-  institution   Institution @relation("StudentCommunityReputationInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
+  institution   Institution @relation("StudentCommunityReputationInstitution", fields: [institutionId], references: [id], onDelete: Cascade, map: "StudentCommunityReputation_institution_fkey")
   userId        String
-  user          User        @relation("StudentCommunityReputationUser", fields: [userId], references: [id], onDelete: Cascade)
+  user          User        @relation("StudentCommunityReputationUser", fields: [userId], references: [id], onDelete: Cascade, map: "StudentCommunityReputation_user_fkey")
   eventType     String
   sourceId      String
   points        Int
   createdAt     DateTime @default(now())
 
-  @@unique([userId, eventType, sourceId])
-  @@index([institutionId, userId, createdAt])
+  @@unique([userId, eventType, sourceId], map: "StudentCommunityReputation_unique")
+  @@index([institutionId, userId, createdAt], map: "StudentCommunityReputation_ledger_idx")
 }
 
 model StudentAcceptedAnswerHistory {
   id              String   @id @default(cuid())
   institutionId   String
-  institution     Institution             @relation("StudentAcceptedAnswerHistoryInstitution", fields: [institutionId], references: [id], onDelete: Cascade)
+  institution     Institution             @relation("StudentAcceptedAnswerHistoryInstitution", fields: [institutionId], references: [id], onDelete: Cascade, map: "StudentAcceptedAnswerHistory_institution_fkey")
   discussionId    String
-  discussion      GenericDiscussion       @relation("StudentAcceptedAnswerHistoryDiscussion", fields: [discussionId], references: [id], onDelete: Cascade)
+  discussion      GenericDiscussion       @relation("StudentAcceptedAnswerHistoryDiscussion", fields: [discussionId], references: [id], onDelete: Cascade, map: "StudentAcceptedAnswerHistory_discussion_fkey")
   previousReplyId String?
-  previousReply   GenericDiscussionReply? @relation("StudentAcceptedAnswerHistoryPreviousReply", fields: [previousReplyId], references: [id], onDelete: SetNull)
+  previousReply   GenericDiscussionReply? @relation("StudentAcceptedAnswerHistoryPreviousReply", fields: [previousReplyId], references: [id], onDelete: SetNull, map: "StudentAcceptedAnswerHistory_previous_reply_fkey")
   nextReplyId     String?
-  nextReply       GenericDiscussionReply? @relation("StudentAcceptedAnswerHistoryNextReply", fields: [nextReplyId], references: [id], onDelete: SetNull)
+  nextReply       GenericDiscussionReply? @relation("StudentAcceptedAnswerHistoryNextReply", fields: [nextReplyId], references: [id], onDelete: SetNull, map: "StudentAcceptedAnswerHistory_next_reply_fkey")
   actorId         String
-  actor           User                    @relation("StudentAcceptedAnswerHistoryActor", fields: [actorId], references: [id], onDelete: Cascade)
+  actor           User                    @relation("StudentAcceptedAnswerHistoryActor", fields: [actorId], references: [id], onDelete: Cascade, map: "StudentAcceptedAnswerHistory_actor_fkey")
   action          String
   createdAt       DateTime @default(now())
 
-  @@index([institutionId, discussionId, createdAt])
+  @@index([institutionId, discussionId, createdAt], map: "StudentAcceptedAnswerHistory_scope_idx")
 }
 
 model PhoneOtpChallenge {
