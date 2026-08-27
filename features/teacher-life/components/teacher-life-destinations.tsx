@@ -17,13 +17,6 @@ import type { getTeacherLifeData } from "@/services/teacher-life-service";
 type Data = NonNullable<Awaited<ReturnType<typeof getTeacherLifeData>>>;
 type Action = { title: string; detail: string; href: string };
 
-const destinations = [
-  ["Save Time", "/teacher/life/save-time"],
-  ["Earn More", "/teacher/life/earn-more"],
-  ["Learn More", "/teacher/life/learn-more"],
-  ["Enjoy More", "/teacher/life/enjoy-more"]
-] as const;
-
 function LifeContext({ active, eyebrow, title, detail, tone }: { active: string; eyebrow: string; title: string; detail: string; tone: string }) {
   return (
     <>
@@ -36,9 +29,6 @@ function LifeContext({ active, eyebrow, title, detail, tone }: { active: string;
         <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">{title}</h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 opacity-80 sm:text-base">{detail}</p>
       </header>
-      <nav aria-label="Teacher Life destinations" className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        {destinations.map(([label, href]) => <Link aria-current={label === active ? "page" : undefined} className={`flex min-h-12 items-center justify-center border px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-primary ${label === active ? "border-current bg-white/70" : "bg-surface hover:bg-muted"}`} href={href} key={href}>{label}</Link>)}
-      </nav>
     </>
   );
 }
