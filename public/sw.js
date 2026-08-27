@@ -1,4 +1,7 @@
-const CACHE_NAME = "teachx-offline-v4";
+// Bump this whenever a deployment changes client/server action contracts.
+// It ensures previously cached application assets cannot keep submitting an
+// incompatible Auth.js CSRF or Next.js Server Action request after release.
+const CACHE_NAME = "teachx-offline-v5";
 const OFFLINE_URL = "/offline";
 const APP_SHELL = [OFFLINE_URL, "/manifest.webmanifest", "/icons/icon-192.png"];
 const PUBLIC_PAGES = new Set(["/pricing", "/trust", "/teachers", "/students", "/privacy", "/terms", "/security", "/cookies", "/refund-policy", "/contact"]);

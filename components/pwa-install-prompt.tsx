@@ -34,6 +34,10 @@ export function PwaInstallPrompt() {
     };
     navigator.serviceWorker.addEventListener("controllerchange", controllerChanged);
     navigator.serviceWorker.register("/sw.js").then((registration) => {
+      // Browsers otherwise throttle service-worker update checks. Check once
+      // when the application starts so a deployed auth/server-action update
+      // reaches an existing installation promptly.
+      void registration.update().catch(() => undefined);
       if (registration.waiting) {
         setWaiting(registration.waiting);
         setNotice("update");
