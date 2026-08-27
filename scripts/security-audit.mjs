@@ -32,7 +32,9 @@ const routes = routeFiles.map((file) => ({ file, route: routeFor(file), source: 
 const checks = [];
 
 for (const item of routes) {
-  const explicitAuth = /\brequireApiSession\s*\(|\bauth\s*\(/.test(item.source);
+  // Routes may use the approved current-user helper, which validates the
+  // Auth.js session, active account, session version, and tenant context.
+  const explicitAuth = /\brequireApiSession\s*\(|\bauth\s*\(|\bgetCurrentUser\s*\(/.test(item.source);
   checks.push(result(`api:${item.route}`, isPublic(item.route) || explicitAuth, isPublic(item.route) ? "governed public endpoint" : "explicit route authentication"));
 
   const mutating = /export\s+async\s+function\s+(POST|PUT|PATCH|DELETE)\b/.test(item.source);
