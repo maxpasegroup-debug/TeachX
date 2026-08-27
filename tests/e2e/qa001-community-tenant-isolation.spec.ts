@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { spawnSync } from "node:child_process";
 
@@ -24,9 +25,7 @@ function makeFixture(projectName: string) {
 
 let fixture = makeFixture("uninitialized");
 
-type PrismaModule = typeof import("@/lib/db");
-
-let prismaModule: PrismaModule;
+let prisma: PrismaClient;
 
 function verifyQaDatabaseGuard() {
   const result = spawnSync(process.execPath, ["scripts/qa-database.mjs", "verify"], {
@@ -38,16 +37,15 @@ function verifyQaDatabaseGuard() {
 }
 
 async function cleanup() {
-  await prismaModule.prisma.user.deleteMany({
+  await prisma.user.deleteMany({
     where: { id: { in: [fixture.teacherA, fixture.teacherB, fixture.teacherNoInstitution] } }
   });
-  await prismaModule.prisma.institution.deleteMany({
+  await prisma.institution.deleteMany({
     where: { id: { in: [fixture.tenantA, fixture.tenantB] } }
   });
 }
 
 async function seed() {
-  const { prisma } = prismaModule;
   await cleanup();
   const passwordHash = await bcrypt.hash(fixture.password, 4);
   const role = await prisma.role.upsert({
@@ -129,14 +127,14 @@ test.describe.serial("QA-001 real community notification tenant isolation", () =
     fixture = makeFixture(workerInfo.project.name);
     process.env.DATABASE_URL = qaDatabaseUrl;
     verifyQaDatabaseGuard();
-    prismaModule = await import("@/lib/db");
+    prisma = new PrismaClient({ datasourceUrl: qaDatabaseUrl });
     await seed();
   });
 
   test.afterAll(async () => {
-    if (!prismaModule) return;
+    if (!prisma) return;
     await cleanup();
-    await prismaModule.prisma.$disconnect();
+    await prisma.$disconnect();
   });
 
   test("QA001-01 empty search preserves authenticated user and tenant scope", async ({ page }) => {
