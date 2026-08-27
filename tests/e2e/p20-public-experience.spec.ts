@@ -45,8 +45,10 @@ test("P20 mobile menu is reachable and contains every public world", async ({ pa
 test("P20 calls to action use the canonical teacher signup", async ({ page }) => {
   await page.goto("/");
   const starts = page.getByRole("link", { name: /^Start Free$/i });
-  expect(await starts.count()).toBeGreaterThan(0);
-  for (let index = 0; index < await starts.count(); index += 1) await expect(starts.nth(index)).toHaveAttribute("href", "/signup/teacher");
+  await expect(starts.first()).toBeVisible();
+  const count = await starts.count();
+  expect(count).toBeGreaterThan(0);
+  for (let index = 0; index < count; index += 1) await expect(starts.nth(index)).toHaveAttribute("href", "/signup/teacher");
 });
 
 test("P20 unknown public URLs retain real 404 behavior", async ({ page }) => {

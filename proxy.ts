@@ -4,12 +4,24 @@ import { getToken } from "next-auth/jwt";
 
 import type { PermissionKey, RoleKey } from "@/lib/constants/roles";
 import { rolePermissions } from "@/lib/constants/roles";
-import { getRoutePermission, isPublicApiRoute, publicRoutes } from "@/lib/constants/route-permissions";
+import { getRoutePermission, isPublicApiRoute, publicRoutes, routePermissions } from "@/lib/constants/route-permissions";
 import { prisma } from "@/lib/db";
 
 const MAX_API_BODY_BYTES = 1024 * 1024;
 const WRITE_FREEZE_EXEMPT_PREFIXES = ["/api/auth", "/api/email/webhooks", "/api/payments/webhooks"];
 const WRITE_FREEZE_EXACT = ["/api/health", "/api/ready", "/api/status", "/api/version"];
+const PROTECTED_PAGE_PREFIXES = [
+  ...Object.keys(routePermissions),
+  "/access-denied",
+  "/checkout",
+  "/institution",
+  "/profile",
+  "/student-parent-invitations"
+] as const;
+
+function matchesRoutePrefix(pathname: string, prefixes: readonly string[]) {
+  return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
 
 function hasPermission(roles: RoleKey[] = [], permission: PermissionKey) {
   return roles.some((role) => rolePermissions[role]?.includes(permission));
@@ -34,7 +46,11 @@ export default async function proxy(request: NextRequest) {
   const { nextUrl } = request;
   const isApi = nextUrl.pathname.startsWith("/api/");
   const isLandingPage = nextUrl.pathname === "/";
-  const isPublicRoute = isLandingPage || publicRoutes.some((route) => nextUrl.pathname === route || nextUrl.pathname.startsWith(`${route}/`));
+  // Files in /public are intentionally public. Redirecting these requests to
+  // login returns HTML where browsers expect an image, font, or other asset.
+  const isStaticPublicAsset = /\.[a-z0-9]+$/i.test(nextUrl.pathname);
+  const isPublicRoute = isLandingPage || isStaticPublicAsset || matchesRoutePrefix(nextUrl.pathname, publicRoutes);
+  const isProtectedPageRoute = matchesRoutePrefix(nextUrl.pathname, PROTECTED_PAGE_PREFIXES);
   const publicApi = isApi && isPublicApiRoute(nextUrl.pathname);
   const contentLength = Number(request.headers.get("content-length") || 0);
   const incomingRequestId = request.headers.get("x-request-id") || "";
@@ -98,14 +114,16 @@ export default async function proxy(request: NextRequest) {
     isAuthenticated = account?.status === "ACTIVE"
       && authSessionVersion !== null
       && account.authSessionVersion === authSessionVersion;
-    roles = account?.roles.map(({ role }) => role.key as RoleKey) ?? [];
+    roles = account?.roles?.map(({ role }) => role.key as RoleKey) ?? [];
   }
 
   if (isApi && !isAuthenticated) return unauthorizedApi(requestId);
 
   const requiredPermission = getRoutePermission(nextUrl.pathname);
 
-  if (!isApi && !isAuthenticated && !isPublicRoute) {
+  // Only known app areas redirect to login. Let unknown paths reach Next.js,
+  // which correctly serves the application's 404 page.
+  if (!isApi && !isAuthenticated && isProtectedPageRoute) {
     const loginUrl = new URL("/login", nextUrl);
     loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);
     return withRequestId(NextResponse.redirect(loginUrl), requestId);
