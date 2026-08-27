@@ -139,7 +139,7 @@ test.describe.serial("QA-001 real community notification tenant isolation", () =
 
   test("QA001-01 empty search preserves authenticated user and tenant scope", async ({ page }) => {
     await login(page, fixture.emailA);
-    await expect(page.getByLabel("Notification center").getByText(fixture.secretA, { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Communication notification center").getByText(fixture.secretA, { exact: true })).toBeVisible();
     await expect(page.getByText("Tenant A broadcast", { exact: true })).toBeVisible();
     await expect(page.getByText(fixture.secretB, { exact: true })).toHaveCount(0);
   });
@@ -183,7 +183,7 @@ test.describe.serial("QA-001 real community notification tenant isolation", () =
   test("QA001-08 own and institution-wide searches remain authorized", async ({ page }) => {
     await login(page, fixture.emailA);
     await page.goto(`/communication?notificationQuery=${encodeURIComponent(fixture.secretA)}`);
-    await expect(page.getByLabel("Notification center").getByText(fixture.secretA, { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Communication notification center").getByText(fixture.secretA, { exact: true })).toBeVisible();
     await page.goto("/communication?notificationQuery=Tenant%20A%20broadcast");
     await expect(page.getByText("Tenant A broadcast", { exact: true })).toBeVisible();
   });
@@ -207,7 +207,7 @@ test.describe.serial("QA-001 real community notification tenant isolation", () =
     await page.getByPlaceholder("Search notifications").fill(fixture.secretA);
     await page.getByRole("button", { name: "Search" }).click();
     await expect(page).toHaveURL(new RegExp(`notificationQuery=${fixture.secretA}`));
-    await expect(page.getByLabel("Notification center").getByText(fixture.secretA, { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Communication notification center").getByText(fixture.secretA, { exact: true })).toBeVisible();
   });
 
   test("QA001-12 unauthenticated notification query is rejected by the protected route", async ({ page }) => {

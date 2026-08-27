@@ -218,7 +218,7 @@ function CommunitiesPanel({ data }: { data: CommunityOSData }) {
 function NotificationCenterPanel({ data }: { data: CommunityOSData }) {
   const groups = data.notifications.grouped;
   return (
-    <Card className="p-5 shadow-soft">
+    <Card aria-label="Communication notification center" className="p-5 shadow-soft">
       <div className="flex items-center justify-between gap-4"><div className="flex items-center gap-3"><Bell className="h-5 w-5 text-sky-700" /><h2 className="text-xl font-semibold">Notification Center</h2></div><Badge>{data.notifications.unreadCount} unread</Badge></div>
       <form action="/communication" method="get" className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
         <Input name="notificationQuery" defaultValue={data.notifications.query} placeholder="Search notifications" />
