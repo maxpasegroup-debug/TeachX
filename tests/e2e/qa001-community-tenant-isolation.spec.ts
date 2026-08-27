@@ -140,7 +140,7 @@ test.describe.serial("QA-001 real community notification tenant isolation", () =
   test("QA001-01 empty search preserves authenticated user and tenant scope", async ({ page }) => {
     await login(page, fixture.emailA);
     await expect(page.getByLabel("Communication notification center").getByText(fixture.secretA, { exact: true })).toBeVisible();
-    await expect(page.getByText("Tenant A broadcast", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Communication notification center").getByText("Tenant A broadcast", { exact: true })).toBeVisible();
     await expect(page.getByText(fixture.secretB, { exact: true })).toHaveCount(0);
   });
 
@@ -185,13 +185,13 @@ test.describe.serial("QA-001 real community notification tenant isolation", () =
     await page.goto(`/communication?notificationQuery=${encodeURIComponent(fixture.secretA)}`);
     await expect(page.getByLabel("Communication notification center").getByText(fixture.secretA, { exact: true })).toBeVisible();
     await page.goto("/communication?notificationQuery=Tenant%20A%20broadcast");
-    await expect(page.getByText("Tenant A broadcast", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Communication notification center").getByText("Tenant A broadcast", { exact: true })).toBeVisible();
   });
 
   test("QA001-09 user without institution receives only their own matching notification", async ({ page }) => {
     await login(page, fixture.emailNoInstitution);
     await page.goto("/communication?notificationQuery=NO_INSTITUTION_OWN_552211");
-    await expect(page.getByText("NO_INSTITUTION_OWN_552211", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Communication notification center").getByText("NO_INSTITUTION_OWN_552211", { exact: true })).toBeVisible();
     await page.goto("/communication?notificationQuery=Tenant%20A%20broadcast");
     await expect(page.getByText("Tenant A broadcast", { exact: true })).toHaveCount(0);
   });
