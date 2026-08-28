@@ -58,6 +58,7 @@ test("Earn More service and plan CRUD stay bound to the current teacher and tena
   assert.match(actions, /service: \{ institutionId: teacher\.institutionId, teacherId: teacher\.id \}/);
   assert.match(actions, /institutionId: teacher\.institutionId, teacherId: teacher\.id/);
   assert.doesNotMatch(actions, /teacherEarningService\.update\(\{\s*where: \{ id:/);
+  assert.match(actions, /const earningServiceTypes = new Set\(\["MENTOR", "TRAIN"\]\)/);
 });
 
 test("Earn More client requests remain scoped to the signed-in teacher and tenant", () => {

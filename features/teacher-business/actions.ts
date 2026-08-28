@@ -101,7 +101,8 @@ export async function saveBusinessProfileAction(formData: FormData) {
   return { ok: true, message: "Your professional profile was saved successfully." };
 }
 
-const earningServiceTypes = new Set(["TEACH", "MENTOR", "TRAIN"]);
+const earningServiceTypes = new Set(["MENTOR", "TRAIN"]);
+const legacyEarningServiceTypes = new Set(["TEACH", "MENTOR", "TRAIN"]);
 const earningServiceStatuses = new Set(["DRAFT", "PUBLISHED"]);
 
 async function ownedEarningService(teacher: Awaited<ReturnType<typeof currentTeacher>>, id: string) {
@@ -163,7 +164,9 @@ export async function saveEarningServiceAction(formData: FormData) {
   const id = value(formData, "id");
   const type = value(formData, "type");
   const title = value(formData, "title").slice(0, 180);
-  if (!earningServiceTypes.has(type) || title.length < 3) throw new Error("Choose a service type and enter a title of at least 3 characters.");
+  const existing = id ? await ownedEarningService(teacher, id) : null;
+  if (id && !existing) throw new Error("That service is unavailable.");
+  if (!(id ? legacyEarningServiceTypes : earningServiceTypes).has(type) || title.length < 3) throw new Error("Choose a service type and enter a title of at least 3 characters.");
   const currency = teachingCurrencies.has(value(formData, "currency")) ? value(formData, "currency") : teacher.currency.toUpperCase() || "INR";
   const payload = {
     type, title, currency,
@@ -172,10 +175,8 @@ export async function saveEarningServiceAction(formData: FormData) {
     availability: value(formData, "availability").slice(0, 1000) || null
   };
   if (id) {
-    const service = await ownedEarningService(teacher, id);
-    if (!service) throw new Error("That service is unavailable.");
-    await prisma.teacherEarningService.updateMany({ where: { id: service.id, institutionId: teacher.institutionId, teacherId: teacher.id }, data: payload });
-    await businessActivity(teacher, `Updated ${type.toLowerCase()} service: ${title}`, service.id);
+    await prisma.teacherEarningService.updateMany({ where: { id: existing.id, institutionId: teacher.institutionId, teacherId: teacher.id }, data: payload });
+    await businessActivity(teacher, `Updated ${type.toLowerCase()} service: ${title}`, existing.id);
   } else {
     const service = await prisma.teacherEarningService.create({ data: { ...payload, institutionId: teacher.institutionId, teacherId: teacher.id } });
     await businessActivity(teacher, `Created ${type.toLowerCase()} service: ${title}`, service.id);
