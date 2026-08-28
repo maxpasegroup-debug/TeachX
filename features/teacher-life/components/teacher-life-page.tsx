@@ -359,7 +359,7 @@ export function TeacherLifePage({ pillar, data, workspaceData }: { pillar: Teach
   const Icon = current.icon;
   if (pillar === "save-time") {
     return (
-      <div className="min-w-0 space-y-7">
+      <div className="relative left-1/2 w-[100dvw] min-w-0 -translate-x-1/2 space-y-7 overflow-x-clip">
         <nav className="text-sm text-muted-foreground" aria-label="Breadcrumb"><Link className="hover:text-foreground" href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span aria-current="page">Save Time</span></nav>
         <SaveTime data={data} workspaceData={workspaceData} />
         <TaraBridge pillar={pillar} />
