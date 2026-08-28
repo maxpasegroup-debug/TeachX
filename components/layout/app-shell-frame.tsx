@@ -5,7 +5,14 @@ import type { ReactNode } from "react";
 
 export function AppShellFrame({ sidebar, topHeader, children }: { sidebar: ReactNode; topHeader: ReactNode; children: ReactNode }) {
   const pathname = usePathname();
-  const immersiveTeacherExperience = pathname === "/teacher" || pathname.startsWith("/teacher/life/");
+  // Teaching-space destinations are focused work canvases. They must not be
+  // squeezed beside the global application navigation after leaving Save Time.
+  const immersiveTeacherExperience =
+    pathname === "/teacher" ||
+    pathname.startsWith("/teacher/life/") ||
+    pathname.startsWith("/teacher/workspace/") ||
+    pathname === "/teacher/ai-studio/create/parent-communication" ||
+    pathname === "/teacher/settings";
 
   if (immersiveTeacherExperience) {
     return <main className="min-h-screen bg-[#f7f4ec] text-[#111714]">{children}</main>;
