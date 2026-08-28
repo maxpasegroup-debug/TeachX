@@ -98,3 +98,10 @@ test("P8 UI connects profile, resources, marketplace, orders, wallet, payout, AI
   assert.match(component, /saveMarketplaceProductAction/);
   assert.match(component, /overflow-x-auto/);
 });
+
+test("Earn More schedule uses the existing restricted booking workflow", () => {
+  const component = read("features/teacher-business/components/teacher-business-page.tsx");
+  assert.match(component, /slug: "schedule"/);
+  assert.match(component, /href="\/communication"/);
+  assert.match(component, /Appointment slots, payments, and video links are not created/);
+});

@@ -3,7 +3,7 @@ import { ensureDefaultSubscriptionPlans, ensureWallet, getAICreditSummary, getAc
 import { getResourceMetadata } from "@/services/learning-marketplace-service";
 
 export const teacherBusinessModules = [
-  "home", "services", "one-to-one", "profile", "portfolio", "publishing", "happy-notes", "marketplace", "orders", "earnings", "wallet", "payouts", "analytics", "subscription", "downloads", "opportunities"
+  "home", "services", "schedule", "one-to-one", "profile", "portfolio", "publishing", "happy-notes", "marketplace", "orders", "earnings", "wallet", "payouts", "analytics", "subscription", "downloads", "opportunities"
 ] as const;
 export type TeacherBusinessModule = (typeof teacherBusinessModules)[number];
 
