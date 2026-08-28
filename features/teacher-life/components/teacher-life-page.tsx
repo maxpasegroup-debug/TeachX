@@ -49,25 +49,25 @@ function PillarNav({ active }: { active: TeacherLifePillar }) {
 }
 
 const staffRoomTabs = [
-  ["Today", "#today", CalendarDays],
-  ["Groups", "#groups", UsersRound],
-  ["Learners", "#learners", ClipboardCheck],
-  ["Files", "#files", FolderOpen],
-  ["Ask TeachX", "#ask-teachx", Sparkles]
+  ["Today", "/teacher/life/save-time", CalendarDays],
+  ["Groups", "/teacher/workspace/classrooms", UsersRound],
+  ["Learners", "/teacher/workspace/classrooms", ClipboardCheck],
+  ["Files", "/teacher/workspace/resources", FolderOpen],
+  ["Ask TeachX", "/tara", Sparkles]
 ] as const;
 
 const teachingSpaceNav = [
-  ["Overview", "#today", CalendarDays],
-  ["My Spaces", "#spaces", Compass],
-  ["Learners", "#learners", UsersRound],
-  ["Programs", "#programs", BookOpen],
-  ["Groups", "#groups", UsersRound],
-  ["Schedule", "#schedule", CalendarDays],
-  ["Learning Plan", "#learning-plan", NotebookPen],
-  ["Activities", "#activities", FileText],
-  ["Attendance & Progress", "#progress", ClipboardCheck],
-  ["Communication", "#communication", MessageCircle],
-  ["Files", "#files", FolderOpen],
+  ["Overview", "/teacher/life/save-time", CalendarDays],
+  ["My Spaces", "/teacher/workspace/classrooms", Compass],
+  ["Learners", "/teacher/workspace/classrooms", UsersRound],
+  ["Programs", "/teacher/workspace/lessons", BookOpen],
+  ["Groups", "/teacher/workspace/classrooms", UsersRound],
+  ["Schedule", "/teacher/workspace/planner", CalendarDays],
+  ["Learning Plan", "/teacher/workspace/resources", NotebookPen],
+  ["Activities", "/teacher/workspace/classrooms", FileText],
+  ["Attendance & Progress", "/teacher/workspace/classrooms", ClipboardCheck],
+  ["Communication", "/teacher/ai-studio/create/parent-communication", MessageCircle],
+  ["Files", "/teacher/workspace/resources", FolderOpen],
   ["Setup", "/teacher/settings", Sparkles]
 ] as const;
 
@@ -135,13 +135,8 @@ function TeachingSpaceSidebar() {
       </div>
       <nav className="space-y-1" aria-label="Save Time workspace">
         {teachingSpaceNav.map(([label, href, Icon]) => {
-          const internal = href.startsWith("#");
           const className = "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-white/76 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#20d16b]/50";
-          return internal ? (
-            <a className={className} href={href} key={label}><Icon className="h-4 w-4 text-[#20d16b]" />{label}</a>
-          ) : (
-            <Link className={className} href={href} key={label}><Icon className="h-4 w-4 text-[#20d16b]" />{label}</Link>
-          );
+          return <Link className={className} href={href} key={label}><Icon className="h-4 w-4 text-[#20d16b]" />{label}</Link>;
         })}
       </nav>
       <Link className="mt-5 flex min-h-12 items-center gap-3 rounded-2xl bg-[#20d16b] px-4 text-sm font-semibold text-[#111714]" href="/tara">
