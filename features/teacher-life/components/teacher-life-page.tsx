@@ -124,29 +124,14 @@ function ClassRoomCard({ item }: { item: WorkspaceData["classrooms"][number] }) 
   );
 }
 
-function TeachingSpaceSidebar({
-  classrooms,
-  learners,
-  materials,
-  pending
-}: {
-  classrooms: number;
-  learners: number;
-  materials: number;
-  pending: number;
-}) {
+function TeachingSpaceSidebar() {
   return (
     <aside className="rounded-[1.5rem] border border-black/10 bg-[#111714] p-4 text-white shadow-[0_20px_60px_rgba(17,23,20,.14)] lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
       <div className="mb-5 rounded-2xl bg-white/8 p-4">
         <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#20d16b]">Save Time</p>
         <h2 className="mt-2 text-xl font-semibold">My Teaching Space</h2>
         <p className="mt-2 text-xs leading-5 text-white/60">Organize your real teaching world.</p>
-        <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-white/10 text-sm">
-          <div className="bg-[#111714] p-3"><dt className="text-[10px] uppercase tracking-[.14em] text-white/45">Classes</dt><dd className="mt-1 font-semibold text-white">{classrooms}</dd></div>
-          <div className="bg-[#111714] p-3"><dt className="text-[10px] uppercase tracking-[.14em] text-white/45">Learners</dt><dd className="mt-1 font-semibold text-white">{learners}</dd></div>
-          <div className="bg-[#111714] p-3"><dt className="text-[10px] uppercase tracking-[.14em] text-white/45">Materials</dt><dd className="mt-1 font-semibold text-white">{materials}</dd></div>
-          <div className="bg-[#111714] p-3"><dt className="text-[10px] uppercase tracking-[.14em] text-white/45">Pending</dt><dd className="mt-1 font-semibold text-white">{pending}</dd></div>
-        </dl>
+        <TeacherLifeSwitcher active="save-time" variant="dark" />
       </div>
       <nav className="space-y-1" aria-label="Save Time workspace">
         {teachingSpaceNav.map(([label, href, Icon]) => {
@@ -189,7 +174,7 @@ function SaveTime({ data, workspaceData }: { data: Data; workspaceData?: Workspa
 
   return (
     <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-      <TeachingSpaceSidebar classrooms={classrooms.length} learners={students} materials={materials.length} pending={attendancePending + pendingReviews} />
+      <TeachingSpaceSidebar />
       <div className="min-w-0 space-y-8">
       <section className="rounded-md border border-sky-200 bg-sky-50 p-5 sm:p-7">
         <div className="grid gap-6 lg:grid-cols-[1.15fr_.85fr] lg:items-end">
@@ -378,7 +363,6 @@ export function TeacherLifePage({ pillar, data, workspaceData }: { pillar: Teach
     return (
       <div className="relative left-1/2 w-[100dvw] min-w-0 -translate-x-1/2 space-y-7 overflow-x-clip">
         <nav className="text-sm text-muted-foreground" aria-label="Breadcrumb"><Link className="hover:text-foreground" href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span aria-current="page">Save Time</span></nav>
-        <TeacherLifeSwitcher active="save-time" />
         <SaveTime data={data} workspaceData={workspaceData} />
         <TaraBridge pillar={pillar} />
         <footer className="flex flex-wrap gap-x-5 gap-y-2 border-t pt-5 text-sm text-muted-foreground"><Link href="/teacher/life/earn-more">Earn More</Link><Link href="/teacher/life/learn-more">Learn More</Link><Link href="/teacher/workspace/notifications">Notifications</Link><Link href="/teacher/support">Help & support</Link></footer>
