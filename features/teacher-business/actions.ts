@@ -26,6 +26,7 @@ function safeHttps(input?: string | null) {
 }
 function refresh() {
   revalidatePath("/teacher/business", "layout");
+  revalidatePath("/teacher/life/earn-more");
   revalidatePath("/teacher/resources");
   revalidatePath("/student/marketplace");
   revalidatePath("/marketplace");
@@ -100,6 +101,14 @@ export async function saveBusinessProfileAction(formData: FormData) {
   return { ok: true, message: "Your professional profile was saved successfully." };
 }
 
+const earningServiceTypes = new Set(["TEACH", "MENTOR", "TRAIN"]);
+const earningServiceStatuses = new Set(["DRAFT", "PUBLISHED"]);
+
+async function ownedEarningService(teacher: Awaited<ReturnType<typeof currentTeacher>>, id: string) {
+  if (!id) return null;
+  return prisma.teacherEarningService.findFirst({ where: { id, institutionId: teacher.institutionId, teacherId: teacher.id } });
+}
+
 export async function saveOneToOneTeachingAction(formData: FormData) {
   const teacher = await currentTeacher();
   const existing = await prisma.teacherProfile.findFirst({
@@ -147,6 +156,81 @@ export async function saveOneToOneTeachingAction(formData: FormData) {
     ok: true,
     message: activate ? "Your Teach 1:1 profile is active and ready for discovery." : "Your Teach 1:1 profile draft was saved successfully."
   };
+}
+
+export async function saveEarningServiceAction(formData: FormData) {
+  const teacher = await currentTeacher();
+  const id = value(formData, "id");
+  const type = value(formData, "type");
+  const title = value(formData, "title").slice(0, 180);
+  if (!earningServiceTypes.has(type) || title.length < 3) throw new Error("Choose a service type and enter a title of at least 3 characters.");
+  const currency = teachingCurrencies.has(value(formData, "currency")) ? value(formData, "currency") : teacher.currency.toUpperCase() || "INR";
+  const payload = {
+    type, title, currency,
+    description: value(formData, "description").slice(0, 4000) || null,
+    expertise: list(formData, "expertise"),
+    availability: value(formData, "availability").slice(0, 1000) || null
+  };
+  if (id) {
+    const service = await ownedEarningService(teacher, id);
+    if (!service) throw new Error("That service is unavailable.");
+    await prisma.teacherEarningService.updateMany({ where: { id: service.id, institutionId: teacher.institutionId, teacherId: teacher.id }, data: payload });
+    await businessActivity(teacher, `Updated ${type.toLowerCase()} service: ${title}`, service.id);
+  } else {
+    const service = await prisma.teacherEarningService.create({ data: { ...payload, institutionId: teacher.institutionId, teacherId: teacher.id } });
+    await businessActivity(teacher, `Created ${type.toLowerCase()} service: ${title}`, service.id);
+  }
+  refresh();
+  return { ok: true, message: "Service saved successfully." };
+}
+
+export async function setEarningServiceStatusAction(formData: FormData) {
+  const teacher = await currentTeacher();
+  const service = await ownedEarningService(teacher, value(formData, "id"));
+  const status = value(formData, "status");
+  if (!service || !earningServiceStatuses.has(status)) throw new Error("That service is unavailable.");
+  await prisma.teacherEarningService.updateMany({ where: { id: service.id, institutionId: teacher.institutionId, teacherId: teacher.id }, data: { status } });
+  await businessActivity(teacher, `${status === "PUBLISHED" ? "Published" : "Unpublished"} ${service.type.toLowerCase()} service: ${service.title}`, service.id);
+  refresh();
+  return { ok: true, message: status === "PUBLISHED" ? "Service is live in your Earn More workspace. Checkout remains unavailable until settlement controls are ready." : "Service moved to draft." };
+}
+
+export async function deleteEarningServiceAction(formData: FormData) {
+  const teacher = await currentTeacher();
+  const service = await ownedEarningService(teacher, value(formData, "id"));
+  if (!service) throw new Error("That service is unavailable.");
+  await prisma.teacherEarningService.deleteMany({ where: { id: service.id, institutionId: teacher.institutionId, teacherId: teacher.id } });
+  await businessActivity(teacher, `Deleted ${service.type.toLowerCase()} service: ${service.title}`);
+  refresh();
+  return { ok: true, message: "Service deleted." };
+}
+
+export async function saveEarningServicePlanAction(formData: FormData) {
+  const teacher = await currentTeacher();
+  const service = await ownedEarningService(teacher, value(formData, "serviceId"));
+  const id = value(formData, "id");
+  const name = value(formData, "name").slice(0, 180);
+  const price = rate(formData, "price");
+  if (!service || name.length < 3) throw new Error("Choose a service and enter a plan name of at least 3 characters.");
+  const payload = { name, price, currency: teachingCurrencies.has(value(formData, "currency")) ? value(formData, "currency") : service.currency, description: value(formData, "description").slice(0, 2000) || null, duration: value(formData, "duration").slice(0, 120) || null, sessions: Math.min(1000, Math.max(0, Number(value(formData, "sessions")) || 0)) || null };
+  if (id) {
+    const plan = await prisma.teacherEarningServicePlan.findFirst({ where: { id, serviceId: service.id, service: { institutionId: teacher.institutionId, teacherId: teacher.id } } });
+    if (!plan) throw new Error("That plan is unavailable.");
+    await prisma.teacherEarningServicePlan.update({ where: { id: plan.id }, data: payload });
+  } else await prisma.teacherEarningServicePlan.create({ data: { ...payload, serviceId: service.id } });
+  await businessActivity(teacher, `${id ? "Updated" : "Added"} plan for ${service.title}`, service.id);
+  refresh();
+  return { ok: true, message: "Plan saved successfully." };
+}
+
+export async function deleteEarningServicePlanAction(formData: FormData) {
+  const teacher = await currentTeacher();
+  const plan = await prisma.teacherEarningServicePlan.findFirst({ where: { id: value(formData, "id"), service: { institutionId: teacher.institutionId, teacherId: teacher.id } }, include: { service: true } });
+  if (!plan) throw new Error("That plan is unavailable.");
+  await prisma.teacherEarningServicePlan.delete({ where: { id: plan.id } });
+  await businessActivity(teacher, `Removed plan from ${plan.service.title}`, plan.serviceId);
+  refresh();
+  return { ok: true, message: "Plan deleted." };
 }
 
 export async function submitHappyNotesAction(formData: FormData) {

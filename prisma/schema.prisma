@@ -840,230 +840,232 @@ enum VisitorStatus {
 }
 
 model Institution {
-  id                    String                 @id @default(cuid())
-  name                  String
-  logoUrl               String?
-  primaryColor          String                 @default("#111827")
-  secondaryColor        String                 @default("#64748b")
-  address               String?
-  phone                 String?
-  email                 String?
-  website               String?
-  timezone              String                 @default("Asia/Kolkata")
-  academicYear          String?
-  currency              String                 @default("INR")
-  users                 User[]
-  settings              Setting[]
-  notifications         Notification[]
-  auditLogs             AuditLog[]
-  branches              Branch[]
-  academicYears         AcademicYear[]
-  departments           Department[]
-  courses               Course[]
-  plannerEvents         PlannerEvent[]
-  timeSlots             TimeSlot[]
-  rooms                 Room[]
-  classrooms            Classroom[]
-  leadSources           CampaignSource[]
-  campaigns             Campaign[]
-  leads                 Lead[]
-  applications          Application[]
-  admissions            Admission[]
-  partners              Partner[]
-  questionImports       QuestionImport[]
-  exams                 Exam[]
-  feeHeads              FeeHead[]
-  feePlans              FeePlan[]
-  studentFees           StudentFee[]
-  payments              Payment[]
-  invoices              Invoice[]
-  receipts              Receipt[]
-  expenseCategories     ExpenseCategory[]
-  expenses              Expense[]
-  payrolls              Payroll[]
-  visitors              Visitor[]
-  appointments          Appointment[]
-  contentFolders        ContentFolder[]
-  contentItems          ContentItem[]
-  activities            Activity[]
-  communications        Communication[]
-  directConversations   DirectConversation[]
-  communities           Community[]
-  genericDiscussions    GenericDiscussion[]
-  notificationTemplates NotificationTemplate[]
-  activityEvents        ActivityEvent[]
-  supportTickets        SupportTicket[]
-  supportReplies        SupportReply[]
-  featureFlags          FeatureFlag[]
-  platformMetrics       PlatformMetric[]
-  aiConversations       AIConversation[]
-  aiUsages              AIUsage[]
-  promptTemplates       PromptTemplate[]
-  automationRules       AutomationRule[]
-  subscriptionPlans     SubscriptionPlan[]
-  userSubscriptions     UserSubscription[]
-  wallets               Wallet[]
-  walletTransactions    WalletTransaction[]
-  commerceOrders        CommerceOrder[]
-  coupons               Coupon[]
-  referrals             Referral[]
-  commerceInvoices      CommerceInvoice[]
-  commerceCreditNotes   CommerceCreditNote[]
-  commercePaymentEvents CommercePaymentEvent[]
-  transactionalEmails   TransactionalEmail[]
-  storageObjects        StorageObject[]
-  studentCommunityRequests      StudentCommunityRequest[]       @relation("StudentCommunityRequestInstitution")
-  studentCommunityVotes         StudentCommunityVote[]          @relation("StudentCommunityVoteInstitution")
-  studentAcceptedAnswers        StudentAcceptedAnswer[]         @relation("StudentAcceptedAnswerInstitution")
-  studentAcceptedAnswerHistory  StudentAcceptedAnswerHistory[]  @relation("StudentAcceptedAnswerHistoryInstitution")
-  studentCommunityReports       StudentCommunityReport[]        @relation("StudentCommunityReportInstitution")
-  studentCommunityBlocks        StudentCommunityBlock[]         @relation("StudentCommunityBlockInstitution")
+  id                             String                          @id @default(cuid())
+  name                           String
+  logoUrl                        String?
+  primaryColor                   String                          @default("#111827")
+  secondaryColor                 String                          @default("#64748b")
+  address                        String?
+  phone                          String?
+  email                          String?
+  website                        String?
+  timezone                       String                          @default("Asia/Kolkata")
+  academicYear                   String?
+  currency                       String                          @default("INR")
+  users                          User[]
+  settings                       Setting[]
+  notifications                  Notification[]
+  auditLogs                      AuditLog[]
+  branches                       Branch[]
+  academicYears                  AcademicYear[]
+  departments                    Department[]
+  courses                        Course[]
+  plannerEvents                  PlannerEvent[]
+  timeSlots                      TimeSlot[]
+  rooms                          Room[]
+  classrooms                     Classroom[]
+  leadSources                    CampaignSource[]
+  campaigns                      Campaign[]
+  leads                          Lead[]
+  applications                   Application[]
+  admissions                     Admission[]
+  partners                       Partner[]
+  questionImports                QuestionImport[]
+  exams                          Exam[]
+  feeHeads                       FeeHead[]
+  feePlans                       FeePlan[]
+  studentFees                    StudentFee[]
+  payments                       Payment[]
+  invoices                       Invoice[]
+  receipts                       Receipt[]
+  expenseCategories              ExpenseCategory[]
+  expenses                       Expense[]
+  payrolls                       Payroll[]
+  visitors                       Visitor[]
+  appointments                   Appointment[]
+  contentFolders                 ContentFolder[]
+  contentItems                   ContentItem[]
+  activities                     Activity[]
+  communications                 Communication[]
+  directConversations            DirectConversation[]
+  communities                    Community[]
+  genericDiscussions             GenericDiscussion[]
+  notificationTemplates          NotificationTemplate[]
+  activityEvents                 ActivityEvent[]
+  supportTickets                 SupportTicket[]
+  supportReplies                 SupportReply[]
+  featureFlags                   FeatureFlag[]
+  platformMetrics                PlatformMetric[]
+  aiConversations                AIConversation[]
+  aiUsages                       AIUsage[]
+  promptTemplates                PromptTemplate[]
+  automationRules                AutomationRule[]
+  subscriptionPlans              SubscriptionPlan[]
+  userSubscriptions              UserSubscription[]
+  wallets                        Wallet[]
+  walletTransactions             WalletTransaction[]
+  commerceOrders                 CommerceOrder[]
+  coupons                        Coupon[]
+  referrals                      Referral[]
+  commerceInvoices               CommerceInvoice[]
+  commerceCreditNotes            CommerceCreditNote[]
+  commercePaymentEvents          CommercePaymentEvent[]
+  transactionalEmails            TransactionalEmail[]
+  storageObjects                 StorageObject[]
+  teacherEarningServices         TeacherEarningService[]
+  studentCommunityRequests       StudentCommunityRequest[]       @relation("StudentCommunityRequestInstitution")
+  studentCommunityVotes          StudentCommunityVote[]          @relation("StudentCommunityVoteInstitution")
+  studentAcceptedAnswers         StudentAcceptedAnswer[]         @relation("StudentAcceptedAnswerInstitution")
+  studentAcceptedAnswerHistory   StudentAcceptedAnswerHistory[]  @relation("StudentAcceptedAnswerHistoryInstitution")
+  studentCommunityReports        StudentCommunityReport[]        @relation("StudentCommunityReportInstitution")
+  studentCommunityBlocks         StudentCommunityBlock[]         @relation("StudentCommunityBlockInstitution")
   studentCommunityResourceShares StudentCommunityResourceShare[] @relation("StudentCommunityResourceShareInstitution")
-  studentGroupEvents            StudentGroupEvent[]             @relation("StudentGroupEventInstitution")
-  studentGroupChallenges        StudentGroupChallenge[]         @relation("StudentGroupChallengeInstitution")
-  studentCommunityReputations   StudentCommunityReputation[]    @relation("StudentCommunityReputationInstitution")
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
+  studentGroupEvents             StudentGroupEvent[]             @relation("StudentGroupEventInstitution")
+  studentGroupChallenges         StudentGroupChallenge[]         @relation("StudentGroupChallengeInstitution")
+  studentCommunityReputations    StudentCommunityReputation[]    @relation("StudentCommunityReputationInstitution")
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
 }
 
 model User {
-  id                             String                          @id @default(cuid())
-  institutionId                  String?
-  institution                    Institution?                    @relation(fields: [institutionId], references: [id], onDelete: SetNull)
-  email                          String                          @unique
-  name                           String
-  userType                       UserType?
-  passwordHash                   String?
-  phoneE164                      String?                         @unique
-  phoneVerifiedAt                DateTime?
-  pinHash                        String?
-  pinFailedAttempts              Int                             @default(0)
-  pinLockedUntil                 DateTime?
-  pinChangedAt                   DateTime?
-  authSessionVersion             Int                             @default(0)
-  status                         UserStatus                      @default(ACTIVE)
-  emailVerifiedAt                DateTime?
-  lastLoginAt                    DateTime?
-  rememberToken                  String?
-  roles                          UserRole[]
-  profile                        Profile?
-  teacherProfile                 TeacherProfile?
-  studentProfile                 StudentProfile?
-  notifications                  Notification[]
-  plannerItemsCreated            PlannerEvent[]                  @relation("PlannerEventCreator")
-  auditLogs                      AuditLog[]                      @relation("ActorAuditLogs")
-  accounts                       Account[]
-  sessions                       Session[]
-  resetTokens                    PasswordResetToken[]
-  phoneOtpChallenges             PhoneOtpChallenge[]
-  transactionalEmails            TransactionalEmail[]
-  storageObjects                 StorageObject[]                 @relation("StorageObjectOwner")
-  storageTransferEvents          StorageTransferEvent[]          @relation("StorageTransferActor")
-  facultyBatches                 BatchFaculty[]
-  studentBatches                 BatchStudent[]
-  timetableEntries               TimetableEntry[]                @relation("TimetableFaculty")
-  scheduleOverrides              DailyScheduleOverride[]         @relation("OverrideFaculty")
-  classroomAnnouncements         ClassroomAnnouncement[]         @relation("AnnouncementAuthor")
-  materials                      StudyMaterial[]                 @relation("MaterialUploader")
-  assignments                    Assignment[]                    @relation("AssignmentCreator")
-  assignmentSubmissions          AssignmentSubmission[]          @relation("SubmissionStudent")
-  reviewedAssignmentSubmissions  AssignmentSubmission[]          @relation("SubmissionReviewer")
-  reviewedAssignmentRevisions    AssignmentSubmissionRevision[]  @relation("RevisionReviewer")
-  assignmentDoubts               AssignmentDoubt[]               @relation("AssignmentDoubtStudent")
-  assignmentDoubtMessages        AssignmentDoubtMessage[]        @relation("AssignmentDoubtMessageAuthor")
-  marketplaceEntitlements        MarketplaceEntitlement[]
-  marketplaceCart                MarketplaceCart?
-  marketplaceReviews             MarketplaceBuyerReview[]        @relation("MarketplaceReviewBuyer")
-  marketplaceReviewVotes         MarketplaceReviewHelpfulVote[]
-  marketplaceReviewReports       MarketplaceReviewReport[]
-  marketplaceWishlistCollections MarketplaceWishlistCollection[]
-  marketplaceWishlistItems       MarketplaceWishlistItem[]
-  attendanceRecords              AttendanceRecord[]              @relation("AttendanceStudent")
-  recordings                     Recording[]                     @relation("RecordingUploader")
-  liveSessions                   LiveSession[]                   @relation("LiveSessionFaculty")
-  learningProgress               LearningProgress[]              @relation("LearningProgressStudent")
-  videoProgress                  VideoProgress[]                 @relation("VideoProgressStudent")
-  bookmarks                      Bookmark[]                      @relation("BookmarkStudent")
-  studentNotes                   StudentNote[]                   @relation("StudentNoteOwner")
-  discussionThreads              DiscussionThread[]              @relation("DiscussionThreadAuthor")
-  discussionReplies              DiscussionReply[]               @relation("DiscussionReplyAuthor")
-  assignedLeads                  Lead[]                          @relation("AssignedExecutive")
-  ownedLeadTasks                 LeadTask[]                      @relation("LeadTaskOwner")
-  leadActivities                 LeadActivity[]                  @relation("LeadActivityActor")
-  guestLeads                     Lead[]                          @relation("LeadGuestUser")
-  partnerProfile                 Partner?
-  admissionsAsStudent            Admission[]                     @relation("AdmissionStudent")
-  authoredQuestions              Question[]                      @relation("QuestionAuthor")
-  questionImports                QuestionImport[]
-  createdExams                   Exam[]                          @relation("ExamCreator")
-  examAttempts                   ExamAttempt[]                   @relation("ExamAttemptStudent")
-  studentFees                    StudentFee[]                    @relation("StudentFeeStudent")
-  payments                       Payment[]                       @relation("PaymentStudent")
-  invoices                       Invoice[]                       @relation("InvoiceStudent")
-  createdContent                 ContentItem[]                   @relation("ContentCreator")
-  contentVersions                ContentVersion[]                @relation("ContentVersionUpdater")
-  contentReviews                 ContentReview[]                 @relation("ContentReviewer")
-  contentApprovals               ContentApproval[]               @relation("ContentApprover")
-  contentDownloads               DownloadHistory[]               @relation("ContentDownloadUser")
-  contentWatches                 WatchHistory[]                  @relation("ContentWatchUser")
-  workspacePreferences           WorkspacePreference[]
-  userPreferences                UserPreference[]
-  savedSearches                  SavedSearch[]
-  dashboardWidgets               DashboardWidget[]
-  recentItems                    RecentItem[]
-  favoriteItems                  FavoriteItem[]
-  notificationPreferences        NotificationPreference[]
-  activities                     Activity[]                      @relation("ActivityActor")
-  parentLinks                    ParentChildRelation[]           @relation("ParentRelation")
-  childLinks                     ParentChildRelation[]           @relation("ChildRelation")
-  communicationsCreated          Communication[]                 @relation("CommunicationCreator")
-  communicationRecipients        CommunicationRecipient[]
-  communicationLogs              CommunicationLog[]
-  directConversationsCreated     DirectConversation[]            @relation("DirectConversationCreator")
-  directConversationParticipants DirectConversationParticipant[]
-  sentDirectMessages             DirectMessage[]                 @relation("DirectMessageSender")
-  communitiesCreated             Community[]                     @relation("CommunityCreator")
-  communityMemberships           CommunityMember[]
-  genericDiscussions             GenericDiscussion[]             @relation("GenericDiscussionAuthor")
-  genericDiscussionReplies       GenericDiscussionReply[]        @relation("GenericDiscussionReplyAuthor")
-  notificationTemplatesCreated   NotificationTemplate[]          @relation("NotificationTemplateCreator")
-  activityEvents                 ActivityEvent[]                 @relation("ActivityEventActor")
-  supportTicketsCreated          SupportTicket[]                 @relation("SupportTicketRequester")
-  supportTicketsAssigned         SupportTicket[]                 @relation("SupportTicketAssignee")
-  supportReplies                 SupportReply[]                  @relation("SupportReplyAuthor")
-  aiConversations                AIConversation[]
-  aiUsages                       AIUsage[]
-  subscriptions                  UserSubscription[]
-  wallets                        Wallet[]
-  walletTransactions             WalletTransaction[]
-  commerceOrders                 CommerceOrder[]                 @relation("CommerceOrderBuyer")
-  soldOrderItems                 CommerceOrderItem[]             @relation("CommerceOrderItemSeller")
-  commerceInvoices               CommerceInvoice[]               @relation("CommerceInvoiceBuyer")
-  referralsMade                  Referral[]                      @relation("ReferralReferrer")
-  referralsUsed                  Referral[]                      @relation("ReferralReferred")
-  automationExecutions           AutomationExecution[]
-  staffProfile                   StaffProfile?
-  leaveApplications              LeaveApplication[]              @relation("LeaveApplicant")
-  approvedLeaves                 LeaveApplication[]              @relation("LeaveApprover")
-  privacyConsents                PrivacyConsent[]
-  privacyRequests                PrivacyRequest[]
-  studentCommunityRequestsMade     StudentCommunityRequest[]              @relation("StudentCommunityRequestRequester")
-  studentCommunityRequestsReceived StudentCommunityRequest[]              @relation("StudentCommunityRequestRecipient")
-  studentCommunityVotes            StudentCommunityVote[]                 @relation("StudentCommunityVoteUser")
-  studentAcceptedAnswers            StudentAcceptedAnswer[]                @relation("StudentAcceptedAnswerActor")
-  studentAcceptedAnswerHistory      StudentAcceptedAnswerHistory[]         @relation("StudentAcceptedAnswerHistoryActor")
-  studentCommunityReportsMade       StudentCommunityReport[]               @relation("StudentCommunityReportReporter")
-  studentCommunityReportsModerated  StudentCommunityReport[]               @relation("StudentCommunityReportModerator")
-  studentCommunityBlocksCreated     StudentCommunityBlock[]                @relation("StudentCommunityBlockBlocker")
-  studentCommunityBlocksReceived    StudentCommunityBlock[]                @relation("StudentCommunityBlockBlocked")
-  studentCommunityResourceShares    StudentCommunityResourceShare[]        @relation("StudentCommunityResourceShareOwner")
-  studentGroupEventsCreated          StudentGroupEvent[]                    @relation("StudentGroupEventCreator")
-  studentGroupEventRsvps             StudentGroupEventRsvp[]
-  studentGroupChallengesCreated      StudentGroupChallenge[]                @relation("StudentGroupChallengeCreator")
+  id                                  String                             @id @default(cuid())
+  institutionId                       String?
+  institution                         Institution?                       @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  email                               String                             @unique
+  name                                String
+  userType                            UserType?
+  passwordHash                        String?
+  phoneE164                           String?                            @unique
+  phoneVerifiedAt                     DateTime?
+  pinHash                             String?
+  pinFailedAttempts                   Int                                @default(0)
+  pinLockedUntil                      DateTime?
+  pinChangedAt                        DateTime?
+  authSessionVersion                  Int                                @default(0)
+  status                              UserStatus                         @default(ACTIVE)
+  emailVerifiedAt                     DateTime?
+  lastLoginAt                         DateTime?
+  rememberToken                       String?
+  roles                               UserRole[]
+  profile                             Profile?
+  teacherProfile                      TeacherProfile?
+  teacherEarningServices              TeacherEarningService[]
+  studentProfile                      StudentProfile?
+  notifications                       Notification[]
+  plannerItemsCreated                 PlannerEvent[]                     @relation("PlannerEventCreator")
+  auditLogs                           AuditLog[]                         @relation("ActorAuditLogs")
+  accounts                            Account[]
+  sessions                            Session[]
+  resetTokens                         PasswordResetToken[]
+  phoneOtpChallenges                  PhoneOtpChallenge[]
+  transactionalEmails                 TransactionalEmail[]
+  storageObjects                      StorageObject[]                    @relation("StorageObjectOwner")
+  storageTransferEvents               StorageTransferEvent[]             @relation("StorageTransferActor")
+  facultyBatches                      BatchFaculty[]
+  studentBatches                      BatchStudent[]
+  timetableEntries                    TimetableEntry[]                   @relation("TimetableFaculty")
+  scheduleOverrides                   DailyScheduleOverride[]            @relation("OverrideFaculty")
+  classroomAnnouncements              ClassroomAnnouncement[]            @relation("AnnouncementAuthor")
+  materials                           StudyMaterial[]                    @relation("MaterialUploader")
+  assignments                         Assignment[]                       @relation("AssignmentCreator")
+  assignmentSubmissions               AssignmentSubmission[]             @relation("SubmissionStudent")
+  reviewedAssignmentSubmissions       AssignmentSubmission[]             @relation("SubmissionReviewer")
+  reviewedAssignmentRevisions         AssignmentSubmissionRevision[]     @relation("RevisionReviewer")
+  assignmentDoubts                    AssignmentDoubt[]                  @relation("AssignmentDoubtStudent")
+  assignmentDoubtMessages             AssignmentDoubtMessage[]           @relation("AssignmentDoubtMessageAuthor")
+  marketplaceEntitlements             MarketplaceEntitlement[]
+  marketplaceCart                     MarketplaceCart?
+  marketplaceReviews                  MarketplaceBuyerReview[]           @relation("MarketplaceReviewBuyer")
+  marketplaceReviewVotes              MarketplaceReviewHelpfulVote[]
+  marketplaceReviewReports            MarketplaceReviewReport[]
+  marketplaceWishlistCollections      MarketplaceWishlistCollection[]
+  marketplaceWishlistItems            MarketplaceWishlistItem[]
+  attendanceRecords                   AttendanceRecord[]                 @relation("AttendanceStudent")
+  recordings                          Recording[]                        @relation("RecordingUploader")
+  liveSessions                        LiveSession[]                      @relation("LiveSessionFaculty")
+  learningProgress                    LearningProgress[]                 @relation("LearningProgressStudent")
+  videoProgress                       VideoProgress[]                    @relation("VideoProgressStudent")
+  bookmarks                           Bookmark[]                         @relation("BookmarkStudent")
+  studentNotes                        StudentNote[]                      @relation("StudentNoteOwner")
+  discussionThreads                   DiscussionThread[]                 @relation("DiscussionThreadAuthor")
+  discussionReplies                   DiscussionReply[]                  @relation("DiscussionReplyAuthor")
+  assignedLeads                       Lead[]                             @relation("AssignedExecutive")
+  ownedLeadTasks                      LeadTask[]                         @relation("LeadTaskOwner")
+  leadActivities                      LeadActivity[]                     @relation("LeadActivityActor")
+  guestLeads                          Lead[]                             @relation("LeadGuestUser")
+  partnerProfile                      Partner?
+  admissionsAsStudent                 Admission[]                        @relation("AdmissionStudent")
+  authoredQuestions                   Question[]                         @relation("QuestionAuthor")
+  questionImports                     QuestionImport[]
+  createdExams                        Exam[]                             @relation("ExamCreator")
+  examAttempts                        ExamAttempt[]                      @relation("ExamAttemptStudent")
+  studentFees                         StudentFee[]                       @relation("StudentFeeStudent")
+  payments                            Payment[]                          @relation("PaymentStudent")
+  invoices                            Invoice[]                          @relation("InvoiceStudent")
+  createdContent                      ContentItem[]                      @relation("ContentCreator")
+  contentVersions                     ContentVersion[]                   @relation("ContentVersionUpdater")
+  contentReviews                      ContentReview[]                    @relation("ContentReviewer")
+  contentApprovals                    ContentApproval[]                  @relation("ContentApprover")
+  contentDownloads                    DownloadHistory[]                  @relation("ContentDownloadUser")
+  contentWatches                      WatchHistory[]                     @relation("ContentWatchUser")
+  workspacePreferences                WorkspacePreference[]
+  userPreferences                     UserPreference[]
+  savedSearches                       SavedSearch[]
+  dashboardWidgets                    DashboardWidget[]
+  recentItems                         RecentItem[]
+  favoriteItems                       FavoriteItem[]
+  notificationPreferences             NotificationPreference[]
+  activities                          Activity[]                         @relation("ActivityActor")
+  parentLinks                         ParentChildRelation[]              @relation("ParentRelation")
+  childLinks                          ParentChildRelation[]              @relation("ChildRelation")
+  communicationsCreated               Communication[]                    @relation("CommunicationCreator")
+  communicationRecipients             CommunicationRecipient[]
+  communicationLogs                   CommunicationLog[]
+  directConversationsCreated          DirectConversation[]               @relation("DirectConversationCreator")
+  directConversationParticipants      DirectConversationParticipant[]
+  sentDirectMessages                  DirectMessage[]                    @relation("DirectMessageSender")
+  communitiesCreated                  Community[]                        @relation("CommunityCreator")
+  communityMemberships                CommunityMember[]
+  genericDiscussions                  GenericDiscussion[]                @relation("GenericDiscussionAuthor")
+  genericDiscussionReplies            GenericDiscussionReply[]           @relation("GenericDiscussionReplyAuthor")
+  notificationTemplatesCreated        NotificationTemplate[]             @relation("NotificationTemplateCreator")
+  activityEvents                      ActivityEvent[]                    @relation("ActivityEventActor")
+  supportTicketsCreated               SupportTicket[]                    @relation("SupportTicketRequester")
+  supportTicketsAssigned              SupportTicket[]                    @relation("SupportTicketAssignee")
+  supportReplies                      SupportReply[]                     @relation("SupportReplyAuthor")
+  aiConversations                     AIConversation[]
+  aiUsages                            AIUsage[]
+  subscriptions                       UserSubscription[]
+  wallets                             Wallet[]
+  walletTransactions                  WalletTransaction[]
+  commerceOrders                      CommerceOrder[]                    @relation("CommerceOrderBuyer")
+  soldOrderItems                      CommerceOrderItem[]                @relation("CommerceOrderItemSeller")
+  commerceInvoices                    CommerceInvoice[]                  @relation("CommerceInvoiceBuyer")
+  referralsMade                       Referral[]                         @relation("ReferralReferrer")
+  referralsUsed                       Referral[]                         @relation("ReferralReferred")
+  automationExecutions                AutomationExecution[]
+  staffProfile                        StaffProfile?
+  leaveApplications                   LeaveApplication[]                 @relation("LeaveApplicant")
+  approvedLeaves                      LeaveApplication[]                 @relation("LeaveApprover")
+  privacyConsents                     PrivacyConsent[]
+  privacyRequests                     PrivacyRequest[]
+  studentCommunityRequestsMade        StudentCommunityRequest[]          @relation("StudentCommunityRequestRequester")
+  studentCommunityRequestsReceived    StudentCommunityRequest[]          @relation("StudentCommunityRequestRecipient")
+  studentCommunityVotes               StudentCommunityVote[]             @relation("StudentCommunityVoteUser")
+  studentAcceptedAnswers              StudentAcceptedAnswer[]            @relation("StudentAcceptedAnswerActor")
+  studentAcceptedAnswerHistory        StudentAcceptedAnswerHistory[]     @relation("StudentAcceptedAnswerHistoryActor")
+  studentCommunityReportsMade         StudentCommunityReport[]           @relation("StudentCommunityReportReporter")
+  studentCommunityReportsModerated    StudentCommunityReport[]           @relation("StudentCommunityReportModerator")
+  studentCommunityBlocksCreated       StudentCommunityBlock[]            @relation("StudentCommunityBlockBlocker")
+  studentCommunityBlocksReceived      StudentCommunityBlock[]            @relation("StudentCommunityBlockBlocked")
+  studentCommunityResourceShares      StudentCommunityResourceShare[]    @relation("StudentCommunityResourceShareOwner")
+  studentGroupEventsCreated           StudentGroupEvent[]                @relation("StudentGroupEventCreator")
+  studentGroupEventRsvps              StudentGroupEventRsvp[]
+  studentGroupChallengesCreated       StudentGroupChallenge[]            @relation("StudentGroupChallengeCreator")
   studentGroupChallengeParticipations StudentGroupChallengeParticipant[]
-  studentCommunityReputations        StudentCommunityReputation[]           @relation("StudentCommunityReputationUser")
-  createdAt                      DateTime                        @default(now())
-  updatedAt                      DateTime                        @updatedAt
+  studentCommunityReputations         StudentCommunityReputation[]       @relation("StudentCommunityReputationUser")
+  createdAt                           DateTime                           @default(now())
+  updatedAt                           DateTime                           @updatedAt
 
   @@index([userType])
 }
@@ -1182,34 +1184,34 @@ model Course {
 }
 
 model Subject {
-  id                String                  @id @default(cuid())
-  courseId          String
-  course            Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  departmentId      String?
-  department        Department?             @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  name              String
-  code              String?
-  description       String?
-  order             Int                     @default(1)
-  status            RecordStatus            @default(ACTIVE)
-  timetableEntries  TimetableEntry[]
-  scheduleOverrides DailyScheduleOverride[] @relation("OverrideSubject")
-  materials         StudyMaterial[]
-  assignments       Assignment[]
-  learningProgress  LearningProgress[]
-  chapters          Chapter[]
-  topics            Topic[]
-  questions         Question[]
-  exams             Exam[]
-  feePlans          FeePlan[]
-  studentFees       StudentFee[]
-  contentFolders    ContentFolder[]
-  contentItems      ContentItem[]
+  id                       String                    @id @default(cuid())
+  courseId                 String
+  course                   Course                    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  departmentId             String?
+  department               Department?               @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  name                     String
+  code                     String?
+  description              String?
+  order                    Int                       @default(1)
+  status                   RecordStatus              @default(ACTIVE)
+  timetableEntries         TimetableEntry[]
+  scheduleOverrides        DailyScheduleOverride[]   @relation("OverrideSubject")
+  materials                StudyMaterial[]
+  assignments              Assignment[]
+  learningProgress         LearningProgress[]
+  chapters                 Chapter[]
+  topics                   Topic[]
+  questions                Question[]
+  exams                    Exam[]
+  feePlans                 FeePlan[]
+  studentFees              StudentFee[]
+  contentFolders           ContentFolder[]
+  contentItems             ContentItem[]
   studentCommunityRequests StudentCommunityRequest[] @relation("StudentCommunityRequestSubject")
-  studentGroupEvents       StudentGroupEvent[]        @relation("StudentGroupEventSubject")
-  studentGroupChallenges   StudentGroupChallenge[]    @relation("StudentGroupChallengeSubject")
-  createdAt         DateTime                @default(now())
-  updatedAt         DateTime                @updatedAt
+  studentGroupEvents       StudentGroupEvent[]       @relation("StudentGroupEventSubject")
+  studentGroupChallenges   StudentGroupChallenge[]   @relation("StudentGroupChallengeSubject")
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
 
   @@unique([courseId, name])
 }
@@ -2801,61 +2803,61 @@ model ContentFolder {
 }
 
 model ContentItem {
-  id                       String                    @id @default(cuid())
-  institutionId            String
-  institution              Institution               @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  folderId                 String?
-  folder                   ContentFolder?            @relation(fields: [folderId], references: [id], onDelete: SetNull)
-  courseId                 String
-  course                   Course                    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  subjectId                String?
-  subject                  Subject?                  @relation(fields: [subjectId], references: [id], onDelete: SetNull)
-  chapterId                String?
-  chapter                  Chapter?                  @relation(fields: [chapterId], references: [id], onDelete: SetNull)
-  topicId                  String?
-  topic                    Topic?                    @relation(fields: [topicId], references: [id], onDelete: SetNull)
-  classroomId              String?
-  classroom                Classroom?                @relation(fields: [classroomId], references: [id], onDelete: SetNull)
-  batchId                  String?
-  batch                    Batch?                    @relation(fields: [batchId], references: [id], onDelete: SetNull)
-  materialId               String?
-  material                 StudyMaterial?            @relation(fields: [materialId], references: [id], onDelete: SetNull)
-  recordingId              String?
-  recording                Recording?                @relation(fields: [recordingId], references: [id], onDelete: SetNull)
-  createdById              String?
-  createdBy                User?                     @relation("ContentCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  title                    String
-  description              String?
-  type                     ContentItemType
-  fileUrl                  String?
-  externalUrl              String?
-  storageKey               String?
-  mimeType                 String?
-  sizeBytes                Int                       @default(0)
-  durationSeconds          Int                       @default(0)
-  version                  Int                       @default(1)
-  visibility               ContentVisibilityScope    @default(TEACHERS)
-  status                   ContentWorkflowStatus     @default(DRAFT)
-  publishedAt              DateTime?
-  aiReadyNotes             Json?
-  versions                 ContentVersion[]
-  reviews                  ContentReview[]
-  approvals                ContentApproval[]
-  analytics                ContentAnalytics?
-  downloads                DownloadHistory[]
-  commerceOrderItems       CommerceOrderItem[]
-  marketplaceListing       MarketplaceListing?
-  marketplaceEntitlements  MarketplaceEntitlement[]
-  marketplaceReviews       MarketplaceBuyerReview[]
-  marketplaceWishlistItems MarketplaceWishlistItem[]
-  watches                  WatchHistory[]
-  transcript               Transcript?
-  plannerEvents            PlannerEvent[]
-  externalContent          ExternalContent?
-  storageObject            StorageObject?
+  id                             String                          @id @default(cuid())
+  institutionId                  String
+  institution                    Institution                     @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  folderId                       String?
+  folder                         ContentFolder?                  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  courseId                       String
+  course                         Course                          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  subjectId                      String?
+  subject                        Subject?                        @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  chapterId                      String?
+  chapter                        Chapter?                        @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  topicId                        String?
+  topic                          Topic?                          @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  classroomId                    String?
+  classroom                      Classroom?                      @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  batchId                        String?
+  batch                          Batch?                          @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  materialId                     String?
+  material                       StudyMaterial?                  @relation(fields: [materialId], references: [id], onDelete: SetNull)
+  recordingId                    String?
+  recording                      Recording?                      @relation(fields: [recordingId], references: [id], onDelete: SetNull)
+  createdById                    String?
+  createdBy                      User?                           @relation("ContentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  title                          String
+  description                    String?
+  type                           ContentItemType
+  fileUrl                        String?
+  externalUrl                    String?
+  storageKey                     String?
+  mimeType                       String?
+  sizeBytes                      Int                             @default(0)
+  durationSeconds                Int                             @default(0)
+  version                        Int                             @default(1)
+  visibility                     ContentVisibilityScope          @default(TEACHERS)
+  status                         ContentWorkflowStatus           @default(DRAFT)
+  publishedAt                    DateTime?
+  aiReadyNotes                   Json?
+  versions                       ContentVersion[]
+  reviews                        ContentReview[]
+  approvals                      ContentApproval[]
+  analytics                      ContentAnalytics?
+  downloads                      DownloadHistory[]
+  commerceOrderItems             CommerceOrderItem[]
+  marketplaceListing             MarketplaceListing?
+  marketplaceEntitlements        MarketplaceEntitlement[]
+  marketplaceReviews             MarketplaceBuyerReview[]
+  marketplaceWishlistItems       MarketplaceWishlistItem[]
+  watches                        WatchHistory[]
+  transcript                     Transcript?
+  plannerEvents                  PlannerEvent[]
+  externalContent                ExternalContent?
+  storageObject                  StorageObject?
   studentCommunityResourceShares StudentCommunityResourceShare[] @relation("StudentCommunityResourceShareContent")
-  createdAt                DateTime                  @default(now())
-  updatedAt                DateTime                  @updatedAt
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
 
   @@index([institutionId, status, type])
   @@index([institutionId, status, updatedAt])
@@ -2988,28 +2990,28 @@ model LiveSession {
 }
 
 model PlannerEvent {
-  id             String           @id @default(cuid())
+  id             String            @id @default(cuid())
   institutionId  String
-  institution    Institution      @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  institution    Institution       @relation(fields: [institutionId], references: [id], onDelete: Cascade)
   academicYearId String?
-  academicYear   AcademicYear?    @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  academicYear   AcademicYear?     @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
   title          String
-  type           PlannerEventType @default(EVENT)
+  type           PlannerEventType  @default(EVENT)
   startsAt       DateTime
   endsAt         DateTime
   description    String?
   createdById    String?
-  createdBy      User?              @relation("PlannerEventCreator", fields: [createdById], references: [id], onDelete: Cascade)
-  kind           PlannerItemKind    @default(EVENT)
-  status         PlannerItemStatus  @default(PENDING)
-  priority       PlannerPriority    @default(NORMAL)
+  createdBy      User?             @relation("PlannerEventCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  kind           PlannerItemKind   @default(EVENT)
+  status         PlannerItemStatus @default(PENDING)
+  priority       PlannerPriority   @default(NORMAL)
   location       String?
   classroomId    String?
-  classroom      Classroom?         @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  classroom      Classroom?        @relation(fields: [classroomId], references: [id], onDelete: SetNull)
   lessonId       String?
-  lesson         ContentItem?       @relation(fields: [lessonId], references: [id], onDelete: SetNull)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  lesson         ContentItem?      @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   @@index([institutionId, startsAt])
   @@index([institutionId, createdById, startsAt])
@@ -3138,6 +3140,47 @@ model TeacherProfile {
   updatedAt           DateTime @updatedAt
 
   bookingRequests TeacherBookingRequest[] @relation("TeacherBookingRequests")
+}
+
+/// Teacher-owned offerings for the Earn More workspace. Checkout is deliberately
+/// not attached to these records until the shared commission and settlement flow
+/// is ready; this model only manages the teacher's own service catalogue.
+model TeacherEarningService {
+  id            String                      @id @default(cuid())
+  institutionId String
+  teacherId     String
+  institution   Institution                 @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  teacher       User                        @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  type          String
+  title         String
+  description   String?
+  expertise     String[]                    @default([])
+  availability  String?
+  status        String                      @default("DRAFT")
+  currency      String                      @default("INR")
+  plans         TeacherEarningServicePlan[]
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+
+  @@index([institutionId, teacherId, type])
+  @@index([institutionId, status])
+}
+
+model TeacherEarningServicePlan {
+  id          String                @id @default(cuid())
+  serviceId   String
+  service     TeacherEarningService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  duration    String?
+  sessions    Int?
+  price       Decimal
+  currency    String                @default("INR")
+  status      String                @default("ACTIVE")
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  @@index([serviceId, status])
 }
 
 model TeacherBookingRequest {
@@ -3318,20 +3361,20 @@ model CommunicationLog {
 }
 
 model DirectConversation {
-  id            String                          @id @default(cuid())
-  institutionId String?
-  institution   Institution?                    @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  createdById   String?
-  createdBy     User?                           @relation("DirectConversationCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  type          DirectConversationType
-  status        DirectConversationStatus        @default(REQUESTED)
-  title         String
-  context       Json?
-  participants  DirectConversationParticipant[]
-  messages      DirectMessage[]
+  id                             String                          @id @default(cuid())
+  institutionId                  String?
+  institution                    Institution?                    @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  createdById                    String?
+  createdBy                      User?                           @relation("DirectConversationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  type                           DirectConversationType
+  status                         DirectConversationStatus        @default(REQUESTED)
+  title                          String
+  context                        Json?
+  participants                   DirectConversationParticipant[]
+  messages                       DirectMessage[]
   studentCommunityResourceShares StudentCommunityResourceShare[] @relation("StudentCommunityResourceShareConversation")
-  createdAt     DateTime                        @default(now())
-  updatedAt     DateTime                        @updatedAt
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
 
   @@index([institutionId, status, updatedAt])
 }
@@ -3370,25 +3413,25 @@ model DirectMessage {
 }
 
 model Community {
-  id            String              @id @default(cuid())
-  institutionId String?
-  institution   Institution?        @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  createdById   String?
-  createdBy     User?               @relation("CommunityCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  name          String
-  description   String?
-  type          CommunityType
-  visibility    CommunityVisibility @default(INVITE_ONLY)
-  status        CommunityStatus     @default(ACTIVE)
-  metadata      Json?
-  members       CommunityMember[]
-  discussions   GenericDiscussion[]
-  studentCommunityRequests      StudentCommunityRequest[]      @relation("StudentCommunityRequestCommunity")
+  id                             String                          @id @default(cuid())
+  institutionId                  String?
+  institution                    Institution?                    @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  createdById                    String?
+  createdBy                      User?                           @relation("CommunityCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  name                           String
+  description                    String?
+  type                           CommunityType
+  visibility                     CommunityVisibility             @default(INVITE_ONLY)
+  status                         CommunityStatus                 @default(ACTIVE)
+  metadata                       Json?
+  members                        CommunityMember[]
+  discussions                    GenericDiscussion[]
+  studentCommunityRequests       StudentCommunityRequest[]       @relation("StudentCommunityRequestCommunity")
   studentCommunityResourceShares StudentCommunityResourceShare[] @relation("StudentCommunityResourceShareCommunity")
-  studentGroupEvents            StudentGroupEvent[]            @relation("StudentGroupEventCommunity")
-  studentGroupChallenges        StudentGroupChallenge[]        @relation("StudentGroupChallengeCommunity")
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  studentGroupEvents             StudentGroupEvent[]             @relation("StudentGroupEventCommunity")
+  studentGroupChallenges         StudentGroupChallenge[]         @relation("StudentGroupChallengeCommunity")
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
 
   @@index([institutionId, type, status])
 }
@@ -3407,43 +3450,43 @@ model CommunityMember {
 }
 
 model GenericDiscussion {
-  id            String                   @id @default(cuid())
-  institutionId String?
-  institution   Institution?             @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  communityId   String?
-  community     Community?               @relation(fields: [communityId], references: [id], onDelete: SetNull)
-  authorId      String?
-  author        User?                    @relation("GenericDiscussionAuthor", fields: [authorId], references: [id], onDelete: SetNull)
-  scope         GenericDiscussionScope
-  scopeId       String?
-  title         String
-  body          String?
-  status        GenericDiscussionStatus  @default(OPEN)
-  isPinned      Boolean                  @default(false)
-  isLocked      Boolean                  @default(false)
-  replies       GenericDiscussionReply[]
-  studentAcceptedAnswer       StudentAcceptedAnswer?        @relation("StudentAcceptedAnswerDiscussion")
+  id                           String                         @id @default(cuid())
+  institutionId                String?
+  institution                  Institution?                   @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  communityId                  String?
+  community                    Community?                     @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  authorId                     String?
+  author                       User?                          @relation("GenericDiscussionAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  scope                        GenericDiscussionScope
+  scopeId                      String?
+  title                        String
+  body                         String?
+  status                       GenericDiscussionStatus        @default(OPEN)
+  isPinned                     Boolean                        @default(false)
+  isLocked                     Boolean                        @default(false)
+  replies                      GenericDiscussionReply[]
+  studentAcceptedAnswer        StudentAcceptedAnswer?         @relation("StudentAcceptedAnswerDiscussion")
   studentAcceptedAnswerHistory StudentAcceptedAnswerHistory[] @relation("StudentAcceptedAnswerHistoryDiscussion")
-  metadata      Json?
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
+  metadata                     Json?
+  createdAt                    DateTime                       @default(now())
+  updatedAt                    DateTime                       @updatedAt
 
   @@index([institutionId, scope, status])
   @@index([communityId, createdAt])
 }
 
 model GenericDiscussionReply {
-  id           String            @id @default(cuid())
-  discussionId String
-  discussion   GenericDiscussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
-  authorId     String?
-  author       User?             @relation("GenericDiscussionReplyAuthor", fields: [authorId], references: [id], onDelete: SetNull)
-  body         String
-  metadata     Json?
-  studentAcceptedAnswer          StudentAcceptedAnswer?         @relation("StudentAcceptedAnswerReply")
-  previousAcceptedAnswerHistory  StudentAcceptedAnswerHistory[] @relation("StudentAcceptedAnswerHistoryPreviousReply")
-  nextAcceptedAnswerHistory      StudentAcceptedAnswerHistory[] @relation("StudentAcceptedAnswerHistoryNextReply")
-  createdAt    DateTime          @default(now())
+  id                            String                         @id @default(cuid())
+  discussionId                  String
+  discussion                    GenericDiscussion              @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  authorId                      String?
+  author                        User?                          @relation("GenericDiscussionReplyAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  body                          String
+  metadata                      Json?
+  studentAcceptedAnswer         StudentAcceptedAnswer?         @relation("StudentAcceptedAnswerReply")
+  previousAcceptedAnswerHistory StudentAcceptedAnswerHistory[] @relation("StudentAcceptedAnswerHistoryPreviousReply")
+  nextAcceptedAnswerHistory     StudentAcceptedAnswerHistory[] @relation("StudentAcceptedAnswerHistoryNextReply")
+  createdAt                     DateTime                       @default(now())
 
   @@index([discussionId, createdAt])
 }
@@ -3911,16 +3954,16 @@ model StudentCommunityVote {
 }
 
 model StudentAcceptedAnswer {
-  id            String   @id @default(cuid())
+  id            String                 @id @default(cuid())
   institutionId String
   institution   Institution            @relation("StudentAcceptedAnswerInstitution", fields: [institutionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  discussionId  String   @unique(map: "StudentAcceptedAnswer_discussion_key")
-  discussion    GenericDiscussion       @relation("StudentAcceptedAnswerDiscussion", fields: [discussionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  replyId       String   @unique(map: "StudentAcceptedAnswer_reply_key")
-  reply         GenericDiscussionReply  @relation("StudentAcceptedAnswerReply", fields: [replyId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  discussionId  String                 @unique(map: "StudentAcceptedAnswer_discussion_key")
+  discussion    GenericDiscussion      @relation("StudentAcceptedAnswerDiscussion", fields: [discussionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  replyId       String                 @unique(map: "StudentAcceptedAnswer_reply_key")
+  reply         GenericDiscussionReply @relation("StudentAcceptedAnswerReply", fields: [replyId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   acceptedById  String
-  acceptedBy    User                     @relation("StudentAcceptedAnswerActor", fields: [acceptedById], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  acceptedAt    DateTime @default(now())
+  acceptedBy    User                   @relation("StudentAcceptedAnswerActor", fields: [acceptedById], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  acceptedAt    DateTime               @default(now())
 }
 
 model StudentCommunityReport {
@@ -3945,47 +3988,47 @@ model StudentCommunityReport {
 }
 
 model StudentCommunityBlock {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   institutionId String
   institution   Institution @relation("StudentCommunityBlockInstitution", fields: [institutionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   blockerId     String
   blocker       User        @relation("StudentCommunityBlockBlocker", fields: [blockerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   blockedId     String
   blocked       User        @relation("StudentCommunityBlockBlocked", fields: [blockedId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  createdAt     DateTime @default(now())
+  createdAt     DateTime    @default(now())
 
   @@unique([blockerId, blockedId], map: "StudentCommunityBlock_unique")
   @@index([institutionId, blockedId], map: "StudentCommunityBlock_reverse_idx")
 }
 
 model StudentCommunityResourceShare {
-  id             String   @id @default(cuid())
+  id             String                         @id @default(cuid())
   institutionId  String
-  institution    Institution                     @relation("StudentCommunityResourceShareInstitution", fields: [institutionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  institution    Institution                    @relation("StudentCommunityResourceShareInstitution", fields: [institutionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   ownerId        String
-  owner          User                            @relation("StudentCommunityResourceShareOwner", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  owner          User                           @relation("StudentCommunityResourceShareOwner", fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   communityId    String?
-  community      Community?                      @relation("StudentCommunityResourceShareCommunity", fields: [communityId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  community      Community?                     @relation("StudentCommunityResourceShareCommunity", fields: [communityId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   conversationId String?
-  conversation   DirectConversation?             @relation("StudentCommunityResourceShareConversation", fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  conversation   DirectConversation?            @relation("StudentCommunityResourceShareConversation", fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   contentItemId  String?
-  contentItem    ContentItem?                    @relation("StudentCommunityResourceShareContent", fields: [contentItemId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  contentItem    ContentItem?                   @relation("StudentCommunityResourceShareContent", fields: [contentItemId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   snapshotType   String
   title          String
   snapshot       Json
-  supersedesId   String?                         @unique(map: "StudentCommunityResourceShare_supersedes_key")
-  supersedes     StudentCommunityResourceShare?  @relation("StudentCommunityResourceShareSupersession", fields: [supersedesId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  supersededBy   StudentCommunityResourceShare?  @relation("StudentCommunityResourceShareSupersession")
-  version        Int      @default(1)
-  status         String   @default("PUBLISHED")
-  createdAt      DateTime @default(now())
+  supersedesId   String?                        @unique(map: "StudentCommunityResourceShare_supersedes_key")
+  supersedes     StudentCommunityResourceShare? @relation("StudentCommunityResourceShareSupersession", fields: [supersedesId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  supersededBy   StudentCommunityResourceShare? @relation("StudentCommunityResourceShareSupersession")
+  version        Int                            @default(1)
+  status         String                         @default("PUBLISHED")
+  createdAt      DateTime                       @default(now())
 
   @@index([institutionId, communityId, createdAt], map: "StudentCommunityResourceShare_group_idx")
   @@index([conversationId, createdAt], map: "StudentCommunityResourceShare_chat_idx")
 }
 
 model StudentGroupEvent {
-  id            String   @id @default(cuid())
+  id            String                  @id @default(cuid())
   institutionId String
   institution   Institution             @relation("StudentGroupEventInstitution", fields: [institutionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   communityId   String
@@ -3999,28 +4042,28 @@ model StudentGroupEvent {
   description   String?
   startsAt      DateTime
   endsAt        DateTime
-  status        String   @default("ACTIVE")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  status        String                  @default("ACTIVE")
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
   rsvps         StudentGroupEventRsvp[]
 
   @@index([institutionId, communityId, startsAt], map: "StudentGroupEvent_scope_idx")
 }
 
 model StudentGroupEventRsvp {
-  id        String   @id @default(cuid())
+  id        String            @id @default(cuid())
   eventId   String
   event     StudentGroupEvent @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   userId    String
   user      User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  status    String   @default("GOING")
-  createdAt DateTime @default(now())
+  status    String            @default("GOING")
+  createdAt DateTime          @default(now())
 
   @@unique([eventId, userId], map: "StudentGroupEventRsvp_unique")
 }
 
 model StudentGroupChallenge {
-  id            String   @id @default(cuid())
+  id            String                             @id @default(cuid())
   institutionId String
   institution   Institution                        @relation("StudentGroupChallengeInstitution", fields: [institutionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   communityId   String
@@ -4032,32 +4075,32 @@ model StudentGroupChallenge {
   kind          String
   title         String
   description   String?
-  target        Int      @default(1)
+  target        Int                                @default(1)
   startsAt      DateTime
   endsAt        DateTime
-  status        String   @default("ACTIVE")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  status        String                             @default("ACTIVE")
+  createdAt     DateTime                           @default(now())
+  updatedAt     DateTime                           @updatedAt
   participants  StudentGroupChallengeParticipant[]
 
   @@index([institutionId, communityId, status, endsAt], map: "StudentGroupChallenge_scope_idx")
 }
 
 model StudentGroupChallengeParticipant {
-  id          String    @id @default(cuid())
+  id          String                @id @default(cuid())
   challengeId String
   challenge   StudentGroupChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   userId      String
   user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  progress    Int       @default(0)
+  progress    Int                   @default(0)
   completedAt DateTime?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime              @default(now())
 
   @@unique([challengeId, userId], map: "StudentGroupChallengeParticipant_unique")
 }
 
 model StudentCommunityReputation {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   institutionId String
   institution   Institution @relation("StudentCommunityReputationInstitution", fields: [institutionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   userId        String
@@ -4065,14 +4108,14 @@ model StudentCommunityReputation {
   eventType     String
   sourceId      String
   points        Int
-  createdAt     DateTime @default(now())
+  createdAt     DateTime    @default(now())
 
   @@unique([userId, eventType, sourceId], map: "StudentCommunityReputation_unique")
   @@index([institutionId, userId, createdAt], map: "StudentCommunityReputation_ledger_idx")
 }
 
 model StudentAcceptedAnswerHistory {
-  id              String   @id @default(cuid())
+  id              String                  @id @default(cuid())
   institutionId   String
   institution     Institution             @relation("StudentAcceptedAnswerHistoryInstitution", fields: [institutionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   discussionId    String
@@ -4084,7 +4127,7 @@ model StudentAcceptedAnswerHistory {
   actorId         String
   actor           User                    @relation("StudentAcceptedAnswerHistoryActor", fields: [actorId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   action          String
-  createdAt       DateTime @default(now())
+  createdAt       DateTime                @default(now())
 
   @@index([institutionId, discussionId, createdAt], map: "StudentAcceptedAnswerHistory_scope_idx")
 }

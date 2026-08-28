@@ -50,6 +50,16 @@ test("business mutations validate tenant ownership and protect sold resources", 
   assert.doesNotMatch(actions, /deleteWalletTransactionAction|deleteBusinessOrderAction/);
 });
 
+test("Earn More service and plan CRUD stay bound to the current teacher and tenant", () => {
+  const service = read("services/teacher-business-service.ts");
+  const actions = read("features/teacher-business/actions.ts");
+  assert.match(service, /teacherEarningService\.findMany\(\{\s*where: \{ institutionId, teacherId: userId \}/);
+  assert.match(actions, /where: \{ id, institutionId: teacher\.institutionId, teacherId: teacher\.id \}/);
+  assert.match(actions, /service: \{ institutionId: teacher\.institutionId, teacherId: teacher\.id \}/);
+  assert.match(actions, /institutionId: teacher\.institutionId, teacherId: teacher\.id/);
+  assert.doesNotMatch(actions, /teacherEarningService\.update\(\{\s*where: \{ id:/);
+});
+
 test("payout readiness is honest when no teacher payout model exists", () => {
   const service = read("services/teacher-business-service.ts");
   const schema = read("prisma/schema.prisma");

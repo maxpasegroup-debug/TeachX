@@ -3,10 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   BarChart3, BookOpen, BriefcaseBusiness, CheckCircle2, CircleDollarSign, Download,
-  ExternalLink, FileText, GraduationCap, Home, Lightbulb, Package, PenLine, Plus, Search, Sparkles, Star, Store, Upload,
+  ExternalLink, FileText, GraduationCap, Handshake, Home, Lightbulb, Package, PenLine, Plus, Search, Sparkles, Star, Store, Upload,
   UserRound, WalletCards
 } from "lucide-react";
 
@@ -22,7 +22,8 @@ import { changeSubscriptionAction } from "@/features/commerce/actions";
 import {
   deleteBusinessResourceAction, deletePortfolioItemAction, saveBusinessProfileAction,
   saveMarketplaceProductAction, saveOneToOneTeachingAction, savePortfolioItemAction, setBusinessResourceStatusAction, submitHappyNotesAction,
-  setSubscriptionRenewalAction
+  setSubscriptionRenewalAction, deleteEarningServiceAction, deleteEarningServicePlanAction, saveEarningServiceAction,
+  saveEarningServicePlanAction, setEarningServiceStatusAction
 } from "@/features/teacher-business/actions";
 import type { getTeacherBusinessData, TeacherBusinessModule } from "@/services/teacher-business-service";
 import { ProfilePhotoUpload } from "@/features/teacher-business/components/profile-photo-upload";
@@ -32,6 +33,7 @@ type Resource = Data["resources"][number];
 
 const modules: { slug: TeacherBusinessModule; label: string; icon: typeof Home }[] = [
   { slug: "home", label: "Business Home", icon: Home },
+  { slug: "services", label: "My Services", icon: Handshake },
   { slug: "one-to-one", label: "Teach 1:1", icon: GraduationCap },
   { slug: "profile", label: "Profile", icon: UserRound },
   { slug: "portfolio", label: "Portfolio", icon: BriefcaseBusiness },
@@ -50,6 +52,7 @@ const modules: { slug: TeacherBusinessModule; label: string; icon: typeof Home }
 
 const descriptions: Record<TeacherBusinessModule, string> = {
   home: "Your professional profile, publishing, sales, and wallet evidence in one concise view.",
+  services: "Create and manage your own Teach, Mentor, and Train services. Customer checkout remains unavailable until shared settlement controls are ready.",
   "one-to-one": "Complete one simple professional teaching profile, set your real availability and pricing, then activate it for discovery.",
   profile: "Maintain the professional profile shared with the teacher network and marketplace.",
   portfolio: "Present selected teaching work, achievements, qualifications, and published resources.",
@@ -113,6 +116,49 @@ function BusinessHome({ data }: { data: Data }) {
       <Card className="p-5"><h2 className="font-semibold">Recent business activity</h2><div className="mt-3 space-y-3">{h.recentActivity.length ? h.recentActivity.map((item) => <Link className="block border-b pb-3 text-sm" href={item.link || "/teacher/business/home"} key={item.id}><b>{item.title}</b><span className="block text-xs text-muted-foreground">{when(item.createdAt)}</span></Link>) : <p className="text-sm text-muted-foreground">No business activity has been recorded yet.</p>}</div></Card>
       <Card className="p-5"><h2 className="font-semibold">Business path</h2><div className="mt-3 grid gap-2 text-sm">{[["Profile and portfolio","/teacher/business/profile"],["Create in Resource Studio","/teacher/resources"],["Publish and prepare","/teacher/business/publishing"],["Sell in Marketplace","/teacher/business/marketplace"],["Order to wallet evidence","/teacher/business/orders"],["Settlement readiness","/teacher/business/payouts"]].map(([label, href], index) => <Link className="flex min-h-10 items-center justify-between border-b" href={href} key={label}><span>{index + 1}. {label}</span><ExternalLink className="h-4 w-4" /></Link>)}</div></Card>
     </section>
+  </div>;
+}
+
+function ServiceForm({ service, currency, initialType, onDone }: { service?: Data["earningServices"][number]; currency: string; initialType?: "TEACH" | "MENTOR" | "TRAIN"; onDone?: () => void }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [notice, setNotice] = useState<string | null>(null);
+  function submit(formData: FormData) {
+    setNotice(null);
+    startTransition(async () => {
+      try { const result = await saveEarningServiceAction(formData); setNotice(result.message); router.refresh(); onDone?.(); }
+      catch (error) { setNotice(error instanceof Error ? error.message : "Service could not be saved. Please retry."); }
+    });
+  }
+  return <form action={submit} className="grid gap-3 md:grid-cols-2">
+    <input name="id" type="hidden" value={service?.id ?? ""} />
+    <Field label="Service"><Select defaultValue={service?.type ?? initialType ?? "TEACH"} name="type"><option value="TEACH">Teach — 1:1 teaching</option><option value="MENTOR">Mentor — 1:1 mentoring</option><option value="TRAIN">Train — practical skills</option></Select></Field>
+    <Field label="Service title"><Input defaultValue={service?.title ?? ""} maxLength={180} name="title" placeholder="e.g. Mathematics coaching" required /></Field>
+    <Field label="Currency"><Select defaultValue={service?.currency ?? currency} name="currency"><option value="INR">INR</option><option value="AED">AED</option><option value="SAR">SAR</option><option value="QAR">QAR</option><option value="OMR">OMR</option></Select></Field>
+    <Field label="Expertise"><Input defaultValue={service?.expertise.join(", ") ?? ""} name="expertise" placeholder="Subjects or skills, separated by commas" /></Field>
+    <Field className="md:col-span-2" label="Description"><Textarea defaultValue={service?.description ?? ""} maxLength={4000} name="description" placeholder="Explain who this service is for and how you help." /></Field>
+    <Field className="md:col-span-2" label="Availability"><Textarea defaultValue={service?.availability ?? ""} maxLength={1000} name="availability" placeholder="Share the times you currently offer. Slot booking is not active yet." /></Field>
+    <div className="md:col-span-2"><Button disabled={pending} type="submit">{pending ? "Saving service…" : service ? "Save Service" : "Create Service"}</Button>{notice ? <p aria-live="polite" className={`mt-2 text-sm ${notice.includes("successfully") ? "text-emerald-800" : "text-red-700"}`}>{notice}</p> : null}</div>
+  </form>;
+}
+
+function PlanForm({ service, plan, onDone }: { service: Data["earningServices"][number]; plan?: Data["earningServices"][number]["plans"][number]; onDone?: () => void }) {
+  const router = useRouter(); const [pending, startTransition] = useTransition(); const [notice, setNotice] = useState<string | null>(null);
+  function submit(formData: FormData) { setNotice(null); startTransition(async () => { try { const result = await saveEarningServicePlanAction(formData); setNotice(result.message); router.refresh(); onDone?.(); } catch (error) { setNotice(error instanceof Error ? error.message : "Plan could not be saved. Please retry."); } }); }
+  return <form action={submit} className="mt-3 grid gap-3 border-t pt-3 sm:grid-cols-2"><input name="serviceId" type="hidden" value={service.id} /><input name="id" type="hidden" value={plan?.id ?? ""} /><Field label="Plan name"><Input defaultValue={plan?.name ?? ""} maxLength={180} name="name" placeholder="e.g. 60 minute session" required /></Field><Field label="Price"><Input defaultValue={plan?.price ?? ""} min="0" name="price" type="number" /></Field><Field label="Duration"><Input defaultValue={plan?.duration ?? ""} maxLength={120} name="duration" placeholder="e.g. 60 minutes" /></Field><Field label="Sessions"><Input defaultValue={plan?.sessions ?? ""} min="1" name="sessions" type="number" /></Field><input name="currency" type="hidden" value={service.currency} /><Field className="sm:col-span-2" label="Plan details"><Input defaultValue={plan?.description ?? ""} maxLength={2000} name="description" /></Field><div className="sm:col-span-2"><Button className="h-10 px-3 text-sm" disabled={pending} type="submit">{pending ? "Saving…" : plan ? "Save Plan" : "Add Plan"}</Button>{notice ? <p aria-live="polite" className={`mt-2 text-sm ${notice.includes("successfully") ? "text-emerald-800" : "text-red-700"}`}>{notice}</p> : null}</div></form>;
+}
+
+function MyServices({ data }: { data: Data }) {
+  const searchParams = useSearchParams(); const requestedType = searchParams.get("create");
+  const initialType = requestedType === "TEACH" || requestedType === "MENTOR" || requestedType === "TRAIN" ? requestedType : undefined;
+  const [creating, setCreating] = useState(Boolean(initialType)); const router = useRouter(); const [, startTransition] = useTransition(); const [notice, setNotice] = useState<string | null>(null);
+  function mutate(action: (formData: FormData) => Promise<{ ok: boolean; message: string }>) { return (formData: FormData) => { setNotice(null); startTransition(async () => { try { const result = await action(formData); setNotice(result.message); router.refresh(); } catch (error) { setNotice(error instanceof Error ? error.message : "Update failed. Please retry."); } }); }; }
+  const active = data.earningServices.filter((item) => item.status === "PUBLISHED").length;
+  return <div className="space-y-6"><section className="border-l-4 border-emerald-600 bg-emerald-50/70 p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-semibold text-emerald-800">Your knowledge can earn.</p><h2 className="mt-1 text-2xl font-semibold">Build the services you want to offer</h2><p className="mt-2 max-w-2xl text-sm text-muted-foreground">Create Teach, Mentor, or Train services and flexible plans. Publishing makes them ready for future discovery; customer booking and checkout are not available yet.</p></div><Button onClick={() => setCreating((value) => !value)} type="button"><Plus className="mr-2 h-4 w-4" />{creating ? "Close" : "Create Service"}</Button></div>{creating ? <Card className="mt-5 p-5"><h3 className="font-semibold">Create an earning service</h3><p className="mt-1 text-sm text-muted-foreground">Start simply. You can add plans after saving.</p><div className="mt-4"><ServiceForm currency={data.currency} initialType={initialType} onDone={() => setCreating(false)} /></div></Card> : null}</section>
+    <section className="flex flex-wrap gap-2"><ActionLink href="/teacher/business/publishing" primary><Upload className="h-4 w-4" />Create a Program</ActionLink><ActionLink href="/teacher/business/earnings"><CircleDollarSign className="h-4 w-4" />View Earnings</ActionLink><ActionLink href="/teacher/business/profile"><UserRound className="h-4 w-4" />My Profile</ActionLink></section>
+    {notice ? <p aria-live="polite" className={notice.includes("successfully") || notice.includes("live") || notice.includes("draft") || notice.includes("deleted") ? "text-sm text-emerald-800" : "text-sm text-red-700"}>{notice}</p> : null}
+    <section className="grid gap-3 sm:grid-cols-3"><Metric label="Active services" value={active} /><Metric label="Draft services" value={data.earningServices.length - active} /><Metric label="Upcoming requests" value={data.bookingRequests.filter((item) => item.status === "PENDING").length} /></section>
+    {data.earningServices.length ? <section className="space-y-4">{data.earningServices.map((service) => <Card className="p-5" key={service.id}><div className="flex flex-wrap items-start justify-between gap-3"><div><Badge>{service.type}</Badge><Badge className="ml-2">{service.status}</Badge><h2 className="mt-2 text-lg font-semibold">{service.title}</h2><p className="mt-1 text-sm text-muted-foreground">{service.description || "No description added yet."}</p>{service.expertise.length ? <p className="mt-2 text-xs text-muted-foreground">{service.expertise.join(" · ")}</p> : null}</div><div className="flex flex-wrap gap-2"><form action={mutate(setEarningServiceStatusAction)}><input name="id" type="hidden" value={service.id} /><input name="status" type="hidden" value={service.status === "PUBLISHED" ? "DRAFT" : "PUBLISHED"} /><Submit>{service.status === "PUBLISHED" ? "Unpublish" : "Publish"}</Submit></form><form action={mutate(deleteEarningServiceAction)}><input name="id" type="hidden" value={service.id} /><Submit danger>Delete</Submit></form></div></div><details className="mt-4"><summary className="cursor-pointer text-sm font-semibold">Edit service</summary><div className="mt-4"><ServiceForm currency={data.currency} service={service} /></div></details><div className="mt-5 border-t pt-4"><h3 className="font-semibold">Plans</h3><p className="mt-1 text-sm text-muted-foreground">Plans describe your offer only. They cannot be purchased until the shared checkout and settlement controls are enabled.</p>{service.plans.length ? <div className="mt-3 space-y-2">{service.plans.map((plan) => <div className="flex flex-wrap items-center justify-between gap-3 border p-3 text-sm" key={plan.id}><span><b>{plan.name}</b>{plan.duration ? ` · ${plan.duration}` : ""}{plan.sessions ? ` · ${plan.sessions} session${plan.sessions === 1 ? "" : "s"}` : ""}</span><span>{money(plan.price, plan.currency)} <form action={mutate(deleteEarningServicePlanAction)} className="inline"><input name="id" type="hidden" value={plan.id} /><button className="ml-3 text-red-700 underline" type="submit">Delete</button></form></span></div>)}</div> : <p className="mt-3 text-sm text-muted-foreground">No plans yet.</p>}<details className="mt-3"><summary className="cursor-pointer text-sm font-medium">Add a plan</summary><PlanForm service={service} /></details></div></Card>)}</section> : <div><EmptyState description="Start with 1:1 teaching, mentoring, or practical training. You control the details and plans." icon={<Handshake className="h-5 w-5" />} title="No earning services yet" /><div className="mt-3 text-center"><Button onClick={() => setCreating(true)} type="button">Create your first service</Button></div></div>}
   </div>;
 }
 
@@ -384,5 +430,5 @@ function Downloads({ data }: { data: Data }) {
 
 export function TeacherBusinessPage({ module, data }: { module: TeacherBusinessModule; data: Data }) {
   const active = modules.find((item) => item.slug === module)!;
-  return <div className="min-w-0 space-y-6"><nav className="text-sm text-muted-foreground"><Link href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span>Business</span><span className="mx-2">/</span><span className="text-foreground">{active.label}</span></nav><header className="border-b pb-5"><Badge>Teacher Business OS</Badge><h1 className="mt-3 text-3xl font-semibold">{active.label}</h1><p className="mt-2 max-w-3xl text-muted-foreground">{descriptions[module]}</p></header><nav aria-label="Teacher business modules" className="flex max-w-full gap-2 overflow-x-auto pb-2">{modules.map((item) => { const Icon = item.icon; return <Link aria-current={module === item.slug ? "page" : undefined} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-medium ${module === item.slug ? "bg-primary text-primary-foreground" : "border bg-surface"}`} href={`/teacher/business/${item.slug}`} key={item.slug}><Icon className="h-4 w-4" />{item.label}</Link>; })}</nav>{module === "home" ? <BusinessHome data={data} /> : module === "one-to-one" ? <OneToOne data={data} /> : module === "profile" ? <Profile data={data} /> : module === "portfolio" ? <Portfolio data={data} /> : module === "publishing" ? <Publishing data={data} /> : module === "happy-notes" ? <HappyNotes data={data} /> : module === "marketplace" ? <Marketplace data={data} /> : module === "orders" ? <Orders data={data} /> : module === "earnings" ? <Earnings data={data} /> : module === "wallet" ? <Wallet data={data} /> : module === "payouts" ? <Payouts data={data} /> : module === "analytics" ? <Analytics data={data} /> : module === "subscription" ? <Subscription data={data} /> : module === "opportunities" ? <Opportunities /> : <Downloads data={data} />}</div>;
+  return <div className="min-w-0 space-y-6"><nav className="text-sm text-muted-foreground"><Link href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span>Business</span><span className="mx-2">/</span><span className="text-foreground">{active.label}</span></nav><header className="border-b pb-5"><Badge>Teacher Business OS</Badge><h1 className="mt-3 text-3xl font-semibold">{active.label}</h1><p className="mt-2 max-w-3xl text-muted-foreground">{descriptions[module]}</p></header><nav aria-label="Teacher business modules" className="flex max-w-full gap-2 overflow-x-auto pb-2">{modules.map((item) => { const Icon = item.icon; return <Link aria-current={module === item.slug ? "page" : undefined} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-medium ${module === item.slug ? "bg-primary text-primary-foreground" : "border bg-surface"}`} href={`/teacher/business/${item.slug}`} key={item.slug}><Icon className="h-4 w-4" />{item.label}</Link>; })}</nav>{module === "home" ? <BusinessHome data={data} /> : module === "services" ? <MyServices data={data} /> : module === "one-to-one" ? <OneToOne data={data} /> : module === "profile" ? <Profile data={data} /> : module === "portfolio" ? <Portfolio data={data} /> : module === "publishing" ? <Publishing data={data} /> : module === "happy-notes" ? <HappyNotes data={data} /> : module === "marketplace" ? <Marketplace data={data} /> : module === "orders" ? <Orders data={data} /> : module === "earnings" ? <Earnings data={data} /> : module === "wallet" ? <Wallet data={data} /> : module === "payouts" ? <Payouts data={data} /> : module === "analytics" ? <Analytics data={data} /> : module === "subscription" ? <Subscription data={data} /> : module === "opportunities" ? <Opportunities /> : <Downloads data={data} />}</div>;
 }
