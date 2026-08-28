@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { TeacherLifeSwitcher } from "@/features/teacher-life/components/teacher-life-switcher";
 import type { getTeacherLifeData } from "@/services/teacher-life-service";
 
 type Data = NonNullable<Awaited<ReturnType<typeof getTeacherLifeData>>>;
@@ -29,6 +30,7 @@ function LifeContext({ active, eyebrow, title, detail, tone }: { active: string;
         <h1 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">{title}</h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 opacity-80 sm:text-base">{detail}</p>
       </header>
+      <TeacherLifeSwitcher active={active.toLowerCase().replaceAll(" ", "-") as "earn-more" | "learn-more" | "enjoy-more"} />
     </>
   );
 }

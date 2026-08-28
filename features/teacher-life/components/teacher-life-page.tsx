@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { TeacherLifeSwitcher } from "@/features/teacher-life/components/teacher-life-switcher";
 import type { getTeacherLifeData, TeacherLifePillar } from "@/services/teacher-life-service";
 import type { getTeacherWorkspaceData } from "@/services/teacher-workspace-service";
 
@@ -361,6 +362,7 @@ export function TeacherLifePage({ pillar, data, workspaceData }: { pillar: Teach
     return (
       <div className="relative left-1/2 w-[100dvw] min-w-0 -translate-x-1/2 space-y-7 overflow-x-clip">
         <nav className="text-sm text-muted-foreground" aria-label="Breadcrumb"><Link className="hover:text-foreground" href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span aria-current="page">Save Time</span></nav>
+        <TeacherLifeSwitcher active="save-time" />
         <SaveTime data={data} workspaceData={workspaceData} />
         <TaraBridge pillar={pillar} />
         <footer className="flex flex-wrap gap-x-5 gap-y-2 border-t pt-5 text-sm text-muted-foreground"><Link href="/teacher/life/earn-more">Earn More</Link><Link href="/teacher/life/learn-more">Learn More</Link><Link href="/teacher/workspace/notifications">Notifications</Link><Link href="/teacher/support">Help & support</Link></footer>
