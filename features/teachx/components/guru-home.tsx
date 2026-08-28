@@ -99,11 +99,11 @@ function SpaceCard({ space }: { space: TeacherSpace }) {
 
 export function GuruHome() {
   return (
-    <main id="main-content" className="relative min-h-full overflow-hidden bg-[#f7f3ea] px-4 py-8 text-[#111714] sm:px-6 sm:py-12 lg:px-8">
+    <main id="main-content" className="relative min-h-full overflow-hidden bg-[#f7f3ea] py-8 text-[#111714] sm:py-12">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[.32] [background-image:linear-gradient(rgba(22,35,27,.045)_1px,transparent_1px),linear-gradient(90deg,rgba(22,35,27,.045)_1px,transparent_1px)] [background-size:34px_34px]" />
       <div aria-hidden="true" className="pointer-events-none absolute -left-28 top-20 h-80 w-80 rounded-full bg-[#e0f1e6] blur-3xl" />
       <div aria-hidden="true" className="pointer-events-none absolute -right-32 bottom-4 h-96 w-96 rounded-full bg-[#f6e8cf] blur-3xl" />
-      <div className="relative mx-auto max-w-5xl">
+      <div className="relative w-full">
         <section aria-labelledby="teacher-spaces-heading">
           <h1 id="teacher-spaces-heading" className="sr-only">Teacher workspaces</h1>
           <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
