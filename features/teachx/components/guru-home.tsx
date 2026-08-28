@@ -8,22 +8,6 @@ import {
   Heart
 } from "lucide-react";
 
-type ListItem = {
-  title: string;
-  meta?: string | null;
-  href?: string | null;
-};
-
-// Keep this public interface compatible with the existing teacher route. Home is
-// intentionally a destination chooser, so none of the supplied dashboard data
-// is displayed here.
-type GuruHomeProps = {
-  name?: string | null;
-  daily: { todaysClasses: ListItem[]; pendingTasks: ListItem[]; recentResources: ListItem[] };
-  stats: { resourcesCreated: number; studentsHelped: number; downloads: number };
-  aiCreditsRemaining: number;
-};
-
 type TeacherSpace = {
   title: string;
   label: string;
@@ -96,25 +80,30 @@ function SpaceCard({ space }: { space: TeacherSpace }) {
   return (
     <Link
       aria-label={`Open ${space.title}`}
-      className="group relative grid min-h-[280px] overflow-hidden border border-[#d8ddd4] bg-[#fffdf8] p-6 shadow-[0_18px_44px_rgba(20,28,23,.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_26px_55px_rgba(20,28,23,.14)] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#0b8c50]/30 motion-reduce:transition-none sm:min-h-[320px] sm:p-8"
+      className="group relative grid min-h-[290px] overflow-hidden border border-[#d9ddd5] bg-[#fffdf8] p-6 shadow-[0_18px_46px_rgba(20,28,23,.075)] transition duration-500 ease-out hover:-translate-y-1.5 hover:border-[#bec8bd] hover:shadow-[0_30px_65px_rgba(20,28,23,.14)] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#0b8c50]/30 motion-reduce:transform-none motion-reduce:transition-none sm:min-h-[342px] sm:p-8"
       href={space.href}
     >
-      <div aria-hidden="true" className="absolute -right-20 -top-20 h-52 w-52 rounded-full opacity-65 blur-3xl transition duration-500 group-hover:scale-125 motion-reduce:transition-none" style={{ backgroundColor: space.accentSoft }} />
+      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 origin-left scale-x-50 transition duration-500 group-hover:scale-x-100 motion-reduce:transition-none" style={{ backgroundColor: space.accent }} />
+      <div aria-hidden="true" className="absolute -right-20 -top-20 h-52 w-52 rounded-full opacity-70 blur-3xl transition duration-500 group-hover:scale-125 motion-reduce:transition-none" style={{ backgroundColor: space.accentSoft }} />
       <div aria-hidden="true" className="absolute right-5 top-5 h-36 w-40 transition duration-500 group-hover:-translate-y-2 group-hover:rotate-2 motion-reduce:transition-none"><CardArtwork accent={space.accent} kind={space.art} /></div>
+      <span aria-hidden="true" className="absolute bottom-0 left-0 h-24 w-24 border-r border-t border-[#17231b]/[.055]" />
       <div className="relative z-10 flex max-w-[18rem] flex-col items-start">
         <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.2em]" style={{ color: space.accent }}><Icon aria-hidden="true" className="h-4 w-4" />{space.label}</span>
-        <h2 className="mt-5 text-3xl font-semibold tracking-[-.055em] text-[#111714] sm:text-[2.35rem]">{space.title}</h2>
+        <h2 className="mt-5 text-3xl font-semibold tracking-[-.055em] text-[#111714] sm:text-[2.45rem]">{space.title}</h2>
         <p className="mt-3 text-sm leading-6 text-[#5a665f] sm:text-base">{space.description}</p>
       </div>
-      <span className="relative z-10 mt-auto flex min-h-11 items-center gap-2 pt-7 text-sm font-bold" style={{ color: space.accent }}>Open workspace <span className="grid h-10 w-10 place-items-center bg-[#111714] text-white transition group-hover:translate-x-1 group-hover:bg-[#1d2c23] motion-reduce:transition-none"><ArrowRight aria-hidden="true" className="h-4 w-4 rtl-flip" /></span></span>
+      <span className="relative z-10 mt-auto flex min-h-11 items-center gap-3 pt-7 text-sm font-bold" style={{ color: space.accent }}>Open workspace <span className="grid h-10 w-10 place-items-center bg-[#111714] text-white shadow-[4px_4px_0_rgba(17,23,20,.14)] transition duration-300 group-hover:translate-x-1 group-hover:bg-[#1d2c23] group-hover:shadow-[6px_6px_0_rgba(17,23,20,.16)] motion-reduce:transition-none"><ArrowRight aria-hidden="true" className="h-4 w-4 rtl-flip" /></span></span>
     </Link>
   );
 }
 
-export function GuruHome(_props?: Partial<GuruHomeProps>) {
+export function GuruHome() {
   return (
-    <main id="main-content" className="min-h-full bg-[#f7f3ea] px-4 py-8 text-[#111714] sm:px-6 sm:py-12 lg:px-8">
-      <div className="mx-auto max-w-5xl">
+    <main id="main-content" className="relative min-h-full overflow-hidden bg-[#f7f3ea] px-4 py-8 text-[#111714] sm:px-6 sm:py-12 lg:px-8">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[.32] [background-image:linear-gradient(rgba(22,35,27,.045)_1px,transparent_1px),linear-gradient(90deg,rgba(22,35,27,.045)_1px,transparent_1px)] [background-size:34px_34px]" />
+      <div aria-hidden="true" className="pointer-events-none absolute -left-28 top-20 h-80 w-80 rounded-full bg-[#e0f1e6] blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -right-32 bottom-4 h-96 w-96 rounded-full bg-[#f6e8cf] blur-3xl" />
+      <div className="relative mx-auto max-w-5xl">
         <section aria-labelledby="teacher-spaces-heading">
           <h1 id="teacher-spaces-heading" className="sr-only">Teacher workspaces</h1>
           <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
