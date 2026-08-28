@@ -214,8 +214,10 @@ export async function getTeacherBusinessData(userId?: string, institutionId?: st
       updatedAt: service.updatedAt.toISOString()
     })),
     bookingRequests: bookingRequests.map((request) => ({
-      id: request.id, subject: request.subject, status: request.status, preferredDate: request.preferredDate?.toISOString() ?? null,
-      preferredTime: request.preferredTime, createdAt: request.createdAt.toISOString()
+      id: request.id, studentName: request.studentName, subject: request.subject, className: request.className,
+      learningGoal: request.learningGoal, message: request.message, status: request.status,
+      preferredDate: request.preferredDate?.toISOString() ?? null, preferredTime: request.preferredTime,
+      createdAt: request.createdAt.toISOString()
     })),
     plans: plans.filter((plan) => plan.audience === "TEACHER" && plan.isActive && ["teacher-free", "teacher-basic", "teacher-pro"].includes(plan.key)).map((plan) => ({ id: plan.id, key: plan.key, name: plan.name, price: Number(plan.price), currency: plan.currency, interval: plan.interval, credits: plan.aiMonthlyCredits, marketplaceAccess: plan.marketplaceAccess, resourceLimit: plan.resourceLimit, storageLimitMb: plan.storageLimitMb, featureFlags: record(plan.featureFlags) })),
     subscription: subscription ? { id: subscription.id, planId: subscription.planId, key: subscription.plan.key, name: subscription.plan.name, status: subscription.status, price: Number(subscription.plan.price), currency: subscription.plan.currency, interval: subscription.plan.interval, periodEndsAt: subscription.currentPeriodEnd?.toISOString(), cancelAtPeriodEnd: subscription.cancelAtPeriodEnd, prepaid: record(subscription.metadata).prepaidPeriod === true, marketplaceAccess: subscription.plan.marketplaceAccess, resourceLimit: subscription.plan.resourceLimit, storageLimitMb: subscription.plan.storageLimitMb } : null,

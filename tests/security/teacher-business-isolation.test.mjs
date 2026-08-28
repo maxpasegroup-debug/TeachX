@@ -60,6 +60,13 @@ test("Earn More service and plan CRUD stay bound to the current teacher and tena
   assert.doesNotMatch(actions, /teacherEarningService\.update\(\{\s*where: \{ id:/);
 });
 
+test("Earn More client requests remain scoped to the signed-in teacher and tenant", () => {
+  const service = read("services/teacher-business-service.ts");
+  assert.match(service, /teacherBookingRequest\.findMany\(\{\s*where: \{ teacherId: userId, teacherProfile: \{ user: \{ institutionId \} \} \}/);
+  assert.match(service, /studentName: request\.studentName/);
+  assert.doesNotMatch(service, /teacherBookingRequest\.findMany\(\{\s*where: \{\s*\}/);
+});
+
 test("payout readiness is honest when no teacher payout model exists", () => {
   const service = read("services/teacher-business-service.ts");
   const schema = read("prisma/schema.prisma");
