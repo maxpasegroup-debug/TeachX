@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   BarChart3, BookOpen, BriefcaseBusiness, CalendarDays, CheckCircle2, CircleDollarSign, Clock3, Download,
   ExternalLink, FileText, GraduationCap, Handshake, Home, Lightbulb, Package, PenLine, Plus, Search, Sparkles, Star, Store, Upload,
-  UserRound, WalletCards
+  UserRound, UsersRound, WalletCards
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,7 @@ const modules: { slug: TeacherBusinessModule; label: string; icon: typeof Home }
   { slug: "home", label: "Business Home", icon: Home },
   { slug: "services", label: "My Services", icon: Handshake },
   { slug: "schedule", label: "Schedule", icon: CalendarDays },
+  { slug: "clients", label: "Clients", icon: UsersRound },
   { slug: "availability", label: "Availability", icon: Clock3 },
   { slug: "one-to-one", label: "Teach 1:1", icon: GraduationCap },
   { slug: "profile", label: "Profile", icon: UserRound },
@@ -56,6 +57,7 @@ const descriptions: Record<TeacherBusinessModule, string> = {
   home: "Your professional profile, publishing, sales, and wallet evidence in one concise view.",
   services: "Manage Mentor and Train services. Teach 1:1 continues to use your existing professional teaching profile. Customer checkout remains unavailable until shared settlement controls are ready.",
   schedule: "Review real requests from your public teaching profile. Confirm, decline, and complete them in the established Communication workflow.",
+  clients: "Review the learners who have sent you a real teaching request. Client contact details and session metrics stay private until the established Communication workflow supports them.",
   availability: "Prepare private weekly availability for future Teach, Mentor and Train bookings. This does not make sessions bookable yet.",
   "one-to-one": "Complete one simple professional teaching profile, set your real availability and pricing, then activate it for discovery.",
   profile: "Maintain the professional profile shared with the teacher network and marketplace.",
@@ -207,6 +209,46 @@ function Schedule({ data }: { data: Data }) {
   const pending = data.bookingRequests.filter((request) => request.status === "PENDING");
   const upcoming = dated.filter((request) => new Date(request.preferredDate!).getTime() >= new Date().setHours(0, 0, 0, 0));
   return <div className="space-y-6"><section className="border-l-4 border-emerald-600 bg-emerald-50/70 p-5"><p className="text-sm font-semibold text-emerald-800">Earning schedule</p><h2 className="mt-1 text-2xl font-semibold">Requests before appointments</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">TeachX lists only real requests. Appointment slots, payments, and video links are not created until the shared booking controls support them.</p><div className="mt-5 flex flex-wrap gap-2"><ActionLink href="/communication" primary>Manage requests in Communication</ActionLink><ActionLink href="/teacher/business/services">Manage My Services</ActionLink></div></section><section className="grid gap-3 sm:grid-cols-3"><Metric label="Pending response" value={pending.length} /><Metric label="Dated requests" value={dated.length} /><Metric label="Upcoming requests" value={upcoming.length} /></section><section aria-labelledby="scheduled-requests"><div className="flex flex-wrap items-baseline justify-between gap-3"><div><p className="text-sm font-semibold text-emerald-800">Upcoming</p><h2 className="mt-1 text-xl font-semibold" id="scheduled-requests">Requested dates and times</h2></div><span className="text-sm text-muted-foreground">All times are supplied by the requester.</span></div>{upcoming.length ? <div className="mt-4 space-y-3">{upcoming.map((request) => <article className="flex flex-col justify-between gap-3 border bg-surface p-4 sm:flex-row sm:items-center" key={request.id}><div><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{request.subject}</h3><Badge>{request.status}</Badge></div><p className="mt-1 text-sm text-muted-foreground">{request.studentName}{request.className ? ` · ${request.className}` : ""}</p>{request.learningGoal ? <p className="mt-2 text-sm leading-6">{request.learningGoal}</p> : null}</div><div className="shrink-0 text-sm sm:text-right"><p className="font-semibold">{new Date(request.preferredDate!).toLocaleDateString()}</p><p className="mt-1 text-muted-foreground">{request.preferredTime || "Time not selected"}</p></div></article>)}</div> : <EmptyState description="When a learner submits a request with a date, it will appear here. TeachX does not invent appointments." icon={<CalendarDays className="h-5 w-5" />} title="No dated requests yet" />}</section>{undated.length ? <section className="border bg-surface p-5"><h2 className="font-semibold">Requests waiting for a date</h2><div className="mt-3 space-y-2">{undated.map((request) => <div className="flex flex-wrap items-center justify-between gap-3 border-b py-3 text-sm" key={request.id}><span><b>{request.studentName}</b><span className="text-muted-foreground"> · {request.subject}</span></span><Badge>{request.status}</Badge></div>)}</div></section> : null}</div>;
+}
+
+function Clients({ data }: { data: Data }) {
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("ALL");
+  const requests = data.bookingRequests.filter((request) => {
+    const haystack = [request.studentName, request.subject, request.className, request.learningGoal].filter(Boolean).join(" ").toLowerCase();
+    return (status === "ALL" || request.status === status) && haystack.includes(query.trim().toLowerCase());
+  });
+  const statuses = [...new Set(data.bookingRequests.map((request) => request.status))].sort();
+  const pending = data.bookingRequests.filter((request) => request.status === "PENDING").length;
+  const label = (value: string) => value.charAt(0) + value.slice(1).toLowerCase();
+  const requestState = (value: string) => value === "PENDING"
+    ? { rail: "border-l-4 border-l-emerald-600", badge: "border-emerald-200 bg-emerald-50 text-emerald-800", cue: "Response needed" }
+    : value === "ACCEPTED"
+      ? { rail: "border-l-4 border-l-sky-500", badge: "border-sky-200 bg-sky-50 text-sky-800", cue: "Accepted request" }
+      : { rail: "border-l-4 border-l-slate-300", badge: "border-slate-200 bg-slate-50 text-slate-700", cue: "Closed request" };
+
+  return <div className="space-y-6">
+    <section className="border-l-4 border-emerald-600 bg-emerald-50/70 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div><p className="text-sm font-semibold text-emerald-800">Client relationships</p><h2 className="mt-1 text-2xl font-semibold">Requests from learners</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Only learners who have sent a request through your teaching profile appear here. Use Communication to reply or update a request.</p></div>
+        <ActionLink href="/communication" primary>Open Communication</ActionLink>
+      </div>
+    </section>
+    <section className="grid gap-3 sm:grid-cols-2"><Metric label="Client requests" value={data.bookingRequests.length} detail="All recorded requests" /><Metric label="Needs your response" value={pending} detail="Pending requests" /></section>
+    {data.bookingRequests.length ? <>
+      <section aria-label="Filter clients" className="grid gap-3 border bg-surface p-4 sm:grid-cols-[minmax(0,1fr)_190px]">
+        <Field label="Search clients"><Input aria-label="Search clients" onChange={(event) => setQuery(event.target.value)} placeholder="Search name, subject, class or goal" value={query} /></Field>
+        <Field label="Request status"><Select aria-label="Filter client requests by status" onChange={(event) => setStatus(event.target.value)} value={status}><option value="ALL">All statuses</option>{statuses.map((value) => <option key={value} value={value}>{label(value)}</option>)}</Select></Field>
+      </section>
+      <p aria-live="polite" className="text-sm text-muted-foreground">{requests.length} {requests.length === 1 ? "client request" : "client requests"} shown</p>
+      {requests.length ? <section aria-label="Client requests" className="grid gap-3 lg:grid-cols-2">{requests.map((request) => { const state = requestState(request.status); return <article className={`border bg-surface p-5 ${state.rail}`} key={request.id}>
+        <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{state.cue}</p><h3 className="mt-1 text-lg font-semibold">{request.studentName}</h3></div><Badge className={state.badge}>{label(request.status)}</Badge></div>
+        <div className="mt-4 border-y bg-muted/30 px-3 py-3"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Appointment request</p><p className="mt-1 text-sm font-medium">{request.subject}{request.className ? ` - ${request.className}` : ""}</p><p className="mt-1 text-sm text-muted-foreground">{request.preferredDate ? new Date(request.preferredDate).toLocaleDateString() : "Date not selected"}{request.preferredTime ? ` - ${request.preferredTime}` : ""}</p></div>
+        <dl className="mt-4 grid gap-3 text-sm">{request.learningGoal ? <div><dt className="font-medium text-muted-foreground">Learning goal</dt><dd className="mt-1 leading-6">{request.learningGoal}</dd></div> : null}<div><dt className="font-medium text-muted-foreground">Request received</dt><dd className="mt-1">{new Date(request.createdAt).toLocaleDateString()}</dd></div></dl>
+        <div className="mt-5"><ActionLink href="/communication">Manage request</ActionLink></div>
+      </article>; })}</section> : <EmptyAction action="Clear filters" description="No client request matches your search or selected status." href="/teacher/business/clients" icon={<Search className="h-5 w-5" />} title="No matching clients" />}
+    </> : <EmptyAction action="Set up Teach 1:1" description="Clients will appear here when a learner sends a request through your public professional teaching profile." href="/teacher/business/one-to-one" icon={<UsersRound className="h-5 w-5" />} title="No clients yet" />}
+  </div>;
 }
 
 function Profile({ data }: { data: Data }) {
@@ -477,5 +519,5 @@ function Downloads({ data }: { data: Data }) {
 
 export function TeacherBusinessPage({ module, data }: { module: TeacherBusinessModule; data: Data }) {
   const active = modules.find((item) => item.slug === module)!;
-  return <div className="min-w-0 space-y-6"><nav className="text-sm text-muted-foreground"><Link href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span>Business</span><span className="mx-2">/</span><span className="text-foreground">{active.label}</span></nav><header className="border-b pb-5"><Badge>Teacher Business OS</Badge><h1 className="mt-3 text-3xl font-semibold">{active.label}</h1><p className="mt-2 max-w-3xl text-muted-foreground">{descriptions[module]}</p></header><nav aria-label="Teacher business modules" className="flex max-w-full gap-2 overflow-x-auto pb-2">{modules.map((item) => { const Icon = item.icon; return <Link aria-current={module === item.slug ? "page" : undefined} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-medium ${module === item.slug ? "bg-primary text-primary-foreground" : "border bg-surface"}`} href={`/teacher/business/${item.slug}`} key={item.slug}><Icon className="h-4 w-4" />{item.label}</Link>; })}</nav>{module === "home" ? <BusinessHome data={data} /> : module === "services" ? <MyServices data={data} /> : module === "schedule" ? <Schedule data={data} /> : module === "availability" ? <Availability data={data} /> : module === "one-to-one" ? <OneToOne data={data} /> : module === "profile" ? <Profile data={data} /> : module === "portfolio" ? <Portfolio data={data} /> : module === "publishing" ? <Publishing data={data} /> : module === "happy-notes" ? <HappyNotes data={data} /> : module === "marketplace" ? <Marketplace data={data} /> : module === "orders" ? <Orders data={data} /> : module === "earnings" ? <Earnings data={data} /> : module === "wallet" ? <Wallet data={data} /> : module === "payouts" ? <Payouts data={data} /> : module === "analytics" ? <Analytics data={data} /> : module === "subscription" ? <Subscription data={data} /> : module === "opportunities" ? <Opportunities /> : <Downloads data={data} />}</div>;
+  return <div className="min-w-0 space-y-6"><nav className="text-sm text-muted-foreground"><Link href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span>Business</span><span className="mx-2">/</span><span className="text-foreground">{active.label}</span></nav><header className="border-b pb-5"><Badge>Teacher Business OS</Badge><h1 className="mt-3 text-3xl font-semibold">{active.label}</h1><p className="mt-2 max-w-3xl text-muted-foreground">{descriptions[module]}</p></header><nav aria-label="Teacher business modules" className="flex max-w-full gap-2 overflow-x-auto pb-2">{modules.map((item) => { const Icon = item.icon; return <Link aria-current={module === item.slug ? "page" : undefined} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-medium ${module === item.slug ? "bg-primary text-primary-foreground" : "border bg-surface"}`} href={`/teacher/business/${item.slug}`} key={item.slug}><Icon className="h-4 w-4" />{item.label}</Link>; })}</nav>{module === "home" ? <BusinessHome data={data} /> : module === "services" ? <MyServices data={data} /> : module === "schedule" ? <Schedule data={data} /> : module === "clients" ? <Clients data={data} /> : module === "availability" ? <Availability data={data} /> : module === "one-to-one" ? <OneToOne data={data} /> : module === "profile" ? <Profile data={data} /> : module === "portfolio" ? <Portfolio data={data} /> : module === "publishing" ? <Publishing data={data} /> : module === "happy-notes" ? <HappyNotes data={data} /> : module === "marketplace" ? <Marketplace data={data} /> : module === "orders" ? <Orders data={data} /> : module === "earnings" ? <Earnings data={data} /> : module === "wallet" ? <Wallet data={data} /> : module === "payouts" ? <Payouts data={data} /> : module === "analytics" ? <Analytics data={data} /> : module === "subscription" ? <Subscription data={data} /> : module === "opportunities" ? <Opportunities /> : <Downloads data={data} />}</div>;
 }

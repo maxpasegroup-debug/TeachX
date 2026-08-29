@@ -121,3 +121,13 @@ test("Earn More schedule uses the existing restricted booking workflow", () => {
   assert.match(component, /href="\/communication"/);
   assert.match(component, /Appointment slots, payments, and video links are not created/);
 });
+
+test("Earn More Clients reuses only teacher-scoped booking request data", () => {
+  const service = read("services/teacher-business-service.ts");
+  const component = read("features/teacher-business/components/teacher-business-page.tsx");
+  assert.match(service, /teacherBookingRequest\.findMany\(\{\s*where: \{ teacherId: userId, teacherProfile: \{ user: \{ institutionId \} \} \}/);
+  assert.match(component, /slug: "clients"/);
+  assert.match(component, /function Clients\(/);
+  assert.match(component, /href="\/communication"/);
+  assert.doesNotMatch(component.slice(component.indexOf("function Clients"), component.indexOf("function Profile")), /studentEmail|session count|revenue/i);
+});
