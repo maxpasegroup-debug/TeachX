@@ -231,7 +231,7 @@ export async function saveEarningServiceAction(formData: FormData) {
     expertise: list(formData, "expertise"),
     availability: value(formData, "availability").slice(0, 1000) || null
   };
-  if (id) {
+  if (existing) {
     await prisma.teacherEarningService.updateMany({ where: { id: existing.id, institutionId: teacher.institutionId, teacherId: teacher.id }, data: payload });
     await businessActivity(teacher, `Updated ${type.toLowerCase()} service: ${title}`, existing.id);
   } else {
