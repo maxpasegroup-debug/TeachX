@@ -131,11 +131,16 @@ export const authConfig = {
       async authorize(credentials, request) {
         const parsed = staffLoginSchema.safeParse(credentials);
         if (!parsed.success) return null;
-        const limited = await rateLimit(`staff-login:${getClientKey(request, parsed.data.email.toLowerCase())}`, 10, 60_000);
+        // A shared network (school, office, or the parallel browser QA suite)
+        // must not let one account's valid sign-ins exhaust every other
+        // account's login budget. Keep the IP dimension while isolating the
+        // budget to the email address being authenticated.
+        const email = parsed.data.email.toLowerCase();
+        const limited = await rateLimit(`staff-login:${getClientKey(request, "unknown")}:${email}`, 10, 60_000);
         if (limited) return null;
 
         const user = await prisma.user.findUnique({
-          where: { email: parsed.data.email.toLowerCase() },
+          where: { email },
           include: userRelations
         });
 
