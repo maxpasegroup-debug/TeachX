@@ -51,6 +51,16 @@ async function authenticatedCommunityActor(): Promise<CommunityActor | null> {
   };
 }
 
+async function authenticatedPersonalActor() {
+  const session = await auth();
+  if (!session?.user.id || session.user.institutionId) return null;
+
+  return prisma.user.findFirst({
+    where: { id: session.user.id, institutionId: null, status: "ACTIVE" },
+    select: { id: true }
+  });
+}
+
 export async function requireCommunityActor() {
   const actor = await authenticatedCommunityActor();
   if (!actor) throw new Error("Community access requires an active workspace.");
@@ -132,6 +142,20 @@ export async function getGlobalInbox() {
 export async function getCommunityOS(notificationQuery?: string) {
   const actor = await authenticatedCommunityActor();
   if (!actor) {
+    // A teacher without a workspace must never read institution-owned Community
+    // data. Their own private notifications remain safe and useful while they
+    // complete onboarding.
+    const personalActor = await authenticatedPersonalActor();
+    if (personalActor) {
+      return {
+        communication: { communications: [], logs: [] },
+        inbox: emptyInbox(),
+        notifications: await getEnhancedNotificationCenter(notificationQuery),
+        activities: [], requests: [], discussions: [], communities: [], templates: [], users: [],
+        providers: notificationProviders, automationEvents
+      };
+    }
+
     return {
       communication: { communications: [], logs: [] },
       inbox: emptyInbox(),

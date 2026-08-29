@@ -41,7 +41,10 @@ async function main() {
 
   run("npx", ["prisma", "generate"], env);
   run("npm", ["run", "build"], env);
-  run("npx", ["playwright", "test", "tests/e2e/qa001-community-tenant-isolation.spec.ts"], env);
+  // The tenant fixture intentionally mutates an isolated database. Run the
+  // desktop and mobile projects serially so a retry cannot reset another
+  // project's fixture while it is still exercising its authenticated flow.
+  run("npx", ["playwright", "test", "tests/e2e/qa001-community-tenant-isolation.spec.ts", "--workers=1"], env);
 }
 
 main().catch((error) => {
