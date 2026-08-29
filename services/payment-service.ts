@@ -10,6 +10,7 @@ import { captureOperationalError } from "@/lib/observability/logger";
 import { getPaymentConfig, minorAmount } from "@/lib/payments/config";
 import { getAICreditPackage } from "@/lib/payments/ai-credit-catalog";
 import { createRazorpayOrder, createRazorpayRefund, stripe } from "@/lib/payments/providers";
+import { fulfilLiveProgramRegistrationItem, fulfilTeacherServiceBookingItem, reverseEarnMoreFulfilment } from "@/services/earn-more-fulfilment-service";
 import { sendCommerceEmail } from "@/services/transactional-email-service";
 
 export async function getPaymentOverview(institutionId?: string | null) {
@@ -151,6 +152,14 @@ async function fulfil(tx: Prisma.TransactionClient, order: OrderForPayment, sign
 
   for (const item of order.items) {
     const metadata = jsonObject(item.metadata);
+    if (item.itemType === "BOOKING" && typeof metadata.liveProgramRegistrationId === "string") {
+      await fulfilLiveProgramRegistrationItem(tx, { orderId: order.id, registrationId: metadata.liveProgramRegistrationId, provider: signal.provider, providerPaymentId: signal.providerPaymentId });
+      continue;
+    }
+    if (item.itemType === "BOOKING" && item.teacherServiceBookingId) {
+      await fulfilTeacherServiceBookingItem(tx, { orderId: order.id, itemId: item.id, provider: signal.provider, providerPaymentId: signal.providerPaymentId });
+      continue;
+    }
     if (item.itemType === "RESOURCE" && item.resourceId && typeof metadata.listingId === "string") {
       await tx.marketplaceEntitlement.upsert({
         where: { userId_contentItemId: { userId: order.buyerId, contentItemId: item.resourceId } },
@@ -226,6 +235,7 @@ async function fulfil(tx: Prisma.TransactionClient, order: OrderForPayment, sign
 async function reverse(tx: Prisma.TransactionClient, order: OrderForPayment, signal: PaymentSignal) {
   const changed = await tx.commerceOrder.updateMany({ where: { id: order.id, status: { in: ["PAID", "FULFILLED", "REFUND_PENDING"] } }, data: { status: "REFUNDED", refundedAt: new Date() } });
   if (!changed.count) return false;
+  await reverseEarnMoreFulfilment(tx, { orderId: order.id, providerRefundId: signal.providerRefundId });
   await tx.userSubscription.updateMany({ where: { id: `payment-subscription-${order.id}` }, data: { status: "EXPIRED", currentPeriodEnd: new Date() } });
   await tx.marketplaceEntitlement.updateMany({ where: { orderId: order.id }, data: { status: "REVOKED", revokedAt: new Date() } });
 

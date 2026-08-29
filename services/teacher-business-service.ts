@@ -37,7 +37,7 @@ export async function getTeacherBusinessData(userId?: string, institutionId?: st
   const trendSince = new Date();
   trendSince.setDate(1); trendSince.setHours(0, 0, 0, 0); trendSince.setMonth(trendSince.getMonth() - 5);
 
-  const [portfolio, happyNotes, resources, sales, purchases, ownDownloads, wallets, earningTransactions, credits, plans, invoices, profileViews, followers, activities, trialSubscription, earningServices, bookingRequests, teacherAvailability] = await Promise.all([
+  const [portfolio, happyNotes, resources, sales, purchases, ownDownloads, wallets, earningTransactions, credits, plans, invoices, profileViews, followers, activities, trialSubscription, earningServices, bookingRequests, teacherAvailability, payoutAccounts, payoutRequests, settlements] = await Promise.all([
     prisma.userPreference.findMany({ where: { userId, key: { startsWith: "teacher-portfolio:" } }, orderBy: { updatedAt: "desc" }, take: 100 }),
     prisma.userPreference.findMany({ where: { userId, key: { startsWith: "happy-notes-submission:" } }, orderBy: { updatedAt: "desc" }, take: 50 }),
     prisma.contentItem.findMany({
@@ -97,7 +97,10 @@ export async function getTeacherBusinessData(userId?: string, institutionId?: st
     prisma.teacherAvailability.findFirst({
       where: { institutionId, teacherId: userId },
       include: { weeklyRules: { orderBy: { weekday: "asc" } }, unavailableDates: { orderBy: { date: "asc" }, take: 90 } }
-    })
+    }),
+    prisma.teacherPayoutAccount.findMany({ where: { institutionId, teacherId: userId }, orderBy: { updatedAt: "desc" }, take: 10 }),
+    prisma.teacherPayoutRequest.findMany({ where: { institutionId, teacherId: userId }, orderBy: { createdAt: "desc" }, take: 50 }),
+    prisma.earnMoreSettlement.findMany({ where: { institutionId, teacherId: userId }, orderBy: { createdAt: "desc" }, take: 100 })
   ]);
 
   const availability = record(user.teacherProfile?.availability);
@@ -199,7 +202,15 @@ export async function getTeacherBusinessData(userId?: string, institutionId?: st
       pending: primaryEarnings.pending, completed: primaryEarnings.completed, marketplace: primaryEarnings.completed,
       available: primaryEarnings.available, platformCommission: null as number | null, byCurrency: earningsByCurrency, trend: monthlyTrend
     },
-    payouts: { supported: false, eligible: false, status: "NOT_CONFIGURED", history: [] as { id: string; amount: number; currency: string; status: string; createdAt: string }[], reason: "A verified payout provider and settlement request workflow are not configured for teacher wallets." },
+    payouts: {
+      supported: true,
+      eligible: payoutAccounts.some((account) => account.status === "VERIFIED" && account.kycStatus === "VERIFIED") && primaryEarnings.available > 0,
+      status: payoutAccounts.some((account) => account.status === "VERIFIED" && account.kycStatus === "VERIFIED") ? "READY" : payoutAccounts.some((account) => account.status === "PENDING_REVIEW") ? "PENDING_REVIEW" : "NOT_CONFIGURED",
+      accounts: payoutAccounts.map((account) => ({ id: account.id, provider: account.provider, status: account.status, kycStatus: account.kycStatus, verifiedAt: account.verifiedAt?.toISOString() ?? null })),
+      history: payoutRequests.map((request) => ({ id: request.id, amount: Number(request.amount), currency: request.currency, status: request.status, createdAt: request.createdAt.toISOString() })),
+      settlements: settlements.map((settlement) => ({ id: settlement.id, grossAmount: Number(settlement.grossAmount), commissionAmount: Number(settlement.commissionAmount), netAmount: Number(settlement.netAmount), currency: settlement.currency, status: settlement.status, availableAt: settlement.availableAt.toISOString() })),
+      reason: ""
+    },
     analytics: {
       profileViews, resourceViews: resources.reduce((sum, item) => sum + (item.analytics?.views ?? 0), 0),
       downloads: resources.reduce((sum, item) => sum + (item.analytics?.downloads ?? 0), 0), sales: paidSales.length, pendingOrders: pendingSales.length, followers,

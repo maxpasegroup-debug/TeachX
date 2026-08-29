@@ -712,6 +712,71 @@ enum CommerceOrderStatus {
   REFUNDED
 }
 
+/// States for one-to-one work. Reserved states are additionally protected by
+/// a PostgreSQL overlap constraint in the matching migration.
+enum TeacherServiceBookingStatus {
+  RESERVED
+  PENDING_PAYMENT
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  EXPIRED
+  REFUNDED
+  DISPUTED
+}
+
+enum EarnMoreSettlementStatus {
+  PENDING
+  AVAILABLE
+  PAID_OUT
+  REFUNDED
+  DISPUTED
+  CANCELLED
+}
+
+enum TeacherPayoutAccountStatus {
+  NOT_SUBMITTED
+  PENDING_REVIEW
+  VERIFIED
+  REJECTED
+  DISABLED
+}
+
+enum TeacherPayoutRequestStatus {
+  REQUESTED
+  UNDER_REVIEW
+  PROCESSING
+  PAID
+  FAILED
+  REJECTED
+  CANCELLED
+}
+
+enum EarnMoreDisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+  CANCELLED
+}
+
+enum TeacherLiveProgramStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum TeacherLiveProgramRegistrationStatus {
+  RESERVED
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+}
+
 enum OperationalIncidentSeverity {
   SEV1
   SEV2
@@ -840,92 +905,100 @@ enum VisitorStatus {
 }
 
 model Institution {
-  id                             String                          @id @default(cuid())
-  name                           String
-  logoUrl                        String?
-  primaryColor                   String                          @default("#111827")
-  secondaryColor                 String                          @default("#64748b")
-  address                        String?
-  phone                          String?
-  email                          String?
-  website                        String?
-  timezone                       String                          @default("Asia/Kolkata")
-  academicYear                   String?
-  currency                       String                          @default("INR")
-  users                          User[]
-  settings                       Setting[]
-  notifications                  Notification[]
-  auditLogs                      AuditLog[]
-  branches                       Branch[]
-  academicYears                  AcademicYear[]
-  departments                    Department[]
-  courses                        Course[]
-  plannerEvents                  PlannerEvent[]
-  timeSlots                      TimeSlot[]
-  rooms                          Room[]
-  classrooms                     Classroom[]
-  leadSources                    CampaignSource[]
-  campaigns                      Campaign[]
-  leads                          Lead[]
-  applications                   Application[]
-  admissions                     Admission[]
-  partners                       Partner[]
-  questionImports                QuestionImport[]
-  exams                          Exam[]
-  feeHeads                       FeeHead[]
-  feePlans                       FeePlan[]
-  studentFees                    StudentFee[]
-  payments                       Payment[]
-  invoices                       Invoice[]
-  receipts                       Receipt[]
-  expenseCategories              ExpenseCategory[]
-  expenses                       Expense[]
-  payrolls                       Payroll[]
-  visitors                       Visitor[]
-  appointments                   Appointment[]
-  contentFolders                 ContentFolder[]
-  contentItems                   ContentItem[]
-  activities                     Activity[]
-  communications                 Communication[]
-  directConversations            DirectConversation[]
-  communities                    Community[]
-  genericDiscussions             GenericDiscussion[]
-  notificationTemplates          NotificationTemplate[]
-  activityEvents                 ActivityEvent[]
-  supportTickets                 SupportTicket[]
-  supportReplies                 SupportReply[]
-  featureFlags                   FeatureFlag[]
-  platformMetrics                PlatformMetric[]
-  aiConversations                AIConversation[]
-  aiUsages                       AIUsage[]
-  promptTemplates                PromptTemplate[]
-  automationRules                AutomationRule[]
-  subscriptionPlans              SubscriptionPlan[]
-  userSubscriptions              UserSubscription[]
-  wallets                        Wallet[]
-  walletTransactions             WalletTransaction[]
-  commerceOrders                 CommerceOrder[]
-  coupons                        Coupon[]
-  referrals                      Referral[]
-  commerceInvoices               CommerceInvoice[]
-  commerceCreditNotes            CommerceCreditNote[]
-  commercePaymentEvents          CommercePaymentEvent[]
-  transactionalEmails            TransactionalEmail[]
-  storageObjects                 StorageObject[]
-  teacherEarningServices         TeacherEarningService[]
-  teacherAvailabilities          TeacherAvailability[]
-  studentCommunityRequests       StudentCommunityRequest[]       @relation("StudentCommunityRequestInstitution")
-  studentCommunityVotes          StudentCommunityVote[]          @relation("StudentCommunityVoteInstitution")
-  studentAcceptedAnswers         StudentAcceptedAnswer[]         @relation("StudentAcceptedAnswerInstitution")
-  studentAcceptedAnswerHistory   StudentAcceptedAnswerHistory[]  @relation("StudentAcceptedAnswerHistoryInstitution")
-  studentCommunityReports        StudentCommunityReport[]        @relation("StudentCommunityReportInstitution")
-  studentCommunityBlocks         StudentCommunityBlock[]         @relation("StudentCommunityBlockInstitution")
-  studentCommunityResourceShares StudentCommunityResourceShare[] @relation("StudentCommunityResourceShareInstitution")
-  studentGroupEvents             StudentGroupEvent[]             @relation("StudentGroupEventInstitution")
-  studentGroupChallenges         StudentGroupChallenge[]         @relation("StudentGroupChallengeInstitution")
-  studentCommunityReputations    StudentCommunityReputation[]    @relation("StudentCommunityReputationInstitution")
-  createdAt                      DateTime                        @default(now())
-  updatedAt                      DateTime                        @updatedAt
+  id                              String                           @id @default(cuid())
+  name                            String
+  logoUrl                         String?
+  primaryColor                    String                           @default("#111827")
+  secondaryColor                  String                           @default("#64748b")
+  address                         String?
+  phone                           String?
+  email                           String?
+  website                         String?
+  timezone                        String                           @default("Asia/Kolkata")
+  academicYear                    String?
+  currency                        String                           @default("INR")
+  users                           User[]
+  settings                        Setting[]
+  notifications                   Notification[]
+  auditLogs                       AuditLog[]
+  branches                        Branch[]
+  academicYears                   AcademicYear[]
+  departments                     Department[]
+  courses                         Course[]
+  plannerEvents                   PlannerEvent[]
+  timeSlots                       TimeSlot[]
+  rooms                           Room[]
+  classrooms                      Classroom[]
+  leadSources                     CampaignSource[]
+  campaigns                       Campaign[]
+  leads                           Lead[]
+  applications                    Application[]
+  admissions                      Admission[]
+  partners                        Partner[]
+  questionImports                 QuestionImport[]
+  exams                           Exam[]
+  feeHeads                        FeeHead[]
+  feePlans                        FeePlan[]
+  studentFees                     StudentFee[]
+  payments                        Payment[]
+  invoices                        Invoice[]
+  receipts                        Receipt[]
+  expenseCategories               ExpenseCategory[]
+  expenses                        Expense[]
+  payrolls                        Payroll[]
+  visitors                        Visitor[]
+  appointments                    Appointment[]
+  contentFolders                  ContentFolder[]
+  contentItems                    ContentItem[]
+  activities                      Activity[]
+  communications                  Communication[]
+  directConversations             DirectConversation[]
+  communities                     Community[]
+  genericDiscussions              GenericDiscussion[]
+  notificationTemplates           NotificationTemplate[]
+  activityEvents                  ActivityEvent[]
+  supportTickets                  SupportTicket[]
+  supportReplies                  SupportReply[]
+  featureFlags                    FeatureFlag[]
+  platformMetrics                 PlatformMetric[]
+  aiConversations                 AIConversation[]
+  aiUsages                        AIUsage[]
+  promptTemplates                 PromptTemplate[]
+  automationRules                 AutomationRule[]
+  subscriptionPlans               SubscriptionPlan[]
+  userSubscriptions               UserSubscription[]
+  wallets                         Wallet[]
+  walletTransactions              WalletTransaction[]
+  commerceOrders                  CommerceOrder[]
+  coupons                         Coupon[]
+  referrals                       Referral[]
+  commerceInvoices                CommerceInvoice[]
+  commerceCreditNotes             CommerceCreditNote[]
+  commercePaymentEvents           CommercePaymentEvent[]
+  transactionalEmails             TransactionalEmail[]
+  storageObjects                  StorageObject[]
+  teacherEarningServices          TeacherEarningService[]
+  teacherAvailabilities           TeacherAvailability[]
+  teacherServiceBookings          TeacherServiceBooking[]
+  earnMoreCommissionPolicies      EarnMoreCommissionPolicy[]
+  earnMoreSettlements             EarnMoreSettlement[]
+  teacherPayoutAccounts           TeacherPayoutAccount[]
+  teacherPayoutRequests           TeacherPayoutRequest[]
+  earnMoreDisputes                EarnMoreDispute[]
+  teacherLivePrograms             TeacherLiveProgram[]
+  teacherLiveProgramRegistrations TeacherLiveProgramRegistration[]
+  studentCommunityRequests        StudentCommunityRequest[]        @relation("StudentCommunityRequestInstitution")
+  studentCommunityVotes           StudentCommunityVote[]           @relation("StudentCommunityVoteInstitution")
+  studentAcceptedAnswers          StudentAcceptedAnswer[]          @relation("StudentAcceptedAnswerInstitution")
+  studentAcceptedAnswerHistory    StudentAcceptedAnswerHistory[]   @relation("StudentAcceptedAnswerHistoryInstitution")
+  studentCommunityReports         StudentCommunityReport[]         @relation("StudentCommunityReportInstitution")
+  studentCommunityBlocks          StudentCommunityBlock[]          @relation("StudentCommunityBlockInstitution")
+  studentCommunityResourceShares  StudentCommunityResourceShare[]  @relation("StudentCommunityResourceShareInstitution")
+  studentGroupEvents              StudentGroupEvent[]              @relation("StudentGroupEventInstitution")
+  studentGroupChallenges          StudentGroupChallenge[]          @relation("StudentGroupChallengeInstitution")
+  studentCommunityReputations     StudentCommunityReputation[]     @relation("StudentCommunityReputationInstitution")
+  createdAt                       DateTime                         @default(now())
+  updatedAt                       DateTime                         @updatedAt
 }
 
 model User {
@@ -952,6 +1025,14 @@ model User {
   teacherProfile                      TeacherProfile?
   teacherEarningServices              TeacherEarningService[]
   teacherAvailabilities               TeacherAvailability[]
+  teacherServiceBookingsAsTeacher     TeacherServiceBooking[]            @relation("TeacherServiceBookingTeacher")
+  teacherServiceBookingsAsLearner     TeacherServiceBooking[]            @relation("TeacherServiceBookingLearner")
+  earnMoreSettlements                 EarnMoreSettlement[]               @relation("EarnMoreSettlementTeacher")
+  teacherPayoutAccounts               TeacherPayoutAccount[]
+  teacherPayoutRequests               TeacherPayoutRequest[]
+  earnMoreDisputesRaised              EarnMoreDispute[]                  @relation("EarnMoreDisputeRaisedBy")
+  teacherLivePrograms                 TeacherLiveProgram[]
+  teacherLiveProgramRegistrations     TeacherLiveProgramRegistration[]   @relation("TeacherLiveProgramRegistrationLearner")
   studentProfile                      StudentProfile?
   notifications                       Notification[]
   plannerItemsCreated                 PlannerEvent[]                     @relation("PlannerEventCreator")
@@ -2427,34 +2508,39 @@ model WalletTransaction {
 }
 
 model CommerceOrder {
-  id                      String                   @id @default(cuid())
-  institutionId           String?
-  institution             Institution?             @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  buyerId                 String
-  buyer                   User                     @relation("CommerceOrderBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
-  type                    CommerceOrderType
-  status                  CommerceOrderStatus      @default(CREATED)
-  subtotal                Decimal                  @default(0)
-  discount                Decimal                  @default(0)
-  tax                     Decimal                  @default(0)
-  total                   Decimal                  @default(0)
-  currency                String                   @default("INR")
-  couponId                String?
-  coupon                  Coupon?                  @relation(fields: [couponId], references: [id], onDelete: SetNull)
-  gateway                 String?
-  gatewayOrderId          String?
-  gatewayPaymentId        String?                  @unique
-  paidAt                  DateTime?
-  refundedAt              DateTime?
-  metadata                Json?
-  items                   CommerceOrderItem[]
-  walletTransactions      WalletTransaction[]
-  invoices                CommerceInvoice[]
-  marketplaceEntitlements MarketplaceEntitlement[]
-  paymentEvents           CommercePaymentEvent[]
-  creditNotes             CommerceCreditNote[]
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
+  id                       String                           @id @default(cuid())
+  institutionId            String?
+  institution              Institution?                     @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  buyerId                  String
+  buyer                    User                             @relation("CommerceOrderBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  type                     CommerceOrderType
+  status                   CommerceOrderStatus              @default(CREATED)
+  subtotal                 Decimal                          @default(0)
+  discount                 Decimal                          @default(0)
+  tax                      Decimal                          @default(0)
+  total                    Decimal                          @default(0)
+  currency                 String                           @default("INR")
+  couponId                 String?
+  coupon                   Coupon?                          @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  gateway                  String?
+  gatewayOrderId           String?
+  gatewayPaymentId         String?                          @unique
+  paidAt                   DateTime?
+  refundedAt               DateTime?
+  metadata                 Json?
+  items                    CommerceOrderItem[]
+  walletTransactions       WalletTransaction[]
+  invoices                 CommerceInvoice[]
+  marketplaceEntitlements  MarketplaceEntitlement[]
+  paymentEvents            CommercePaymentEvent[]
+  creditNotes              CommerceCreditNote[]
+  teacherServiceBooking    TeacherServiceBooking?
+  earnMoreSettlements      EarnMoreSettlement[]
+  payoutRequests           TeacherPayoutRequest[]
+  disputes                 EarnMoreDispute[]
+  liveProgramRegistrations TeacherLiveProgramRegistration[]
+  createdAt                DateTime                         @default(now())
+  updatedAt                DateTime                         @updatedAt
 
   @@index([institutionId, status, createdAt])
   @@index([buyerId, createdAt])
@@ -2487,27 +2573,30 @@ model CommercePaymentEvent {
 }
 
 model CommerceOrderItem {
-  id               String                 @id @default(cuid())
-  orderId          String
-  order            CommerceOrder          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  itemType         CommerceItemType
-  title            String
-  quantity         Int                    @default(1)
-  unitPrice        Decimal                @default(0)
-  total            Decimal                @default(0)
-  resourceId       String?
-  resource         ContentItem?           @relation(fields: [resourceId], references: [id], onDelete: SetNull)
-  planId           String?
-  plan             SubscriptionPlan?      @relation(fields: [planId], references: [id], onDelete: SetNull)
-  bookingRequestId String?
-  bookingRequest   TeacherBookingRequest? @relation(fields: [bookingRequestId], references: [id], onDelete: SetNull)
-  sellerId         String?
-  seller           User?                  @relation("CommerceOrderItemSeller", fields: [sellerId], references: [id], onDelete: SetNull)
-  metadata         Json?
-  createdAt        DateTime               @default(now())
+  id                      String                 @id @default(cuid())
+  orderId                 String
+  order                   CommerceOrder          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  itemType                CommerceItemType
+  title                   String
+  quantity                Int                    @default(1)
+  unitPrice               Decimal                @default(0)
+  total                   Decimal                @default(0)
+  resourceId              String?
+  resource                ContentItem?           @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+  planId                  String?
+  plan                    SubscriptionPlan?      @relation(fields: [planId], references: [id], onDelete: SetNull)
+  bookingRequestId        String?
+  bookingRequest          TeacherBookingRequest? @relation(fields: [bookingRequestId], references: [id], onDelete: SetNull)
+  teacherServiceBookingId String?
+  teacherServiceBooking   TeacherServiceBooking? @relation(fields: [teacherServiceBookingId], references: [id], onDelete: SetNull)
+  sellerId                String?
+  seller                  User?                  @relation("CommerceOrderItemSeller", fields: [sellerId], references: [id], onDelete: SetNull)
+  metadata                Json?
+  createdAt               DateTime               @default(now())
 
   @@index([resourceId])
   @@index([sellerId])
+  @@index([teacherServiceBookingId])
 }
 
 model Coupon {
@@ -3161,6 +3250,7 @@ model TeacherEarningService {
   status        String                      @default("DRAFT")
   currency      String                      @default("INR")
   plans         TeacherEarningServicePlan[]
+  bookings      TeacherServiceBooking[]
   createdAt     DateTime                    @default(now())
   updatedAt     DateTime                    @updatedAt
 
@@ -3169,18 +3259,19 @@ model TeacherEarningService {
 }
 
 model TeacherEarningServicePlan {
-  id          String                @id @default(cuid())
+  id          String                  @id @default(cuid())
   serviceId   String
-  service     TeacherEarningService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  service     TeacherEarningService   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   name        String
   description String?
   duration    String?
   sessions    Int?
   price       Decimal
-  currency    String                @default("INR")
-  status      String                @default("ACTIVE")
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
+  currency    String                  @default("INR")
+  status      String                  @default("ACTIVE")
+  bookings    TeacherServiceBooking[]
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
 
   @@index([serviceId, status])
 }
@@ -3233,9 +3324,9 @@ model TeacherAvailabilityUnavailableDate {
 }
 
 model TeacherBookingRequest {
-  id                 String              @id @default(cuid())
+  id                 String                  @id @default(cuid())
   teacherProfileId   String
-  teacherProfile     TeacherProfile      @relation("TeacherBookingRequests", fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  teacherProfile     TeacherProfile          @relation("TeacherBookingRequests", fields: [teacherProfileId], references: [id], onDelete: Cascade)
   teacherId          String
   studentId          String
   studentName        String
@@ -3246,16 +3337,205 @@ model TeacherBookingRequest {
   className          String?
   learningGoal       String?
   message            String?
-  status             String              @default("PENDING")
+  status             String                  @default("PENDING")
   teacherNotes       String?
   studentNotes       String?
   history            Json?
   commerceOrderItems CommerceOrderItem[]
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  serviceBookings    TeacherServiceBooking[]
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
 
   @@index([teacherId, status, createdAt])
   @@index([studentId, createdAt])
+}
+
+/// An atomic, paid one-to-one reservation. The teacher/learner and institution
+/// are repeated deliberately so every mutation can apply an explicit tenant
+/// boundary without relying on a client supplied profile or service id.
+model TeacherServiceBooking {
+  id                   String                      @id @default(cuid())
+  institutionId        String
+  institution          Institution                 @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  teacherId            String
+  teacher              User                        @relation("TeacherServiceBookingTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  learnerId            String
+  learner              User                        @relation("TeacherServiceBookingLearner", fields: [learnerId], references: [id], onDelete: Cascade)
+  serviceId            String?
+  service              TeacherEarningService?      @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  servicePlanId        String?
+  servicePlan          TeacherEarningServicePlan?  @relation(fields: [servicePlanId], references: [id], onDelete: SetNull)
+  bookingRequestId     String?                     @unique
+  bookingRequest       TeacherBookingRequest?      @relation(fields: [bookingRequestId], references: [id], onDelete: SetNull)
+  orderId              String?                     @unique
+  order                CommerceOrder?              @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  startsAt             DateTime
+  endsAt               DateTime
+  timezone             String
+  status               TeacherServiceBookingStatus @default(RESERVED)
+  reservationExpiresAt DateTime?
+  idempotencyKey       String
+  meetingDetails       Json?
+  notes                String?
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  CommerceOrderItem    CommerceOrderItem[]
+  EarnMoreSettlement   EarnMoreSettlement?
+  EarnMoreDispute      EarnMoreDispute[]
+
+  @@unique([institutionId, learnerId, idempotencyKey])
+  @@index([institutionId, teacherId, startsAt])
+  @@index([institutionId, learnerId, startsAt])
+  @@index([status, reservationExpiresAt])
+}
+
+/// Set by a finance administrator. No commission policy means no payable Earn
+/// More checkout: we never guess a platform fee.
+model EarnMoreCommissionPolicy {
+  id             String      @id @default(cuid())
+  institutionId  String
+  institution    Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  source         String
+  commissionBps  Int
+  settlementDays Int         @default(7)
+  isActive       Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([institutionId, source])
+}
+
+/// Immutable financial split for an educator sale. Wallet changes are made from
+/// this server-created ledger, never from a browser-provided calculation.
+model EarnMoreSettlement {
+  id               String                   @id @default(cuid())
+  institutionId    String
+  institution      Institution              @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  orderId          String                   @unique
+  order            CommerceOrder            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  bookingId        String?                  @unique
+  booking          TeacherServiceBooking?   @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  teacherId        String
+  teacher          User                     @relation("EarnMoreSettlementTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  source           String
+  currency         String                   @default("INR")
+  grossAmount      Decimal
+  commissionBps    Int
+  commissionAmount Decimal
+  netAmount        Decimal
+  availableAt      DateTime
+  status           EarnMoreSettlementStatus @default(PENDING)
+  metadata         Json?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  @@index([institutionId, teacherId, status, availableAt])
+}
+
+/// Sensitive payout details are intentionally not stored here. The provider
+/// recipient/token reference points to a compliant KYC/payout provider.
+model TeacherPayoutAccount {
+  id                   String                     @id @default(cuid())
+  institutionId        String
+  institution          Institution                @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  teacherId            String
+  teacher              User                       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  provider             String
+  recipientReference   String
+  status               TeacherPayoutAccountStatus @default(PENDING_REVIEW)
+  kycStatus            String                     @default("PENDING")
+  verifiedAt           DateTime?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  TeacherPayoutRequest TeacherPayoutRequest[]
+
+  @@unique([institutionId, teacherId, provider])
+  @@index([institutionId, teacherId, status])
+}
+
+model TeacherPayoutRequest {
+  id                      String                     @id @default(cuid())
+  institutionId           String
+  institution             Institution                @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  teacherId               String
+  teacher                 User                       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  accountId               String
+  account                 TeacherPayoutAccount       @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  orderId                 String?                    @unique
+  order                   CommerceOrder?             @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  amount                  Decimal
+  currency                String                     @default("INR")
+  status                  TeacherPayoutRequestStatus @default(REQUESTED)
+  providerPayoutReference String?
+  failureReason           String?
+  createdAt               DateTime                   @default(now())
+  updatedAt               DateTime                   @updatedAt
+
+  @@index([institutionId, teacherId, status, createdAt])
+}
+
+model EarnMoreDispute {
+  id            String                 @id @default(cuid())
+  institutionId String
+  institution   Institution            @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  orderId       String
+  order         CommerceOrder          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  bookingId     String?
+  booking       TeacherServiceBooking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  raisedById    String
+  raisedBy      User                   @relation("EarnMoreDisputeRaisedBy", fields: [raisedById], references: [id], onDelete: Cascade)
+  reason        String
+  status        EarnMoreDisputeStatus  @default(OPEN)
+  resolution    String?
+  resolvedAt    DateTime?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@index([institutionId, status, createdAt])
+  @@index([orderId])
+}
+
+model TeacherLiveProgram {
+  id            String                           @id @default(cuid())
+  institutionId String
+  institution   Institution                      @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  teacherId     String
+  teacher       User                             @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  startsAt      DateTime
+  endsAt        DateTime
+  timezone      String
+  capacity      Int
+  price         Decimal
+  currency      String                           @default("INR")
+  status        TeacherLiveProgramStatus         @default(DRAFT)
+  registrations TeacherLiveProgramRegistration[]
+  createdAt     DateTime                         @default(now())
+  updatedAt     DateTime                         @updatedAt
+
+  @@index([institutionId, teacherId, status, startsAt])
+}
+
+model TeacherLiveProgramRegistration {
+  id                   String                               @id @default(cuid())
+  institutionId        String
+  institution          Institution                          @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  programId            String
+  program              TeacherLiveProgram                   @relation(fields: [programId], references: [id], onDelete: Cascade)
+  learnerId            String
+  learner              User                                 @relation("TeacherLiveProgramRegistrationLearner", fields: [learnerId], references: [id], onDelete: Cascade)
+  orderId              String?                              @unique
+  order                CommerceOrder?                       @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  status               TeacherLiveProgramRegistrationStatus @default(RESERVED)
+  reservationExpiresAt DateTime?
+  idempotencyKey       String
+  createdAt            DateTime                             @default(now())
+  updatedAt            DateTime                             @updatedAt
+
+  @@unique([programId, learnerId])
+  @@unique([institutionId, learnerId, idempotencyKey])
+  @@index([institutionId, programId, status])
 }
 
 model StudentProfile {

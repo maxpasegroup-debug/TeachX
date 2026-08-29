@@ -83,11 +83,44 @@ test("structured availability is private and mutations are tenant-bound", () => 
   assert.doesNotMatch(service, /teacherAvailability\.findMany\(\{\s*where: \{\s*\}/);
 });
 
-test("payout readiness is honest when no teacher payout model exists", () => {
-  const service = read("services/teacher-business-service.ts");
+test("Earn More payouts require provider-tokenized KYC approval and server-side funds", () => {
+  const service = read("services/earn-more-fulfilment-service.ts");
   const schema = read("prisma/schema.prisma");
-  assert.match(service, /payouts: \{ supported: false, eligible: false, status: "NOT_CONFIGURED"/);
-  assert.doesNotMatch(schema, /model TeacherPayout|model PayoutRequest/);
+  assert.match(schema, /model TeacherPayoutAccount \{/);
+  assert.match(schema, /recipientReference/);
+  assert.doesNotMatch(schema.slice(schema.indexOf("model TeacherPayoutAccount"), schema.indexOf("model TeacherPayoutRequest")), /bankAccount|upiId|panNumber/);
+  assert.match(service, /status: "VERIFIED", kycStatus: "VERIFIED"/);
+  assert.match(service, /Number\(wallet\.balance\) < amount/);
+  assert.match(service, /type: "HOLD", amount, pending: true/);
+});
+
+test("paid bookings use atomic reservations, payment fulfilment, and a commission ledger", () => {
+  const schema = read("prisma/schema.prisma");
+  const service = read("services/earn-more-fulfilment-service.ts");
+  const payment = read("services/payment-service.ts");
+  const migration = read("prisma/migrations/20260829100000_add_earn_more_fulfilment/migration.sql");
+  assert.match(schema, /model TeacherServiceBooking \{/);
+  assert.match(schema, /@@unique\(\[institutionId, learnerId, idempotencyKey\]\)/);
+  assert.match(migration, /TeacherServiceBooking_no_paid_overlap/);
+  assert.match(migration, /EXCLUDE USING gist/);
+  assert.match(service, /isolationLevel: "Serializable"/);
+  assert.match(service, /requireCommissionPolicy/);
+  assert.match(service, /commissionBps/);
+  assert.match(service, /pendingBalance: \{ increment: netAmount \}/);
+  assert.match(payment, /fulfilTeacherServiceBookingItem/);
+  assert.match(payment, /reverseEarnMoreFulfilment/);
+  assert.doesNotMatch(service, /commissionBps\s*\|\|\s*\d+/);
+});
+
+test("mentor access, recorded review, live-program capacity, and disputes fail closed", () => {
+  const service = read("services/earn-more-fulfilment-service.ts");
+  assert.match(service, /mentorPremium === true/);
+  assert.match(service, /Premium Mentor is active/);
+  assert.match(service, /status: "PUBLISHED"/);
+  assert.match(service, /reserved >= program\.capacity/);
+  assert.match(service, /This live program is sold out/);
+  assert.match(service, /Only the owner can submit a draft program for review/);
+  assert.match(service, /status: "DISPUTED"/);
 });
 
 test("public marketplace profile queries do not load private booking requests", () => {
