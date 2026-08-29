@@ -110,6 +110,63 @@ async function ownedEarningService(teacher: Awaited<ReturnType<typeof currentTea
   return prisma.teacherEarningService.findFirst({ where: { id, institutionId: teacher.institutionId, teacherId: teacher.id } });
 }
 
+const supportedAvailabilityTimeZones = new Set(["Asia/Kolkata", "Asia/Dubai", "Asia/Riyadh", "Asia/Qatar", "Asia/Muscat", "UTC"]);
+const supportedSessionDurations = new Set([15, 30, 45, 60, 90, 120, 180, 240]);
+const clock = /^([01]\d|2[0-3]):[0-5]\d$/;
+const isoDate = /^\d{4}-\d{2}-\d{2}$/;
+
+function availabilityRules(formData: FormData) {
+  const rules: { weekday: number; startTime: string; endTime: string }[] = [];
+  for (let weekday = 0; weekday < 7; weekday += 1) {
+    if (value(formData, `day-${weekday}-enabled`) !== "true") continue;
+    const startTime = value(formData, `day-${weekday}-start`);
+    const endTime = value(formData, `day-${weekday}-end`);
+    if (!clock.test(startTime) || !clock.test(endTime) || startTime >= endTime) throw new Error("Each available day needs a valid start time before its end time.");
+    rules.push({ weekday, startTime, endTime });
+  }
+  return rules;
+}
+
+function unavailableDates(formData: FormData) {
+  const seen = new Set<string>();
+  return value(formData, "unavailableDates").split(",").map((item) => item.trim()).filter(Boolean).slice(0, 90).map((date) => {
+    const parsed = new Date(`${date}T00:00:00.000Z`);
+    if (!isoDate.test(date) || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date || seen.has(date)) throw new Error("Unavailable dates must be unique dates in YYYY-MM-DD format.");
+    seen.add(date);
+    return { date: parsed };
+  });
+}
+
+export async function saveTeacherAvailabilityAction(formData: FormData) {
+  const teacher = await currentTeacher();
+  const timeZone = value(formData, "timeZone");
+  const durations = value(formData, "sessionDurations").split(",").map((item) => Number(item.trim())).filter((item) => Number.isInteger(item) && supportedSessionDurations.has(item));
+  const uniqueDurations = [...new Set(durations)].sort((a, b) => a - b);
+  const bufferMinutes = Number(value(formData, "bufferMinutes"));
+  const maxSessionsPerDay = Number(value(formData, "maxSessionsPerDay"));
+  if (!supportedAvailabilityTimeZones.has(timeZone)) throw new Error("Choose a supported time zone.");
+  if (!uniqueDurations.length) throw new Error("Choose at least one supported session duration.");
+  if (!Number.isInteger(bufferMinutes) || bufferMinutes < 0 || bufferMinutes > 120) throw new Error("Buffer time must be between 0 and 120 minutes.");
+  if (!Number.isInteger(maxSessionsPerDay) || maxSessionsPerDay < 1 || maxSessionsPerDay > 24) throw new Error("Maximum sessions per day must be between 1 and 24.");
+  const rules = availabilityRules(formData);
+  const dates = unavailableDates(formData);
+  const availability = await prisma.teacherAvailability.upsert({
+    where: { institutionId_teacherId: { institutionId: teacher.institutionId, teacherId: teacher.id } },
+    update: { timeZone, sessionDurations: uniqueDurations, bufferMinutes, maxSessionsPerDay },
+    create: { institutionId: teacher.institutionId, teacherId: teacher.id, timeZone, sessionDurations: uniqueDurations, bufferMinutes, maxSessionsPerDay },
+    select: { id: true }
+  });
+  await prisma.$transaction([
+    prisma.teacherAvailabilityWeeklyRule.deleteMany({ where: { availabilityId: availability.id, availability: { institutionId: teacher.institutionId, teacherId: teacher.id } } }),
+    prisma.teacherAvailabilityUnavailableDate.deleteMany({ where: { availabilityId: availability.id, availability: { institutionId: teacher.institutionId, teacherId: teacher.id } } }),
+    ...(rules.length ? [prisma.teacherAvailabilityWeeklyRule.createMany({ data: rules.map((rule) => ({ ...rule, availabilityId: availability.id })) })] : []),
+    ...(dates.length ? [prisma.teacherAvailabilityUnavailableDate.createMany({ data: dates.map((item) => ({ ...item, availabilityId: availability.id })) })] : [])
+  ]);
+  await businessActivity(teacher, "Structured availability updated", availability.id);
+  refresh();
+  return { ok: true, message: "Your availability was saved successfully. Booking and payment are not enabled yet." };
+}
+
 export async function saveOneToOneTeachingAction(formData: FormData) {
   const teacher = await currentTeacher();
   const existing = await prisma.teacherProfile.findFirst({

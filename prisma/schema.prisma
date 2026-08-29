@@ -913,6 +913,7 @@ model Institution {
   transactionalEmails            TransactionalEmail[]
   storageObjects                 StorageObject[]
   teacherEarningServices         TeacherEarningService[]
+  teacherAvailabilities          TeacherAvailability[]
   studentCommunityRequests       StudentCommunityRequest[]       @relation("StudentCommunityRequestInstitution")
   studentCommunityVotes          StudentCommunityVote[]          @relation("StudentCommunityVoteInstitution")
   studentAcceptedAnswers         StudentAcceptedAnswer[]         @relation("StudentAcceptedAnswerInstitution")
@@ -950,6 +951,7 @@ model User {
   profile                             Profile?
   teacherProfile                      TeacherProfile?
   teacherEarningServices              TeacherEarningService[]
+  teacherAvailabilities               TeacherAvailability[]
   studentProfile                      StudentProfile?
   notifications                       Notification[]
   plannerItemsCreated                 PlannerEvent[]                     @relation("PlannerEventCreator")
@@ -3181,6 +3183,53 @@ model TeacherEarningServicePlan {
   updatedAt   DateTime              @updatedAt
 
   @@index([serviceId, status])
+}
+
+/// Private, teacher-owned booking preparation. These rules are deliberately
+/// not public slots: reservation and payment remain disabled until that flow
+/// has atomic conflict protection and settlement controls.
+model TeacherAvailability {
+  id                String                               @id @default(cuid())
+  institutionId     String
+  teacherId         String
+  institution       Institution                          @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  teacher           User                                 @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  timeZone          String                               @default("Asia/Kolkata")
+  sessionDurations  Int[]                                @default([30, 60])
+  bufferMinutes     Int                                  @default(0)
+  maxSessionsPerDay Int                                  @default(4)
+  weeklyRules       TeacherAvailabilityWeeklyRule[]
+  unavailableDates  TeacherAvailabilityUnavailableDate[]
+  createdAt         DateTime                             @default(now())
+  updatedAt         DateTime                             @updatedAt
+
+  @@unique([institutionId, teacherId])
+  @@index([teacherId])
+}
+
+model TeacherAvailabilityWeeklyRule {
+  id             String              @id @default(cuid())
+  availabilityId String
+  availability   TeacherAvailability @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
+  weekday        Int
+  startTime      String
+  endTime        String
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@unique([availabilityId, weekday])
+}
+
+model TeacherAvailabilityUnavailableDate {
+  id             String              @id @default(cuid())
+  availabilityId String
+  availability   TeacherAvailability @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
+  date           DateTime            @db.Date
+  note           String?
+  createdAt      DateTime            @default(now())
+
+  @@unique([availabilityId, date])
+  @@index([availabilityId, date])
 }
 
 model TeacherBookingRequest {

@@ -68,6 +68,21 @@ test("Earn More client requests remain scoped to the signed-in teacher and tenan
   assert.doesNotMatch(service, /teacherBookingRequest\.findMany\(\{\s*where: \{\s*\}/);
 });
 
+test("structured availability is private and mutations are tenant-bound", () => {
+  const service = read("services/teacher-business-service.ts");
+  const actions = read("features/teacher-business/actions.ts");
+  const schema = read("prisma/schema.prisma");
+  assert.match(service, /teacherAvailability\.findFirst\(\{\s*where: \{ institutionId, teacherId: userId \}/);
+  assert.match(actions, /institutionId_teacherId: \{ institutionId: teacher\.institutionId, teacherId: teacher\.id \}/);
+  assert.match(actions, /availability: \{ institutionId: teacher\.institutionId, teacherId: teacher\.id \}/);
+  assert.match(actions, /supportedAvailabilityTimeZones/);
+  assert.match(actions, /supportedSessionDurations/);
+  assert.match(schema, /model TeacherAvailability \{/);
+  assert.match(schema, /model TeacherAvailabilityWeeklyRule \{/);
+  assert.match(schema, /model TeacherAvailabilityUnavailableDate \{/);
+  assert.doesNotMatch(service, /teacherAvailability\.findMany\(\{\s*where: \{\s*\}/);
+});
+
 test("payout readiness is honest when no teacher payout model exists", () => {
   const service = read("services/teacher-business-service.ts");
   const schema = read("prisma/schema.prisma");

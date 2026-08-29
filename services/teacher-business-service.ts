@@ -3,7 +3,7 @@ import { ensureDefaultSubscriptionPlans, ensureWallet, getAICreditSummary, getAc
 import { getResourceMetadata } from "@/services/learning-marketplace-service";
 
 export const teacherBusinessModules = [
-  "home", "services", "schedule", "one-to-one", "profile", "portfolio", "publishing", "happy-notes", "marketplace", "orders", "earnings", "wallet", "payouts", "analytics", "subscription", "downloads", "opportunities"
+  "home", "services", "schedule", "availability", "one-to-one", "profile", "portfolio", "publishing", "happy-notes", "marketplace", "orders", "earnings", "wallet", "payouts", "analytics", "subscription", "downloads", "opportunities"
 ] as const;
 export type TeacherBusinessModule = (typeof teacherBusinessModules)[number];
 
@@ -37,7 +37,7 @@ export async function getTeacherBusinessData(userId?: string, institutionId?: st
   const trendSince = new Date();
   trendSince.setDate(1); trendSince.setHours(0, 0, 0, 0); trendSince.setMonth(trendSince.getMonth() - 5);
 
-  const [portfolio, happyNotes, resources, sales, purchases, ownDownloads, wallets, earningTransactions, credits, plans, invoices, profileViews, followers, activities, trialSubscription, earningServices, bookingRequests] = await Promise.all([
+  const [portfolio, happyNotes, resources, sales, purchases, ownDownloads, wallets, earningTransactions, credits, plans, invoices, profileViews, followers, activities, trialSubscription, earningServices, bookingRequests, teacherAvailability] = await Promise.all([
     prisma.userPreference.findMany({ where: { userId, key: { startsWith: "teacher-portfolio:" } }, orderBy: { updatedAt: "desc" }, take: 100 }),
     prisma.userPreference.findMany({ where: { userId, key: { startsWith: "happy-notes-submission:" } }, orderBy: { updatedAt: "desc" }, take: 50 }),
     prisma.contentItem.findMany({
@@ -93,7 +93,11 @@ export async function getTeacherBusinessData(userId?: string, institutionId?: st
       where: { teacherId: userId, teacherProfile: { user: { institutionId } } },
       orderBy: [{ preferredDate: "asc" }, { createdAt: "desc" }],
       take: 12
-    }) : Promise.resolve([])
+    }) : Promise.resolve([]),
+    prisma.teacherAvailability.findFirst({
+      where: { institutionId, teacherId: userId },
+      include: { weeklyRules: { orderBy: { weekday: "asc" } }, unavailableDates: { orderBy: { date: "asc" }, take: 90 } }
+    })
   ]);
 
   const availability = record(user.teacherProfile?.availability);
@@ -219,6 +223,12 @@ export async function getTeacherBusinessData(userId?: string, institutionId?: st
       preferredDate: request.preferredDate?.toISOString() ?? null, preferredTime: request.preferredTime,
       createdAt: request.createdAt.toISOString()
     })),
+    availabilitySettings: teacherAvailability ? {
+      timeZone: teacherAvailability.timeZone, sessionDurations: teacherAvailability.sessionDurations,
+      bufferMinutes: teacherAvailability.bufferMinutes, maxSessionsPerDay: teacherAvailability.maxSessionsPerDay,
+      weeklyRules: teacherAvailability.weeklyRules.map((rule) => ({ weekday: rule.weekday, startTime: rule.startTime, endTime: rule.endTime })),
+      unavailableDates: teacherAvailability.unavailableDates.map((item) => item.date.toISOString().slice(0, 10))
+    } : null,
     plans: plans.filter((plan) => plan.audience === "TEACHER" && plan.isActive && ["teacher-free", "teacher-basic", "teacher-pro"].includes(plan.key)).map((plan) => ({ id: plan.id, key: plan.key, name: plan.name, price: Number(plan.price), currency: plan.currency, interval: plan.interval, credits: plan.aiMonthlyCredits, marketplaceAccess: plan.marketplaceAccess, resourceLimit: plan.resourceLimit, storageLimitMb: plan.storageLimitMb, featureFlags: record(plan.featureFlags) })),
     subscription: subscription ? { id: subscription.id, planId: subscription.planId, key: subscription.plan.key, name: subscription.plan.name, status: subscription.status, price: Number(subscription.plan.price), currency: subscription.plan.currency, interval: subscription.plan.interval, periodEndsAt: subscription.currentPeriodEnd?.toISOString(), cancelAtPeriodEnd: subscription.cancelAtPeriodEnd, prepaid: record(subscription.metadata).prepaidPeriod === true, marketplaceAccess: subscription.plan.marketplaceAccess, resourceLimit: subscription.plan.resourceLimit, storageLimitMb: subscription.plan.storageLimitMb } : null,
     trial: trialSubscription ? {

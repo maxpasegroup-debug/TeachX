@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  BarChart3, BookOpen, BriefcaseBusiness, CalendarDays, CheckCircle2, CircleDollarSign, Download,
+  BarChart3, BookOpen, BriefcaseBusiness, CalendarDays, CheckCircle2, CircleDollarSign, Clock3, Download,
   ExternalLink, FileText, GraduationCap, Handshake, Home, Lightbulb, Package, PenLine, Plus, Search, Sparkles, Star, Store, Upload,
   UserRound, WalletCards
 } from "lucide-react";
@@ -23,7 +23,7 @@ import {
   deleteBusinessResourceAction, deletePortfolioItemAction, saveBusinessProfileAction,
   saveMarketplaceProductAction, saveOneToOneTeachingAction, savePortfolioItemAction, setBusinessResourceStatusAction, submitHappyNotesAction,
   setSubscriptionRenewalAction, deleteEarningServiceAction, deleteEarningServicePlanAction, saveEarningServiceAction,
-  saveEarningServicePlanAction, setEarningServiceStatusAction
+  saveEarningServicePlanAction, setEarningServiceStatusAction, saveTeacherAvailabilityAction
 } from "@/features/teacher-business/actions";
 import type { getTeacherBusinessData, TeacherBusinessModule } from "@/services/teacher-business-service";
 import { ProfilePhotoUpload } from "@/features/teacher-business/components/profile-photo-upload";
@@ -35,6 +35,7 @@ const modules: { slug: TeacherBusinessModule; label: string; icon: typeof Home }
   { slug: "home", label: "Business Home", icon: Home },
   { slug: "services", label: "My Services", icon: Handshake },
   { slug: "schedule", label: "Schedule", icon: CalendarDays },
+  { slug: "availability", label: "Availability", icon: Clock3 },
   { slug: "one-to-one", label: "Teach 1:1", icon: GraduationCap },
   { slug: "profile", label: "Profile", icon: UserRound },
   { slug: "portfolio", label: "Portfolio", icon: BriefcaseBusiness },
@@ -55,6 +56,7 @@ const descriptions: Record<TeacherBusinessModule, string> = {
   home: "Your professional profile, publishing, sales, and wallet evidence in one concise view.",
   services: "Manage Mentor and Train services. Teach 1:1 continues to use your existing professional teaching profile. Customer checkout remains unavailable until shared settlement controls are ready.",
   schedule: "Review real requests from your public teaching profile. Confirm, decline, and complete them in the established Communication workflow.",
+  availability: "Prepare private weekly availability for future Teach, Mentor and Train bookings. This does not make sessions bookable yet.",
   "one-to-one": "Complete one simple professional teaching profile, set your real availability and pricing, then activate it for discovery.",
   profile: "Maintain the professional profile shared with the teacher network and marketplace.",
   portfolio: "Present selected teaching work, achievements, qualifications, and published resources.",
@@ -148,6 +150,40 @@ function PlanForm({ service, plan, onDone }: { service: Data["earningServices"][
   const router = useRouter(); const [pending, startTransition] = useTransition(); const [notice, setNotice] = useState<string | null>(null);
   function submit(formData: FormData) { setNotice(null); startTransition(async () => { try { const result = await saveEarningServicePlanAction(formData); setNotice(result.message); router.refresh(); onDone?.(); } catch (error) { setNotice(error instanceof Error ? error.message : "Plan could not be saved. Please retry."); } }); }
   return <form action={submit} className="mt-3 grid gap-3 border-t pt-3 sm:grid-cols-2"><input name="serviceId" type="hidden" value={service.id} /><input name="id" type="hidden" value={plan?.id ?? ""} /><Field label="Plan name"><Input defaultValue={plan?.name ?? ""} maxLength={180} name="name" placeholder="e.g. 60 minute session" required /></Field><Field label="Price"><Input defaultValue={plan?.price ?? ""} min="0" name="price" type="number" /></Field><Field label="Duration"><Input defaultValue={plan?.duration ?? ""} maxLength={120} name="duration" placeholder="e.g. 60 minutes" /></Field><Field label="Sessions"><Input defaultValue={plan?.sessions ?? ""} min="1" name="sessions" type="number" /></Field><input name="currency" type="hidden" value={service.currency} /><Field className="sm:col-span-2" label="Plan details"><Input defaultValue={plan?.description ?? ""} maxLength={2000} name="description" /></Field><div className="sm:col-span-2"><Button className="h-10 px-3 text-sm" disabled={pending} type="submit">{pending ? "Saving…" : plan ? "Save Plan" : "Add Plan"}</Button>{notice ? <p aria-live="polite" className={`mt-2 text-sm ${notice.includes("successfully") ? "text-emerald-800" : "text-red-700"}`}>{notice}</p> : null}</div></form>;
+}
+
+const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function Availability({ data }: { data: Data }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [notice, setNotice] = useState<string | null>(null);
+  const settings = data.availabilitySettings;
+  const rules = new Map(settings?.weeklyRules.map((rule) => [rule.weekday, rule]));
+  const [enabledDays, setEnabledDays] = useState<number[]>(() => settings?.weeklyRules.map((rule) => rule.weekday) ?? []);
+  const activeDayNames = enabledDays.map((weekday) => weekdays[weekday]).join(", ");
+  function submit(formData: FormData) {
+    setNotice(null);
+    startTransition(async () => {
+      try { const result = await saveTeacherAvailabilityAction(formData); setNotice(result.message); router.refresh(); }
+      catch (error) { setNotice(error instanceof Error ? error.message : "Availability could not be saved. Please retry."); }
+    });
+  }
+  return <div className="mx-auto max-w-4xl space-y-5">
+    <section className="border-l-4 border-emerald-600 bg-emerald-50/70 p-5">
+      <p className="text-sm font-semibold text-emerald-800">Booking preparation</p>
+      <h2 className="mt-1 text-2xl font-semibold">Set the hours you want to offer</h2>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Your structured availability stays private for now. It will support safe future Teach, Mentor and Train booking; no public slots, reservations, checkout, or payments are enabled by saving this form.</p>
+    </section>
+    <form action={submit} className="space-y-5">
+      {!settings ? <section className="border border-dashed border-emerald-300 bg-surface p-5"><p className="text-sm font-semibold text-emerald-800">Start your availability</p><h2 className="mt-1 text-xl font-semibold">Nothing is active yet</h2><ol className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3"><li><b className="text-foreground">1.</b> Choose your time zone.</li><li><b className="text-foreground">2.</b> Turn on your teaching days.</li><li><b className="text-foreground">3.</b> Save your private preparation.</li></ol><p className="mt-3 text-sm">No day becomes available until you select it and save.</p></section> : null}
+      <Card className="p-5"><h2 className="font-semibold">Availability summary</h2><p className="mt-1 text-sm text-muted-foreground">Use your local time zone and choose the session lengths you expect to offer.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><Field label="Time zone"><Select defaultValue={settings?.timeZone ?? "Asia/Kolkata"} name="timeZone"><option value="Asia/Kolkata">India - Asia/Kolkata</option><option value="Asia/Dubai">UAE - Asia/Dubai</option><option value="Asia/Riyadh">Saudi Arabia - Asia/Riyadh</option><option value="Asia/Qatar">Qatar - Asia/Qatar</option><option value="Asia/Muscat">Oman - Asia/Muscat</option><option value="UTC">UTC</option></Select></Field><Field label="Session durations (minutes)"><Input defaultValue={settings?.sessionDurations.join(", ") ?? "30, 60"} name="sessionDurations" placeholder="30, 60, 90" required /><p className="mt-1 text-xs text-muted-foreground">Choose from 15, 30, 45, 60, 90, 120, 180, or 240.</p></Field></div></Card>
+      <Card className="p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-semibold">Weekly hours</h2><p className="mt-1 text-sm text-muted-foreground">Turn on only the days you are normally available. Times use the time zone above.</p></div><p className={`border px-3 py-2 text-sm ${activeDayNames ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-amber-300 bg-amber-50 text-amber-900"}`}>{activeDayNames ? `Active: ${activeDayNames}` : "No days active yet"}</p></div><div className="mt-4 divide-y border-t">{weekdays.map((day, weekday) => { const rule = rules.get(weekday); const enabled = enabledDays.includes(weekday); return <div className={`grid gap-3 py-3 sm:grid-cols-[150px_1fr_1fr] ${enabled ? "bg-emerald-50/50" : "opacity-60"}`} key={day}><label className="flex min-h-10 items-center gap-2 px-2 text-sm font-medium"><input checked={enabled} name={`day-${weekday}-enabled`} onChange={(event) => setEnabledDays((current) => event.target.checked ? [...current, weekday].sort((a, b) => a - b) : current.filter((item) => item !== weekday))} type="checkbox" value="true" />{day}</label><Field label="Start"><Input defaultValue={rule?.startTime ?? "09:00"} disabled={!enabled} name={`day-${weekday}-start`} type="time" /></Field><Field label="End"><Input defaultValue={rule?.endTime ?? "17:00"} disabled={!enabled} name={`day-${weekday}-end`} type="time" /></Field></div>; })}</div></Card>
+      <Card className="p-5"><h2 className="font-semibold">Session rules</h2><div className="mt-4 grid gap-3 sm:grid-cols-2"><Field label="Buffer between sessions (minutes)"><Input defaultValue={settings?.bufferMinutes ?? 0} max="120" min="0" name="bufferMinutes" required type="number" /></Field><Field label="Maximum sessions per day"><Input defaultValue={settings?.maxSessionsPerDay ?? 4} max="24" min="1" name="maxSessionsPerDay" required type="number" /></Field></div></Card>
+      <Card className="p-5"><h2 className="font-semibold">Unavailable dates</h2><p className="mt-1 text-sm text-muted-foreground">Add dates you do not want to offer sessions, separated by commas.</p><Field className="mt-4" label="Dates (YYYY-MM-DD)"><Input defaultValue={settings?.unavailableDates.join(", ") ?? ""} name="unavailableDates" placeholder="2026-12-25, 2026-12-31" /></Field>{settings?.unavailableDates.length ? <p className="mt-3 text-sm text-muted-foreground">Currently unavailable: {settings.unavailableDates.join(", ")}</p> : <p className="mt-3 text-sm text-muted-foreground">No unavailable dates saved yet.</p>}</Card>
+      <div className="flex flex-wrap items-center gap-3"><Button disabled={pending} type="submit">{pending ? "Saving availability..." : "Save Availability"}</Button><ActionLink href="/teacher/business/services">Back to My Services</ActionLink>{notice ? <p aria-live="polite" className={`text-sm ${notice.includes("successfully") ? "text-emerald-800" : "text-red-700"}`}>{notice}</p> : null}</div>
+    </form>
+  </div>;
 }
 
 function MyServices({ data }: { data: Data }) {
@@ -441,5 +477,5 @@ function Downloads({ data }: { data: Data }) {
 
 export function TeacherBusinessPage({ module, data }: { module: TeacherBusinessModule; data: Data }) {
   const active = modules.find((item) => item.slug === module)!;
-  return <div className="min-w-0 space-y-6"><nav className="text-sm text-muted-foreground"><Link href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span>Business</span><span className="mx-2">/</span><span className="text-foreground">{active.label}</span></nav><header className="border-b pb-5"><Badge>Teacher Business OS</Badge><h1 className="mt-3 text-3xl font-semibold">{active.label}</h1><p className="mt-2 max-w-3xl text-muted-foreground">{descriptions[module]}</p></header><nav aria-label="Teacher business modules" className="flex max-w-full gap-2 overflow-x-auto pb-2">{modules.map((item) => { const Icon = item.icon; return <Link aria-current={module === item.slug ? "page" : undefined} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-medium ${module === item.slug ? "bg-primary text-primary-foreground" : "border bg-surface"}`} href={`/teacher/business/${item.slug}`} key={item.slug}><Icon className="h-4 w-4" />{item.label}</Link>; })}</nav>{module === "home" ? <BusinessHome data={data} /> : module === "services" ? <MyServices data={data} /> : module === "schedule" ? <Schedule data={data} /> : module === "one-to-one" ? <OneToOne data={data} /> : module === "profile" ? <Profile data={data} /> : module === "portfolio" ? <Portfolio data={data} /> : module === "publishing" ? <Publishing data={data} /> : module === "happy-notes" ? <HappyNotes data={data} /> : module === "marketplace" ? <Marketplace data={data} /> : module === "orders" ? <Orders data={data} /> : module === "earnings" ? <Earnings data={data} /> : module === "wallet" ? <Wallet data={data} /> : module === "payouts" ? <Payouts data={data} /> : module === "analytics" ? <Analytics data={data} /> : module === "subscription" ? <Subscription data={data} /> : module === "opportunities" ? <Opportunities /> : <Downloads data={data} />}</div>;
+  return <div className="min-w-0 space-y-6"><nav className="text-sm text-muted-foreground"><Link href="/teacher">Teacher Home</Link><span className="mx-2">/</span><span>Business</span><span className="mx-2">/</span><span className="text-foreground">{active.label}</span></nav><header className="border-b pb-5"><Badge>Teacher Business OS</Badge><h1 className="mt-3 text-3xl font-semibold">{active.label}</h1><p className="mt-2 max-w-3xl text-muted-foreground">{descriptions[module]}</p></header><nav aria-label="Teacher business modules" className="flex max-w-full gap-2 overflow-x-auto pb-2">{modules.map((item) => { const Icon = item.icon; return <Link aria-current={module === item.slug ? "page" : undefined} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-medium ${module === item.slug ? "bg-primary text-primary-foreground" : "border bg-surface"}`} href={`/teacher/business/${item.slug}`} key={item.slug}><Icon className="h-4 w-4" />{item.label}</Link>; })}</nav>{module === "home" ? <BusinessHome data={data} /> : module === "services" ? <MyServices data={data} /> : module === "schedule" ? <Schedule data={data} /> : module === "availability" ? <Availability data={data} /> : module === "one-to-one" ? <OneToOne data={data} /> : module === "profile" ? <Profile data={data} /> : module === "portfolio" ? <Portfolio data={data} /> : module === "publishing" ? <Publishing data={data} /> : module === "happy-notes" ? <HappyNotes data={data} /> : module === "marketplace" ? <Marketplace data={data} /> : module === "orders" ? <Orders data={data} /> : module === "earnings" ? <Earnings data={data} /> : module === "wallet" ? <Wallet data={data} /> : module === "payouts" ? <Payouts data={data} /> : module === "analytics" ? <Analytics data={data} /> : module === "subscription" ? <Subscription data={data} /> : module === "opportunities" ? <Opportunities /> : <Downloads data={data} />}</div>;
 }
