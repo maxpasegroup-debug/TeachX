@@ -103,6 +103,8 @@ test("paid bookings use atomic reservations, payment fulfilment, and a commissio
   assert.match(schema, /@@unique\(\[institutionId, learnerId, idempotencyKey\]\)/);
   assert.match(migration, /TeacherServiceBooking_no_paid_overlap/);
   assert.match(migration, /EXCLUDE USING gist/);
+  assert.match(migration, /tsrange\("startsAt", "endsAt", '\[\)'\)/);
+  assert.doesNotMatch(migration, /tstzrange/);
   assert.match(service, /isolationLevel: "Serializable"/);
   assert.match(service, /requireCommissionPolicy/);
   assert.match(service, /commissionBps/);

@@ -198,5 +198,5 @@ ALTER TABLE "CommerceOrderItem" ADD CONSTRAINT "CommerceOrderItem_teacherService
 -- the second, database-level guarantee against overlapping paid time.
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 ALTER TABLE "TeacherServiceBooking" ADD CONSTRAINT "TeacherServiceBooking_no_paid_overlap"
-  EXCLUDE USING gist ("teacherId" WITH =, tstzrange("startsAt", "endsAt", '[)') WITH &&)
+  EXCLUDE USING gist ("teacherId" WITH =, tsrange("startsAt", "endsAt", '[)') WITH &&)
   WHERE ("status" IN ('RESERVED', 'PENDING_PAYMENT', 'CONFIRMED'));
