@@ -56,7 +56,7 @@ export function TeachXPublicHeader() {
             </div>
           </details>
 
-          {directLinks.map((item) => <Link aria-label={item.label === "Learn More" ? "Learn more about teacher professional growth" : undefined} className="min-h-11 rounded-md px-2 py-3 text-sm font-semibold text-[#354851] hover:bg-[#eef1ee] hover:text-[#0b2230] focus:outline-none focus:ring-2 focus:ring-[#0d6174] xl:px-3" href={item.href} key={item.href}>{item.label}</Link>)}
+          {directLinks.map((item) => <Link className="min-h-11 rounded-md px-2 py-3 text-sm font-semibold text-[#354851] hover:bg-[#eef1ee] hover:text-[#0b2230] focus:outline-none focus:ring-2 focus:ring-[#0d6174] xl:px-3" href={item.href} key={item.href}>{item.label === "Learn More" ? "Learn More for Teachers" : item.label}</Link>)}
         </nav>
 
         <div className="hidden shrink-0 items-center gap-1 lg:flex">
@@ -93,7 +93,7 @@ export function TeachXPublicFooter() {
         <div><BrandLogo markClassName="h-9 w-9 rounded-md bg-white text-[#071820] shadow-none" textClassName="[&_span:first-child]:text-white [&_span:last-child]:text-white/65" /><p className="mt-5 max-w-sm text-lg leading-7 text-white/70">More time for the life you teach for.</p></div>
         <nav aria-label="Teacher Life OS" className="grid content-start gap-3 text-sm text-white/65">
           <p className="mb-1 font-semibold text-white">Teacher Life OS</p>
-          {pillarLinks.map((item) => <Link aria-label={item.label === "Learn More" ? "Learn more about teacher professional growth" : undefined} className="w-fit hover:text-white" href={item.href} key={item.href}>{item.label}</Link>)}
+          {pillarLinks.map((item) => <Link className="w-fit hover:text-white" href={item.href} key={item.href}>{item.label === "Learn More" ? "Learn More for Teachers" : item.label}</Link>)}
           <Link className="w-fit hover:text-white" href="/tara">TARA</Link>
         </nav>
         <nav aria-label="Company and legal" className="grid content-start gap-3 text-sm text-white/65">
