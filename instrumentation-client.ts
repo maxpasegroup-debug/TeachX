@@ -7,7 +7,15 @@ const tracesSampleRate = Number(process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RAT
 let sentryClient: Promise<SentryClient> | undefined;
 
 if (dsn) {
-  sentryClient = import("@sentry/nextjs");
+  // Error monitoring is important, but loading its full browser SDK while the
+  // first route is painting delays the teacher's initial interaction. Start it
+  // after the page load event instead; subsequent errors and navigations are
+  // still captured with the same privacy controls.
+  sentryClient = new Promise<SentryClient>((resolve) => {
+    const load = () => window.setTimeout(() => resolve(import("@sentry/nextjs")), 0);
+    if (document.readyState === "complete") load();
+    else window.addEventListener("load", load, { once: true });
+  });
   void sentryClient.then((Sentry) => {
     Sentry.init({
       dsn,
