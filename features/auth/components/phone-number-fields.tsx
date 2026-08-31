@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,22 +16,22 @@ export function PhoneNumberFields({ disabled, defaultCountry = "IN" }: PhoneNumb
     label: defaultCountry === "IN" ? "India" : defaultCountry,
     callingCode: defaultCountry === "IN" ? "91" : ""
   }]);
+  const [isLoadingCountries, setIsLoadingCountries] = useState(false);
 
-  useEffect(() => {
-    let active = true;
+  function loadCountries() {
+    if (isLoadingCountries || countries.length > 1) return;
 
-    // The full international phone metadata is substantial. It is only needed
-    // after this field has painted, so keep it out of the login critical path.
+    setIsLoadingCountries(true);
+
+    // This metadata is only useful when a teacher wants to change country.
+    // Loading it at page startup creates a long task on the login screen.
     void import("libphonenumber-js").then(({ getCountries, getCountryCallingCode }) => {
-      if (!active) return;
       const names = new Intl.DisplayNames(["en"], { type: "region" });
       setCountries(getCountries()
         .map((country) => ({ country, label: names.of(country) || country, callingCode: getCountryCallingCode(country) }))
         .sort((left, right) => left.label.localeCompare(right.label)));
-    });
-
-    return () => { active = false; };
-  }, []);
+    }).finally(() => setIsLoadingCountries(false));
+  }
 
   return (
     <div className="space-y-2">
@@ -43,6 +43,7 @@ export function PhoneNumberFields({ disabled, defaultCountry = "IN" }: PhoneNumb
           defaultValue={defaultCountry}
           disabled={disabled}
           name="country"
+          onFocus={loadCountries}
         >
           {countries.map(({ country, label, callingCode }) => <option key={country} value={country}>{label} (+{callingCode})</option>)}
         </select>
