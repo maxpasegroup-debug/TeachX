@@ -20,9 +20,6 @@ export const metadata: Metadata = {
   },
   description: appDescription,
   keywords: ["AI workspace for teachers", "teacher productivity", "AI lesson planner", "teaching resources", "teacher marketplace", "professional teaching profile", "teacher business tools"],
-  alternates: {
-    canonical: "/"
-  },
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { getCountries, getCountryCallingCode } from "libphonenumber-js";
 
 import { Input } from "@/components/ui/input";
@@ -12,11 +12,20 @@ type PhoneNumberFieldsProps = {
 };
 
 export function PhoneNumberFields({ disabled, defaultCountry = "IN" }: PhoneNumberFieldsProps) {
-  const countries = useMemo(() => {
+  const [countryLabels, setCountryLabels] = useState<Record<string, string>>({});
+
+  // Keep the server and first browser render identical. Locale-aware country
+  // names and sorting can differ between Node and Chromium and cause hydration
+  // failures on the sign-in and sign-up pages.
+  const countries = getCountries().map((country) => ({
+    country,
+    label: countryLabels[country] ?? country,
+    callingCode: getCountryCallingCode(country)
+  }));
+
+  useEffect(() => {
     const names = new Intl.DisplayNames(["en"], { type: "region" });
-    return getCountries()
-      .map((country) => ({ country, label: names.of(country) || country, callingCode: getCountryCallingCode(country) }))
-      .sort((left, right) => left.label.localeCompare(right.label));
+    setCountryLabels(Object.fromEntries(getCountries().map((country) => [country, names.of(country) || country])));
   }, []);
 
   return (
