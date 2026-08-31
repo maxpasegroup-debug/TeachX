@@ -3,7 +3,6 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
 import { LogIn } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,8 @@ export function TeacherPinLoginForm({ callbackUrl }: { callbackUrl?: string }) {
     event.preventDefault();
     setError(undefined);
     const form = new FormData(event.currentTarget);
-    const country = String(form.get("country") || "IN") as CountryCode;
+    const country = String(form.get("country") || "IN") as import("libphonenumber-js").CountryCode;
+    const { parsePhoneNumberFromString } = await import("libphonenumber-js");
     const parsedPhone = parsePhoneNumberFromString(String(form.get("phone") || ""), country);
     if (!parsedPhone?.isValid()) {
       setError("Enter a valid mobile number.");

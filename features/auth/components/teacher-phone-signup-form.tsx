@@ -4,7 +4,6 @@ import { useState, useTransition, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
 import { CheckCircle2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -23,15 +22,17 @@ export function TeacherPhoneSignupForm() {
     event.preventDefault();
     setError(undefined);
     const form = new FormData(event.currentTarget);
-    const country = String(form.get("country") || "IN") as CountryCode;
-    const phone = parsePhoneNumberFromString(String(form.get("phone") || ""), country);
-    if (!phone?.isValid()) {
-      setError("Enter a valid mobile number.");
-      return;
-    }
+    const country = String(form.get("country") || "IN") as import("libphonenumber-js").CountryCode;
 
     startTransition(async () => {
       try {
+        const { parsePhoneNumberFromString } = await import("libphonenumber-js");
+        const phone = parsePhoneNumberFromString(String(form.get("phone") || ""), country);
+        if (!phone?.isValid()) {
+          setError("Enter a valid mobile number.");
+          return;
+        }
+
         const created = await completeTeacherPhoneSignupAction(form);
         if (!created.ok) {
           setError(created.message ?? "Your account could not be created.");

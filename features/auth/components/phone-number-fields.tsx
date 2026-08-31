@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCountries, getCountryCallingCode } from "libphonenumber-js";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,20 +11,26 @@ type PhoneNumberFieldsProps = {
 };
 
 export function PhoneNumberFields({ disabled, defaultCountry = "IN" }: PhoneNumberFieldsProps) {
-  const [countryLabels, setCountryLabels] = useState<Record<string, string>>({});
-
-  // Keep the server and first browser render identical. Locale-aware country
-  // names and sorting can differ between Node and Chromium and cause hydration
-  // failures on the sign-in and sign-up pages.
-  const countries = getCountries().map((country) => ({
-    country,
-    label: countryLabels[country] ?? country,
-    callingCode: getCountryCallingCode(country)
-  }));
+  const [countries, setCountries] = useState(() => [{
+    country: defaultCountry,
+    label: defaultCountry === "IN" ? "India" : defaultCountry,
+    callingCode: defaultCountry === "IN" ? "91" : ""
+  }]);
 
   useEffect(() => {
-    const names = new Intl.DisplayNames(["en"], { type: "region" });
-    setCountryLabels(Object.fromEntries(getCountries().map((country) => [country, names.of(country) || country])));
+    let active = true;
+
+    // The full international phone metadata is substantial. It is only needed
+    // after this field has painted, so keep it out of the login critical path.
+    void import("libphonenumber-js").then(({ getCountries, getCountryCallingCode }) => {
+      if (!active) return;
+      const names = new Intl.DisplayNames(["en"], { type: "region" });
+      setCountries(getCountries()
+        .map((country) => ({ country, label: names.of(country) || country, callingCode: getCountryCallingCode(country) }))
+        .sort((left, right) => left.label.localeCompare(right.label)));
+    });
+
+    return () => { active = false; };
   }, []);
 
   return (
