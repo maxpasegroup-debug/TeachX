@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 import "./globals.css";
 import { DeferredPwaInstallPrompt } from "@/components/deferred-pwa-install-prompt";
-import { PrivacyChoices } from "@/components/privacy/privacy-choices";
+import { DeferredPrivacyChoices } from "@/components/deferred-privacy-choices";
 import { getPublicBaseUrl } from "@/lib/env";
 import { CONTRAST_COOKIE, LOCALE_COOKIE, MOTION_COOKIE, resolveLocale, resolveTimeZone, TIME_ZONE_COOKIE } from "@/lib/i18n/config";
 
@@ -59,7 +59,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <a className="skip-link" href="#main-content">Skip to main content</a>
         <div id="main-content" tabIndex={-1}>{children}</div>
         <DeferredPwaInstallPrompt />
-        <PrivacyChoices hasChoice={cookieStore.has("teachx_privacy")} />
+        <DeferredPrivacyChoices hasChoice={cookieStore.has("teachx_privacy")} />
       </body>
     </html>
   );
