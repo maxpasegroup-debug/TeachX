@@ -33,7 +33,7 @@ export function PwaInstallPrompt() {
       window.location.reload();
     };
     navigator.serviceWorker.addEventListener("controllerchange", controllerChanged);
-    navigator.serviceWorker.register("/sw.js").then((registration) => {
+    const register = () => navigator.serviceWorker.register("/sw.js").then((registration) => {
       // Browsers otherwise throttle service-worker update checks. Check once
       // when the application starts so a deployed auth/server-action update
       // reaches an existing installation promptly.
@@ -52,7 +52,18 @@ export function PwaInstallPrompt() {
         });
       });
     }).catch(() => undefined);
+
+    // Registration and update checks are useful, but they do not need to
+    // compete with the first page render or an authentication form.
+    const idle = window.setTimeout(() => {
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(register, { timeout: 4000 });
+      } else {
+        void register();
+      }
+    }, 0);
     return () => {
+      window.clearTimeout(idle);
       window.removeEventListener("offline", offline);
       window.removeEventListener("online", online);
       navigator.serviceWorker.removeEventListener("controllerchange", controllerChanged);

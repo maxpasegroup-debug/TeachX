@@ -45,7 +45,7 @@ export function AudienceLanding({ config }: { config: AudienceLandingConfig }) {
       <script dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} type="application/ld+json" />
 
       <section className="relative h-[calc(100svh-8rem)] min-h-[32.5rem] max-h-[52rem] overflow-hidden bg-[#071820]" aria-labelledby="public-hero-title">
-        <Image alt="A professional teacher planning with a tablet in a bright classroom" className="object-cover object-[61%_center] sm:object-[58%_center] lg:object-center" fill priority sizes="100vw" src="/teacher-life-os-home.webp" />
+        <Image alt="A professional teacher planning with a tablet in a bright classroom" className="object-cover object-[61%_center] sm:object-[58%_center] lg:object-center" fill priority quality={60} sizes="100vw" src="/teacher-life-os-home.webp" />
         <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(5,23,31,0.96)_0%,rgba(5,23,31,0.78)_47%,rgba(5,23,31,0.12)_100%)] md:bg-[linear-gradient(90deg,rgba(5,23,31,0.97)_0%,rgba(5,23,31,0.9)_39%,rgba(5,23,31,0.23)_72%,rgba(5,23,31,0.06)_100%)]" aria-hidden="true" />
         <MotionPrimitive className="relative z-10 mx-auto flex h-full max-w-[90rem] items-end px-5 pb-10 pt-10 sm:px-8 sm:pb-14 md:items-center lg:px-10" variant="fade-up">
           <div className="max-w-3xl text-white">
