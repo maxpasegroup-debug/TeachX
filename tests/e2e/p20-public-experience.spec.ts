@@ -28,7 +28,7 @@ test("P20 desktop navigation reaches every public world", async ({ page, isMobil
   test.skip(isMobile, "Desktop navigation is replaced by the mobile menu.");
   await page.goto("/");
   const nav = page.getByRole("navigation", { name: "Public navigation" });
-  for (const [label, href] of [["Save Time", "/save-time"], ["Earn More", "/earn-more"], ["Learn More", "/learn-more"], ["Enjoy More", "/enjoy-more"], ["TARA", "/tara"], ["Pricing", "/pricing"]]) {
+  for (const [label, href] of [["Save Time", "/save-time"], ["Earn More", "/earn-more"], ["Learn more about teacher professional growth", "/learn-more"], ["Enjoy More", "/enjoy-more"], ["TARA", "/tara"], ["Pricing", "/pricing"]]) {
     await expect(nav.getByRole("link", { name: label, exact: true })).toHaveAttribute("href", href);
   }
 });
