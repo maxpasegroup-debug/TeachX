@@ -11,14 +11,12 @@ type BrandLogoProps = {
 
 export function BrandLogo({ href = "/", className, markClassName, textClassName }: BrandLogoProps) {
   return (
-    <Link className={cn("group inline-flex items-center gap-3", className)} href={href}>
-      <span className={cn("relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-brand-ink text-sm font-semibold text-white shadow-brand transition-transform duration-brand group-hover:-translate-y-0.5", markClassName)}>
-        <span className="absolute inset-x-2 top-1 h-4 rounded-full bg-white/20 blur-md" />
-        TX
+    <Link aria-label="TeachX Guru" className={cn("group inline-flex items-center gap-2", className)} href={href}>
+      <span className={cn("relative flex h-11 w-11 shrink-0 items-center justify-center", markClassName)}>
+        <img alt="" className="h-full w-full object-contain" height={455} src="/brand/logo-mark.png" width={343} />
       </span>
-      <span className={cn("leading-none", textClassName)}>
-        <span className="block text-xl font-bold tracking-normal text-foreground">TeachX</span>
-        <span className="mt-1 block text-[0.68rem] font-light uppercase tracking-[0.32em] text-muted-foreground">Guru</span>
+      <span className={cn("flex items-center", textClassName)}>
+        <img alt="" src="/brand/logo-wordmark.png" style={{ height: 35, width: "auto" }} />
       </span>
     </Link>
   );

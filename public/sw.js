@@ -1,7 +1,7 @@
 // Bump this whenever a deployment changes client/server action contracts.
 // It ensures previously cached application assets cannot keep submitting an
 // incompatible Auth.js CSRF or Next.js Server Action request after release.
-const CACHE_NAME = "teachx-offline-v5";
+const CACHE_NAME = "teachx-offline-v6";
 const OFFLINE_URL = "/offline";
 const APP_SHELL = [OFFLINE_URL, "/manifest.webmanifest", "/icons/icon-192.png"];
 const PUBLIC_PAGES = new Set(["/pricing", "/trust", "/teachers", "/students", "/privacy", "/terms", "/security", "/cookies", "/refund-policy", "/contact"]);
@@ -60,13 +60,16 @@ self.addEventListener("fetch", (event) => {
   if (!staticAsset) return;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(request);
-    if (cached) return cached;
-    const response = await fetch(request);
-    if (response.ok && response.type === "basic" && !response.headers.get("Cache-Control")?.includes("no-store")) {
-      await cache.put(request, response.clone());
-      await trim(cache);
+    try {
+      const response = await fetch(request);
+      if (response.ok && response.type === "basic" && !response.headers.get("Cache-Control")?.includes("no-store")) {
+        await cache.put(request, response.clone());
+        await trim(cache);
+      }
+      return response;
+    } catch {
+      const cached = await cache.match(request);
+      return cached || Response.error();
     }
-    return response;
   })());
 });

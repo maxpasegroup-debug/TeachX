@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { LifeBuoy, Mail, ReceiptText, ShieldCheck } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import type { LucideIcon } from "lucide-react";
+
+import { TeachXPublicFooter, TeachXPublicHeader } from "@/components/landing/teachx-public-chrome";
 
 export const metadata = {
   title: "Contact | TeachX Guru",
@@ -19,38 +18,42 @@ const contactChannels: Array<{ title: string; body: string; email: string; icon:
 
 export default function ContactPage() {
   return (
-    <main className="min-h-screen bg-background">
-      <section className="border-b border-border bg-gradient-to-br from-sky-50 via-white to-emerald-50 px-5 py-14 sm:px-8">
-        <div className="mx-auto max-w-5xl">
-          <Badge>Contact</Badge>
-          <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">We are ready to help teachers launch with confidence.</h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">Use the right channel for onboarding, billing, security, or institution rollout support.</p>
+    <main className="tx-public-page min-h-screen" data-world="Support">
+      <TeachXPublicHeader />
+      <section className="tx-hero-band" aria-labelledby="support-title">
+        <span className="tx-blob tx-blob-orange" aria-hidden="true" />
+        <span className="tx-blob tx-blob-violet" aria-hidden="true" />
+        <div className="tx-hero-copy mx-auto max-w-5xl px-5 py-16 sm:px-8">
+          <p className="tx-public-kicker text-2xl">Support</p>
+          <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-[#2d183c] sm:text-6xl" id="support-title">We are ready to help teachers launch with confidence.</h1>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-[#4c3d58]">Use the right channel for onboarding, billing, security, or institution rollout support.</p>
         </div>
       </section>
-      <section className="mx-auto grid max-w-5xl gap-4 px-5 py-10 sm:px-8 lg:grid-cols-2">
-        {contactChannels.map(({ title, body, email, icon: Icon }) => {
-          return (
-            <Card className="p-5 shadow-soft" key={title}>
-              <Icon className="h-6 w-6 text-sky-700" />
-              <h2 className="mt-5 text-xl font-semibold">{title}</h2>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">{body}</p>
-              <a className="mt-5 inline-flex rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-foreground" href={`mailto:${email}`}>
+      <section className="tx-section-lilac" aria-label="Support channels">
+        <div className="tx-color-grid mx-auto grid max-w-5xl gap-4 px-5 py-12 sm:px-8 lg:grid-cols-2">
+          {contactChannels.map(({ title, body, email, icon: Icon }) => (
+            <article className="tx-public-card flex h-full flex-col p-6" key={title}>
+              <span className="tx-public-icon"><Icon className="h-5 w-5" aria-hidden="true" /></span>
+              <h2 className="mt-5 text-xl font-semibold text-[#2d183c]">{title}</h2>
+              <p className="tx-public-muted mt-3 text-sm leading-6">{body}</p>
+              <a className="tx-public-pill mt-6 inline-flex min-h-12 w-fit items-center px-5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#fcaa1d] focus:ring-offset-2" href={`mailto:${email}`}>
                 Email {email}
               </a>
-            </Card>
-          );
-        })}
+            </article>
+          ))}
+        </div>
       </section>
-      <section className="mx-auto max-w-5xl px-5 pb-12 sm:px-8">
-        <Card className="p-5">
-          <h2 className="font-semibold">Before you write</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">For faster help, include your account email, teacher/institution name, route or order ID if relevant, and a short description of what happened.</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Link className="text-sm font-semibold text-primary underline" href="/trust">Open Trust Center</Link>
-            <Link className="text-sm font-semibold text-primary underline" href="/pricing">View Pricing</Link>
+      <section className="tx-section-cream">
+        <div className="mx-auto max-w-5xl px-5 py-12 sm:px-8">
+          <h2 className="text-2xl font-semibold text-[#2d183c]">Before you write</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#4c3d58]">For faster help, include your account email, teacher/institution name, route or order ID if relevant, and a short description of what happened.</p>
+          <div className="mt-5 flex flex-wrap gap-4">
+            <Link className="text-sm font-semibold underline" href="/trust" style={{ color: "#6f3b90" }}>Open Trust Center</Link>
+            <Link className="text-sm font-semibold underline" href="/pricing" style={{ color: "#8a4b00" }}>View Pricing</Link>
           </div>
-        </Card>
+        </div>
       </section>
+      <TeachXPublicFooter />
     </main>
   );
 }

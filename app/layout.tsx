@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
 import "./globals.css";
+import { PoppinsFont } from "@/components/brand/poppins-font";
+import { StartupLoader } from "@/components/brand/startup-loader";
 import { DeferredPwaInstallPrompt } from "@/components/deferred-pwa-install-prompt";
 import { PrivacyChoices } from "@/components/privacy/privacy-choices";
 import { getPublicBaseUrl } from "@/lib/env";
@@ -41,8 +43,12 @@ export const metadata: Metadata = {
     images: ["/icons/icon.svg"]
   },
   icons: {
-    icon: [{ url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" }, { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" }],
-    apple: [{ url: "/icons/apple-touch-icon.png", type: "image/png", sizes: "180x180" }]
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icons/teachx-tab.png", type: "image/png", sizes: "192x192" }
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", type: "image/png", sizes: "180x180" }],
+    shortcut: "/icons/teachx-tab.png"
   }
 };
 
@@ -56,6 +62,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html data-contrast={contrast} data-motion={motion} data-time-zone={timeZone} dir={locale.direction} lang={locale.code}>
       <body className="font-sans antialiased">
+        <PoppinsFont />
+        <StartupLoader />
         <a className="skip-link" href="#main-content">Skip to main content</a>
         <div id="main-content" tabIndex={-1}>{children}</div>
         <DeferredPwaInstallPrompt />

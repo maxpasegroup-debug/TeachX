@@ -9,6 +9,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Poppins", "sans-serif"],
+        mono: ["Poppins", "sans-serif"]
+      },
       colors: {
         border: "hsl(var(--border))",
         background: "hsl(var(--background))",

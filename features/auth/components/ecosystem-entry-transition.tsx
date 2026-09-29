@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { ArrowRight, BadgeCheck, BookOpen, Bot, Brain, CheckCircle2, Clock3, GraduationCap, Heart, Sparkles, UsersRound, WalletCards } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand/brand-logo";
+import { GuruLoader } from "@/components/brand/guru-loader";
 
 type EcosystemEntryTransitionProps = {
   name?: string | null;
@@ -101,8 +102,8 @@ export function EcosystemEntryTransition({ name, mode = "login", journey = "dash
       <div className="entry-particle bottom-[26%] right-[24%]" />
 
       <section className="premium-glass-card motion-scale w-full max-w-xl rounded-[2.25rem] border border-white/80 bg-white/76 p-7 text-center shadow-brand backdrop-blur-2xl sm:p-9">
-        <div className="mx-auto mb-7 flex justify-center">
-          <BrandLogo className="entry-logo-pulse" markClassName="h-16 w-16" textClassName="text-center" />
+        <div className="mx-auto mb-4 flex justify-center">
+          <GuruLoader />
         </div>
         <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-brand-blue/15 bg-brand-blue-soft px-4 py-2 text-sm font-semibold text-brand-blue">
           <Sparkles className="h-4 w-4" />
