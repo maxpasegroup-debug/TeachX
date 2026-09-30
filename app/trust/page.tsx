@@ -30,7 +30,7 @@ export default function TrustPage() {
         <span className="tx-blob tx-blob-violet" aria-hidden="true" />
         <div className="tx-hero-copy mx-auto max-w-6xl px-5 py-16 sm:px-8">
           <p className="tx-public-kicker text-2xl">Trust</p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-semibold leading-tight text-[#2d183c] sm:text-6xl" id="trust-title">Built for teachers, schools, and global launch confidence.</h1>
+          <h1 className="mt-4 max-w-4xl text-4xl font-semibold leading-tight text-[#6f3b90] sm:text-6xl" id="trust-title">Built for teachers, schools, and global launch confidence.</h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-[#4c3d58]">
             A simple public hub for privacy, security, AI safety, billing clarity, and the policies teachers expect before trusting a new platform.
           </p>
@@ -44,7 +44,7 @@ export default function TrustPage() {
             return (
               <Link className="tx-public-card flex h-full flex-col p-6 focus:outline-none focus:ring-2 focus:ring-[#fcaa1d]" href={card.href} key={card.title}>
                 <span className="tx-public-icon"><Icon className="h-5 w-5" aria-hidden="true" /></span>
-                <h2 className="mt-5 text-lg font-semibold text-[#2d183c]">{card.title}</h2>
+                <h2 className="mt-5 text-lg font-semibold text-[#6f3b90]">{card.title}</h2>
                 <p className="tx-public-muted mt-3 text-sm leading-6">{card.body}</p>
               </Link>
             );
@@ -59,7 +59,7 @@ export default function TrustPage() {
             return (
               <article className="tx-public-card p-6" key={item.title}>
                 <span className="tx-public-icon"><Icon className="h-5 w-5" aria-hidden="true" /></span>
-                <h2 className="mt-5 font-semibold text-[#2d183c]">{item.title}</h2>
+                <h2 className="mt-5 font-semibold text-[#6f3b90]">{item.title}</h2>
                 <p className="tx-public-muted mt-3 text-sm leading-6">{item.body}</p>
               </article>
             );

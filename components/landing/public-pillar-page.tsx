@@ -31,16 +31,16 @@ export function PublicPillarPage({ pillar }: { pillar: PublicPillar }) {
           <div className="tx-hero-copy">
             <span className="tx-public-icon bg-white"><Icon className="h-6 w-6" aria-hidden="true" /></span>
             <p className="tx-public-kicker mt-8 text-2xl">{pillar.eyebrow}</p>
-            <h1 className="mt-4 max-w-[13ch] text-4xl font-semibold leading-[1.05] text-[#2d183c] sm:text-6xl" id="pillar-title">{pillar.title}</h1>
+            <h1 className="mt-4 max-w-[13ch] text-4xl font-semibold leading-[1.05] text-[#6f3b90] sm:text-6xl" id="pillar-title">{pillar.title}</h1>
             <p className="mt-5 max-w-xl text-lg leading-8 text-[#4c3d58]">{pillar.description}</p>
-            {pillar.comingSoon ? <p className="mt-6 inline-flex min-h-9 items-center rounded-full px-4 text-xs font-semibold uppercase" style={{ background: "#fff1d6", color: "#8a4b00" }}>Coming soon</p> : <Link className="tx-public-pill mt-7 inline-flex min-h-12 items-center gap-2 px-6 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#fcaa1d] focus:ring-offset-2" href="/signup/teacher">Start Free<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>}
+            {pillar.comingSoon ? <p className="mt-6 inline-flex min-h-9 items-center rounded-full px-4 text-xs font-semibold uppercase" style={{ background: "#fff1d6", color: "#fcaa1d" }}>Coming soon</p> : <Link className="tx-public-pill mt-7 inline-flex min-h-12 items-center gap-2 px-6 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#fcaa1d] focus:ring-offset-2" href="/signup/teacher">Start Free<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>}
           </div>
           <div className="tx-hero-panel">
-            <p className="text-lg font-semibold text-[#2d183c]">{pillar.statement}</p>
+            <p className="text-lg font-semibold text-[#6f3b90]">{pillar.statement}</p>
             <div className="mt-5 grid gap-3">
               {pillar.categories.map((category, index) => (
                 <div className="tx-swatch" key={category.title}>
-                  <span className="text-sm text-[#7a4e9a]">0{index + 1}</span>
+                  <span className="text-sm text-[#6f3b90]">0{index + 1}</span>
                   <span>{category.title}</span>
                 </div>
               ))}
@@ -53,13 +53,13 @@ export function PublicPillarPage({ pillar }: { pillar: PublicPillar }) {
         <div className="mx-auto max-w-[90rem] px-5 py-16 sm:px-8 lg:px-10 lg:py-24">
           <MotionPrimitive className="mx-auto max-w-3xl pb-10 text-center" variant="fade-up">
             <p className="tx-public-kicker text-lg">Inside {pillar.eyebrow}</p>
-            <h2 className="mt-3 text-3xl font-semibold leading-tight text-[#2d183c] sm:text-5xl" id="capabilities-title">{pillar.statement}</h2>
+            <h2 className="mt-3 text-3xl font-semibold leading-tight text-[#6f3b90] sm:text-5xl" id="capabilities-title">{pillar.statement}</h2>
           </MotionPrimitive>
           <div className="tx-color-grid grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {pillar.categories.map((category, index) => (
               <MotionPrimitive className="tx-public-card p-7" delay={index === 0 ? "none" : "sm"} key={category.title} variant="fade-up">
                 <p className="tx-public-kicker text-sm">0{index + 1}</p>
-                <h3 className="mt-4 text-2xl font-semibold text-[#2d183c]">{category.title}</h3>
+                <h3 className="mt-4 text-2xl font-semibold text-[#6f3b90]">{category.title}</h3>
                 <p className="tx-public-muted mt-3 min-h-12 text-sm leading-6">{category.description}</p>
                 <ul className="mt-7 space-y-3">{category.items.map((item) => <li className="flex gap-3 text-sm" key={item}><Check className="mt-0.5 h-4 w-4 shrink-0 text-[#fcaa1d]" aria-hidden="true" /><span>{item}</span></li>)}</ul>
               </MotionPrimitive>
@@ -73,8 +73,8 @@ export function PublicPillarPage({ pillar }: { pillar: PublicPillar }) {
           <div className="flex gap-4">
             <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[#6f3b90] text-white"><Bot className="h-6 w-6" aria-hidden="true" /></span>
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-[#8a4b00]">TARA in {pillar.eyebrow}</p>
-              <p className="mt-2 max-w-2xl text-xl font-semibold text-[#2d183c] sm:text-2xl">&ldquo;{pillar.taraPrompt}&rdquo;</p>
+              <p className="text-sm font-semibold uppercase tracking-wide text-[#fcaa1d]">TARA in {pillar.eyebrow}</p>
+              <p className="mt-2 max-w-2xl text-xl font-semibold text-[#6f3b90] sm:text-2xl">&ldquo;{pillar.taraPrompt}&rdquo;</p>
             </div>
           </div>
           <Link className="tx-public-pill inline-flex min-h-12 shrink-0 items-center justify-center gap-2 px-5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#fcaa1d]" href="/tara">Meet TARA<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>

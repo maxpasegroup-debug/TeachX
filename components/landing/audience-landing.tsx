@@ -69,8 +69,8 @@ export function AudienceLanding({ config }: { config: AudienceLandingConfig }) {
           .tx-page { background: #f7f4fc; color: #24182c; }
           .tx-page { overflow-x: clip; }
           .tx-hero { background: linear-gradient(180deg, #f3e9fb 0%, #f7f4fc 100%); min-height: calc(100svh - 4.5rem); display: flex; align-items: center; }
-          .tx-float { position: absolute; z-index: 2; display: inline-flex; align-items: center; justify-content: center; min-height: 2.5rem; border-radius: 999px; background: #fcaa1d; color: #3a2150; padding: 0.4rem 0.95rem; font-size: 0.875rem; font-weight: 600; line-height: 1; box-shadow: 0 12px 28px rgba(196, 122, 0, 0.28); white-space: nowrap; }
-          .tx-float:hover { background: #e89a10; }
+          .tx-float { position: absolute; z-index: 2; display: inline-flex; align-items: center; justify-content: center; min-height: 2.5rem; border-radius: 999px; background: #fcaa1d; color: #6f3b90; padding: 0.4rem 0.95rem; font-size: 0.875rem; font-weight: 600; line-height: 1; box-shadow: 0 12px 28px rgba(252, 170, 29, 0.28); white-space: nowrap; }
+          .tx-float:hover { background: #fcaa1d; filter: brightness(0.92); }
           .tx-float-0 { top: 12%; left: 0; }
           .tx-float-1 { top: 12%; right: 0; }
           .tx-float-2 { bottom: 16%; left: 0; }
@@ -79,20 +79,20 @@ export function AudienceLanding({ config }: { config: AudienceLandingConfig }) {
           .tx-hero-actions a { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 3rem; padding: 0.75rem 1.75rem; white-space: nowrap; }
           .tx-final-row { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; }
           @media (max-width: 767px) { .tx-final-row { flex-direction: column; align-items: flex-start; } }
-          .tx-world { display: flex; min-height: 16rem; flex-direction: column; border-radius: 1.5rem; background: linear-gradient(160deg, #ffe7a3 0%, #fcaa1d 58%, #f08c10 100%); padding: 1.4rem; color: #3a2150; border: 2px solid #fff; box-shadow: 0 16px 40px rgba(232, 154, 16, 0.22); transition: transform 0.25s ease, box-shadow 0.25s ease; }
-          .tx-world:hover { transform: translateY(-6px); box-shadow: 0 22px 48px rgba(232, 154, 16, 0.32); }
+          .tx-world { display: flex; min-height: 16rem; flex-direction: column; border-radius: 1.5rem; background: linear-gradient(160deg, #ffe7a3 0%, #fcaa1d 58%, #fcaa1d 100%); padding: 1.4rem; color: #6f3b90; border: 2px solid #fff; box-shadow: 0 16px 40px rgba(252, 170, 29, 0.22); transition: transform 0.25s ease, box-shadow 0.25s ease; }
+          .tx-world:hover { transform: translateY(-6px); box-shadow: 0 22px 48px rgba(252, 170, 29, 0.32); }
           .tx-world .tx-muted { color: #5c3d12; }
-          .tx-world .tx-world-icon { background: #fff; color: #c47a00; }
-          .tx-world-more { color: #3a2150; }
+          .tx-world .tx-world-icon { background: #fff; color: #fcaa1d; }
+          .tx-world-more { color: #6f3b90; }
           .tx-world-icon { display: grid; height: 2.75rem; width: 2.75rem; place-items: center; border-radius: 999px; background: #f3e8ff; color: #6f3b90; }
           .tx-benefit { display: flex; align-items: center; gap: 0.9rem; border-radius: 1.25rem; background: #f8f2fc; padding: 0.9rem 1rem; }
           .tx-role { border: 2px solid #fcaa1d; }
           .tx-life-photo { position: relative; width: min(100%, 22rem); aspect-ratio: 1; margin-inline: auto; overflow: hidden; border-radius: 999px; background: #e7d6f6; box-shadow: 0 24px 50px rgba(111, 59, 144, 0.16); }
           .tx-life-photo img { object-fit: cover; object-position: center 8%; }
-          .tx-worlds { background: linear-gradient(180deg, #f7f4fc 0%, #d8b4fe 42%, #e879f9 72%, #f0abfc 100%); color: #2d183c; }
-          .tx-final { background: linear-gradient(120deg, #d8b4fe 0%, #e879f9 48%, #f0abfc 100%); color: #2d183c; }
-          .tx-final-btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 3rem; padding: 0.75rem 1.75rem; background: #fcaa1d; color: #3a2150; border-radius: 999px; white-space: nowrap; }
-          .tx-final-btn:hover { background: #e89a10; }
+          .tx-worlds { background: linear-gradient(180deg, #f7f1fb 0%, #e4d0f0 22%, #6f3b90 62%, #6f3b90 100%); color: #6f3b90; }
+          .tx-final { background: linear-gradient(120deg, #8a56a6 0%, #6f3b90 52%, #5a3176 100%); color: #fff; }
+          .tx-final-btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 3rem; padding: 0.75rem 1.75rem; background: #fcaa1d; color: #6f3b90; border-radius: 999px; white-space: nowrap; }
+          .tx-final-btn:hover { background: #fcaa1d; filter: brightness(0.92); }
           .tx-hero-grid { display: flex; flex-direction: column; align-items: stretch; gap: 1.5rem; }
           .tx-hero-copy { order: 2; }
           .tx-stage { order: 1; }
@@ -109,13 +109,13 @@ export function AudienceLanding({ config }: { config: AudienceLandingConfig }) {
           }
           .tx-stage { position: relative; width: min(100%, 34rem); aspect-ratio: 1; margin-inline: auto; }
           .tx-blob { position: absolute; border-radius: 9999px; filter: blur(2px); }
-          .tx-blob-a { inset: 6% 2% 10% 8%; background: #e4d0f4; }
-          .tx-blob-b { width: 46%; height: 46%; right: -4%; top: 6%; background: #d7b7ee; opacity: 0.85; }
+          .tx-blob-a { inset: 6% 2% 10% 8%; background: #6f3b90; opacity: 0.22; }
+          .tx-blob-b { width: 46%; height: 46%; right: -4%; top: 6%; background: #6f3b90; opacity: 0.35; }
           .tx-blob-c { width: 28%; height: 28%; left: 0; bottom: 8%; background: #efe4f8; }
           .tx-ornament { position: absolute; inset: -4%; width: 108%; height: 108%; }
           .tx-disc { position: absolute; inset: 7%; overflow: hidden; border-radius: 9999px; background: #e7d6f6; box-shadow: 0 28px 60px rgba(111, 59, 144, 0.18); }
           .tx-disc img { object-fit: cover; object-position: center 6%; }
-          .tx-kicker { color: #7a4e9a; font-style: italic; }
+          .tx-kicker { color: #6f3b90; font-style: italic; }
           .tx-display { color: #1b1524; font-size: clamp(2.8rem, 5.2vw, 5.4rem); line-height: 1.02; max-width: 11ch; }
           .tx-muted { color: #6d6574; }
           .tx-trust { background: #fff; }
@@ -123,13 +123,13 @@ export function AudienceLanding({ config }: { config: AudienceLandingConfig }) {
           @media (min-width: 1024px) { .tx-trust-layout { grid-template-columns: 0.85fr 1.15fr; align-items: start; } }
           .tx-trust-grid { display: grid; gap: 1.75rem 2rem; }
           @media (min-width: 640px) { .tx-trust-grid { grid-template-columns: 1fr 1fr; } }
-          .tx-trust-shield { display: grid; height: 3.25rem; width: 3.25rem; place-items: center; border-radius: 1rem; background: #3a2150; color: #fff; }
+          .tx-trust-shield { display: grid; height: 3.25rem; width: 3.25rem; place-items: center; border-radius: 1rem; background: #6f3b90; color: #fff; }
           .tx-trust-item { display: flex; gap: 0.9rem; align-items: flex-start; }
           .tx-trust-icon { display: grid; height: 2.5rem; width: 2.5rem; flex: none; place-items: center; border-radius: 999px; }
           .tx-trust-grid > :nth-child(4n+1) .tx-trust-icon { background: #f3e8ff; color: #6f3b90; }
-          .tx-trust-grid > :nth-child(4n+2) .tx-trust-icon { background: #fff1d6; color: #8a4b00; }
+          .tx-trust-grid > :nth-child(4n+2) .tx-trust-icon { background: #fff1d6; color: #fcaa1d; }
           .tx-trust-grid > :nth-child(4n+3) .tx-trust-icon { background: #ffe4f3; color: #9d174d; }
-          .tx-trust-grid > :nth-child(4n+4) .tx-trust-icon { background: #ede9fe; color: #6d28d9; }
+          .tx-trust-grid > :nth-child(4n+4) .tx-trust-icon { background: #ede9fe; color: #6f3b90; }
           .tx-trust-link { color: #6f3b90; font-weight: 600; }
           .tx-faq { background: #f7f1fb; }
           .tx-faq-list { display: grid; gap: 0.75rem; max-width: 46rem; margin: 2rem auto 0; }
@@ -137,12 +137,12 @@ export function AudienceLanding({ config }: { config: AudienceLandingConfig }) {
           .tx-page .tx-faq-item { opacity: 1; transform: none; animation: none; }
           .tx-page .tx-faq-item summary { display: flex; min-height: 3.4rem; cursor: pointer; list-style: none; align-items: center; justify-content: space-between; gap: 1rem; font-weight: 600; color: #1b1524; opacity: 1; transform: none; }
           .tx-faq-item summary::-webkit-details-marker { display: none; }
-          .tx-faq-item summary::after { content: "+"; color: #c47a00; font-size: 1.45rem; line-height: 1; }
+          .tx-faq-item summary::after { content: "+"; color: #fcaa1d; font-size: 1.45rem; line-height: 1; }
           .tx-faq-item[open] summary::after { content: "\\2013"; }
           .tx-faq-item p { margin: 0 0 1rem; color: #6d6574; line-height: 1.65; }
-          .tx-pill { background: #fcaa1d; color: #3a2150; }
-          .tx-pill:hover { background: #e89a10; }
-          .tx-ghost { border: 1.5px solid #fcaa1d; color: #8a4b00; background: #fff; }
+          .tx-pill { background: #fcaa1d; color: #6f3b90; }
+          .tx-pill:hover { background: #fcaa1d; filter: brightness(0.92); }
+          .tx-ghost { border: 1.5px solid #fcaa1d; color: #fcaa1d; background: #fff; }
           .tx-ghost:hover { background: #f3e9fa; }
           @media (min-width: 1024px) {
             .tx-hero { min-height: calc(100svh - 4.5rem); align-items: center; }
@@ -234,12 +234,12 @@ export function AudienceLanding({ config }: { config: AudienceLandingConfig }) {
             <span className="tx-blob tx-blob-b" aria-hidden="true" />
             <span className="tx-blob tx-blob-c" aria-hidden="true" />
             <svg aria-hidden="true" className="tx-ornament" viewBox="0 0 400 400">
-              <path d="M70 48c18-22 28-8 22 12-8 24-28 18-22-12z" fill="#d7b7ee" />
-              <path d="M318 70c16-18 28-6 20 12-10 22-28 16-20-12z" fill="#c9a4e4" />
-              <path d="M46 250c20-16 34 0 22 18-14 20-32 12-22-18z" fill="#eadcf6" />
-              <path d="M92 36a170 170 0 0 0-58 150" fill="none" stroke="#c4a6de" strokeDasharray="8 10" strokeLinecap="round" strokeWidth="3" />
-              <circle cx="330" cy="300" fill="#d7c0ee" r="8" />
-              <circle cx="64" cy="150" fill="#b992d4" r="6" />
+              <path d="M70 48c18-22 28-8 22 12-8 24-28 18-22-12z" fill="#6f3b90" />
+              <path d="M318 70c16-18 28-6 20 12-10 22-28 16-20-12z" fill="#6f3b90" />
+              <path d="M46 250c20-16 34 0 22 18-14 20-32 12-22-18z" fill="#6f3b90" />
+              <path d="M92 36a170 170 0 0 0-58 150" fill="none" stroke="#6f3b90" strokeDasharray="8 10" strokeLinecap="round" strokeWidth="3" />
+              <circle cx="330" cy="300" fill="#6f3b90" r="8" />
+              <circle cx="64" cy="150" fill="#6f3b90" r="6" />
             </svg>
             <div className="tx-disc">
               <Image alt="A teacher with a book, ready to help" fill sizes="(min-width: 1024px) 40rem, 90vw" src="/brand/teacher-portrait.png" />
@@ -317,7 +317,7 @@ export function AudienceLanding({ config }: { config: AudienceLandingConfig }) {
       <section className="tx-final" aria-labelledby="final-cta-title">
         <MotionPrimitive className="tx-final-row tx-scroll mx-auto max-w-[90rem] px-5 py-16 sm:px-8 lg:px-10" variant="fade-up">
           <div><p className="text-sm font-semibold">Built for teachers. Powered by TARA.</p><h2 className="mt-3 text-3xl font-semibold sm:text-4xl" id="final-cta-title">Make time for what comes next.</h2></div>
-          <Link className="tx-final-btn inline-flex min-h-12 shrink-0 items-center justify-center gap-2 px-7 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#e879f9]" href={config.primaryHref}>{config.primaryLabel}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+          <Link className="tx-final-btn inline-flex min-h-12 shrink-0 items-center justify-center gap-2 px-7 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#6f3b90]" href={config.primaryHref}>{config.primaryLabel}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
         </MotionPrimitive>
       </section>
 

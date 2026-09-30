@@ -74,11 +74,11 @@ export function TaraWorkspace({ data }: { data: Data }) {
       .tx-tara-kicker { margin: 0; color: #6f3b90; font-size: 0.875rem; font-weight: 600; }
       .tx-tara-sub { margin: 0; color: #6d6574; font-size: 0.75rem; }
       .tx-tara-credits { min-width: 14rem; border-left: 2px solid #e4d4f0; background: #faf7fc; padding: 0.75rem 1rem; }
-      .tx-tara-count { margin-top: 0.5rem; color: #3a2150; font-size: 1.5rem; font-weight: 600; }
+      .tx-tara-count { margin-top: 0.5rem; color: #6f3b90; font-size: 1.5rem; font-weight: 600; }
       .tx-tara-link { display: inline-flex; margin-top: 0.75rem; color: #6f3b90; font-size: 0.875rem; font-weight: 600; }
-      .tx-tara-link:hover { color: #3a2150; }
+      .tx-tara-link:hover { color: #6f3b90; }
       .tx-tara-role { flex: none; border: 1px solid #efe4f6; background: #fff; padding: 0.5rem 0.75rem; }
-      .tx-tara-chat { overflow: hidden; border: 1px solid #efe4f6; border-radius: 1rem; background: #fff; box-shadow: 0 10px 28px rgba(58, 33, 80, 0.05); }
+      .tx-tara-chat { overflow: hidden; border: 1px solid #efe4f6; border-radius: 1rem; background: #fff; box-shadow: 0 10px 28px rgba(111, 59, 144, 0.05); }
       .tx-tara-bar { border-bottom: 1px solid #efe4f6; background: #faf7fc; }
       .tx-tara-suggest { min-height: 3rem; border: 1px solid #efe4f6; background: #fff; padding: 0.75rem 1rem; text-align: left; font-size: 0.875rem; font-weight: 500; }
       .tx-tara-suggest:hover { border-color: #e4d4f0; background: #faf7fc; }
@@ -87,7 +87,7 @@ export function TaraWorkspace({ data }: { data: Data }) {
       .tx-tara-task { display: flex; min-height: 3rem; align-items: center; gap: 0.75rem; padding: 0 1rem; font-size: 0.875rem; font-weight: 500; }
       .tx-tara-task:hover, .tx-tara-flow:hover, .tx-tara-row:hover { border-color: #e4d4f0; background: #faf7fc; }
       .tx-tara-icon { color: #6f3b90; }
-      .tx-tara-dot { background: #c4a6de; }
+      .tx-tara-dot { background: #6f3b90; }
       .tx-tara-num { flex: none; color: #6f3b90; font-weight: 600; }
       .tx-tara-list { border: 1px solid #efe4f6; background: #fff; }
       .tx-tara-row { display: block; width: 100%; padding: 0.75rem; text-align: left; }

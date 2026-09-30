@@ -11,7 +11,6 @@ const MAIN_SELECTOR = [
   "main summary",
   "main .tx-world-more",
   "main .tx-final-btn",
-  "main .tx-footer-link",
   "main .tx-float",
   "main a.tx-pill",
   "main a.tx-ghost",
@@ -26,7 +25,7 @@ const HEADER_SELECTOR = ".tx-public-header .tx-nav-link, .tx-public-header .tx-p
 export function FontEntrance() {
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.motion === "reduce";
-    const mainNodes = [...document.querySelectorAll<HTMLElement>(MAIN_SELECTOR)].filter((el) => !el.closest(".tx-in"));
+    const mainNodes = [...document.querySelectorAll<HTMLElement>(MAIN_SELECTOR)].filter((el) => !el.closest(".tx-in, .tx-public-footer"));
     const headerNodes = [...document.querySelectorAll<HTMLElement>(HEADER_SELECTOR)];
 
     if (reduce) {

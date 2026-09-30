@@ -15,9 +15,9 @@ import { FontEntrance } from "@/components/landing/font-entrance";
 
 const pillarLinks = [
   { label: "Save Time", href: "/save-time", description: "Teach, create, plan and organize.", icon: Clock3, tone: "bg-[#f3e8ff] text-[#6f3b90]" },
-  { label: "Earn More", href: "/earn-more", description: "Build your profile and professional future.", icon: BriefcaseBusiness, tone: "bg-[#ffe8c2] text-[#8a4b00]" },
+  { label: "Earn More", href: "/earn-more", description: "Build your profile and professional future.", icon: BriefcaseBusiness, tone: "bg-[#ffe8c2] text-[#fcaa1d]" },
   { label: "Learn More", href: "/learn-more", description: "Keep growing beyond the classroom.", icon: BookOpen, tone: "bg-[#f3e8ff] text-[#6f3b90]" },
-  { label: "Enjoy More", href: "/enjoy-more", description: "More life beyond the classroom.", icon: Heart, tone: "bg-[#ffe4d6] text-[#9a3412]" },
+  { label: "Enjoy More", href: "/enjoy-more", description: "More life beyond the classroom.", icon: Heart, tone: "bg-[#ffe4d6] text-[#fcaa1d]" },
 ];
 
 const directLinks = [
@@ -28,24 +28,24 @@ const directLinks = [
 
 const publicTheme = `
 .tx-public-page { background: #efe4f8; color: #24182c; overflow-x: clip; }
-.tx-public-header { background: #3a2150; border-color: rgba(255, 255, 255, 0.16); }
+.tx-public-header { background: #6f3b90; border-color: rgba(255, 255, 255, 0.16); }
 .tx-nav-link { color: #fff; }
 .tx-nav-link:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
-.tx-public-menu { background: #fff; border: 1px solid #c4a6de; box-shadow: 0 24px 70px rgba(58, 33, 80, 0.28); }
+.tx-public-menu { background: #fff; border: 1px solid #6f3b90; box-shadow: 0 24px 70px rgba(111, 59, 144, 0.28); }
 .tx-public-menu a:hover { background: #f3e8ff; }
-.tx-public-pill { background: #fcaa1d; color: #3a2150; border-radius: 999px; }
-.tx-public-pill:hover { background: #e89a10; }
-.tx-public-ghost { border: 1.5px solid #fcaa1d; color: #8a4b00; background: #fff; border-radius: 999px; }
+.tx-public-pill { background: #fcaa1d; color: #6f3b90; border-radius: 999px; }
+.tx-public-pill:hover { background: #fcaa1d; filter: brightness(0.92); }
+.tx-public-ghost { border: 1.5px solid #fcaa1d; color: #fcaa1d; background: #fff; border-radius: 999px; }
 .tx-public-ghost:hover { background: #f3e9fa; }
 .tx-public-card { background: #fff; border: 1px solid #efe4f6; border-radius: 1.5rem; box-shadow: 0 16px 40px rgba(111, 59, 144, 0.08); }
 .tx-public-icon { display: grid; height: 2.75rem; width: 2.75rem; place-items: center; border-radius: 999px; background: #f3e8ff; color: #6f3b90; }
-.tx-public-kicker { color: #7a4e9a; font-style: italic; }
+.tx-public-kicker { color: #6f3b90; font-style: italic; }
 .tx-public-muted { color: #6d6574; }
 .tx-public-soft { background: #f8f2fc; border-radius: 1.25rem; }
-.tx-public-final { background: linear-gradient(120deg, #d8b4fe 0%, #e879f9 48%, #f0abfc 100%); color: #2d183c; }
-.tx-public-final-btn { background: #fcaa1d; color: #3a2150; border-radius: 999px; }
-.tx-public-final-btn:hover { background: #e89a10; }
-.tx-public-footer { background: linear-gradient(to bottom, #4d2d68 0%, #3a2150 42%, #2a1638 100%); color: #f7f1fb; border-top: 0; }
+.tx-public-final { background: linear-gradient(120deg, #8a56a6 0%, #6f3b90 52%, #5a3176 100%); color: #fff; }
+.tx-public-final-btn { background: #fcaa1d; color: #6f3b90; border-radius: 999px; }
+.tx-public-final-btn:hover { background: #fcaa1d; filter: brightness(0.92); }
+.tx-public-footer { background: linear-gradient(to bottom, #6f3b90 0%, #6f3b90 42%, #6f3b90 100%); color: #f7f1fb; border-top: 0; }
 .tx-footer-grid { display: grid; gap: 2rem; }
 @media (min-width: 768px) { .tx-footer-grid { grid-template-columns: 1.4fr 1fr 1fr; } }
 .tx-footer-label { margin: 0 0 0.75rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #e7d6f6; }
@@ -64,20 +64,20 @@ main[data-world="Privacy"] .tx-hero-band { background: radial-gradient(circle at
 main[data-world="Terms"] .tx-hero-band { background: radial-gradient(circle at 84% 14%, rgba(232, 121, 249, 0.4), transparent 24%), radial-gradient(circle at 12% 82%, rgba(252, 170, 29, 0.6), transparent 26%), linear-gradient(145deg, #f3e8ff 0%, #fae8ff 46%, #ffe7c2 100%); }
 .tx-blob { position: absolute; border-radius: 999px; pointer-events: none; }
 .tx-blob-orange { top: -3.5rem; right: 6%; width: 16rem; height: 16rem; background: #fcaa1d; opacity: 0.55; }
-.tx-blob-violet { bottom: -6rem; left: -3rem; width: 18rem; height: 18rem; background: #a855f7; opacity: 0.28; }
+.tx-blob-violet { bottom: -6rem; left: -3rem; width: 18rem; height: 18rem; background: #6f3b90; opacity: 0.28; }
 .tx-hero-copy, .tx-hero-panel { position: relative; z-index: 1; }
 .tx-hero-panel { border-radius: 1.75rem; background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 24px 60px rgba(111, 59, 144, 0.16); padding: 1.5rem; }
 .tx-swatch { display: flex; align-items: center; gap: 0.85rem; min-height: 3.25rem; border-radius: 1rem; padding: 0.7rem 0.9rem; font-weight: 600; }
-.tx-swatch:nth-child(3n+1) { background: #f3e8ff; color: #5b2d82; }
-.tx-swatch:nth-child(3n+2) { background: #fff1d6; color: #8a4b00; }
+.tx-swatch:nth-child(3n+1) { background: #f3e8ff; color: #6f3b90; }
+.tx-swatch:nth-child(3n+2) { background: #fff1d6; color: #fcaa1d; }
 .tx-swatch:nth-child(3n+3) { background: #ffe4f3; color: #9d174d; }
 .tx-section-lilac { background: #f7effc; }
 .tx-section-cream { background: radial-gradient(circle at 100% 0%, rgba(252, 170, 29, 0.35), transparent 32%), linear-gradient(180deg, #fff8ec 0%, #ffe7c2 100%); }
 .tx-color-grid > :nth-child(5n+1) { background: linear-gradient(180deg, #f3e8ff 0%, #fff 48%); border-top: 6px solid #6f3b90; }
 .tx-color-grid > :nth-child(5n+2) { background: linear-gradient(180deg, #fff1d0 0%, #fff 48%); border-top: 6px solid #fcaa1d; }
 .tx-color-grid > :nth-child(5n+3) { background: linear-gradient(180deg, #ffe4f1 0%, #fff 48%); border-top: 6px solid #e879f9; }
-.tx-color-grid > :nth-child(5n+4) { background: linear-gradient(180deg, #ffedd5 0%, #fff 48%); border-top: 6px solid #fb923c; }
-.tx-color-grid > :nth-child(5n+5) { background: linear-gradient(180deg, #ede9fe 0%, #fff 48%); border-top: 6px solid #8b5cf6; }
+.tx-color-grid > :nth-child(5n+4) { background: linear-gradient(180deg, #ffedd5 0%, #fff 48%); border-top: 6px solid #fcaa1d; }
+.tx-color-grid > :nth-child(5n+5) { background: linear-gradient(180deg, #ede9fe 0%, #fff 48%); border-top: 6px solid #6f3b90; }
 .tx-plan-basic { background: linear-gradient(180deg, #f3e8ff 0%, #fff 36%); border-top: 6px solid #6f3b90; }
 .tx-plan-pro { background: linear-gradient(180deg, #fff1d0 0%, #fff 36%); border-top: 6px solid #fcaa1d; }
 main :is(h1, h2, h3, p, li, summary):not(.tx-in),
@@ -96,6 +96,7 @@ main .tx-role > span.is-in,
   transform: none;
 }
 .tx-in :is(a.tx-pill, a.tx-ghost) { opacity: 1; transform: none; transition: none; }
+main .tx-public-footer :is(p, a, h1, h2, h3, li, summary) { opacity: 1; transform: none; transition: none; }
 @media (prefers-reduced-motion: reduce) {
   main :is(h1, h2, h3, p, li, summary):not(.tx-in),
   main :is(.tx-world-more, .tx-final-btn, .tx-footer-link, .tx-float, a.tx-pill, a.tx-ghost, a.tx-public-pill, a.tx-public-ghost, a.tx-public-final-btn),
@@ -129,7 +130,7 @@ export function TeachXPublicHeader() {
               Platform
               <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
             </summary>
-            <div className="tx-public-menu absolute left-1/2 top-[3.25rem] w-[44rem] -translate-x-1/2 rounded-2xl border p-3 shadow-[0_24px_70px_rgba(58,33,80,0.12)]">
+            <div className="tx-public-menu absolute left-1/2 top-[3.25rem] w-[44rem] -translate-x-1/2 rounded-2xl border p-3 shadow-[0_24px_70px_rgba(111,59,144,0.12)]">
               <div className="grid grid-cols-2 gap-1">
                 {pillarLinks.map((item) => {
                   const Icon = item.icon;
@@ -160,7 +161,7 @@ export function TeachXPublicHeader() {
           <Link className="tx-public-pill inline-flex min-h-11 items-center gap-2 px-4 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#6f3b90] focus:ring-offset-2" href="/signup/teacher">Start Free<ArrowRight className="hidden h-4 w-4 sm:block" aria-hidden="true" /></Link>
           <details className="group relative">
             <summary className="grid h-11 w-11 cursor-pointer list-none place-items-center rounded-md border border-[#0b2230]/15 bg-white focus:outline-none focus:ring-2 focus:ring-[#6f3b90]" title="Open menu"><span className="sr-only">Open menu</span><Menu className="h-5 w-5" aria-hidden="true" /></summary>
-            <nav aria-label="Mobile public navigation" className="tx-public-menu absolute right-0 mt-2 max-h-[calc(100svh-6rem)] w-[min(21rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border p-2 shadow-[0_24px_70px_rgba(58,33,80,0.16)]">
+            <nav aria-label="Mobile public navigation" className="tx-public-menu absolute right-0 mt-2 max-h-[calc(100svh-6rem)] w-[min(21rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border p-2 shadow-[0_24px_70px_rgba(111,59,144,0.16)]">
               <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase text-[#77848a]">The Teacher Life OS</p>
               {pillarLinks.map((item) => {
                 const Icon = item.icon;

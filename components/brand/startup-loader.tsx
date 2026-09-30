@@ -21,7 +21,8 @@ export function StartupLoader() {
   if (!visible) return null;
 
   return (
-    <div aria-live="polite" className="fixed inset-0 z-[80] flex items-center justify-center" role="status" style={{ background: "#3a2150" }}>
+    <div aria-live="polite" className="startup-splash fixed inset-0 z-[80] flex items-center justify-center" role="status" style={{ background: "#6f3b90" }}>
+      <style>{`.startup-splash .guru-loader-dots span:nth-child(1) { background: #fff; }`}</style>
       <GuruLoader />
       <p className="sr-only">Preparing Your Workspace</p>
     </div>

@@ -25,7 +25,7 @@ export default function ContactPage() {
         <span className="tx-blob tx-blob-violet" aria-hidden="true" />
         <div className="tx-hero-copy mx-auto max-w-5xl px-5 py-16 sm:px-8">
           <p className="tx-public-kicker text-2xl">Support</p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-[#2d183c] sm:text-6xl" id="support-title">We are ready to help teachers launch with confidence.</h1>
+          <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-[#6f3b90] sm:text-6xl" id="support-title">We are ready to help teachers launch with confidence.</h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-[#4c3d58]">Use the right channel for onboarding, billing, security, or institution rollout support.</p>
         </div>
       </section>
@@ -34,7 +34,7 @@ export default function ContactPage() {
           {contactChannels.map(({ title, body, email, icon: Icon }) => (
             <article className="tx-public-card flex h-full flex-col p-6" key={title}>
               <span className="tx-public-icon"><Icon className="h-5 w-5" aria-hidden="true" /></span>
-              <h2 className="mt-5 text-xl font-semibold text-[#2d183c]">{title}</h2>
+              <h2 className="mt-5 text-xl font-semibold text-[#6f3b90]">{title}</h2>
               <p className="tx-public-muted mt-3 text-sm leading-6">{body}</p>
               <a className="tx-public-pill mt-6 inline-flex min-h-12 w-fit items-center px-5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#fcaa1d] focus:ring-offset-2" href={`mailto:${email}`}>
                 Email {email}
@@ -45,11 +45,11 @@ export default function ContactPage() {
       </section>
       <section className="tx-section-cream">
         <div className="mx-auto max-w-5xl px-5 py-12 sm:px-8">
-          <h2 className="text-2xl font-semibold text-[#2d183c]">Before you write</h2>
+          <h2 className="text-2xl font-semibold text-[#6f3b90]">Before you write</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#4c3d58]">For faster help, include your account email, teacher/institution name, route or order ID if relevant, and a short description of what happened.</p>
           <div className="mt-5 flex flex-wrap gap-4">
             <Link className="text-sm font-semibold underline" href="/trust" style={{ color: "#6f3b90" }}>Open Trust Center</Link>
-            <Link className="text-sm font-semibold underline" href="/pricing" style={{ color: "#8a4b00" }}>View Pricing</Link>
+            <Link className="text-sm font-semibold underline" href="/pricing" style={{ color: "#fcaa1d" }}>View Pricing</Link>
           </div>
         </div>
       </section>
