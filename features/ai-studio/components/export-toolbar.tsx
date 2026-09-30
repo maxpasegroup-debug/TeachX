@@ -15,10 +15,10 @@ export function ExportToolbar({ text, fileName = "teachx-ai-material" }: { text?
   function handoutHtml(value: string) {
     return `<!doctype html><html><head><meta charset="utf-8"><title>${safeName}</title><style>
       @page { margin: 18mm; }
-      body { color: #111827; font-family: Arial, sans-serif; line-height: 1.55; }
+      body { color: #111827; font-family: Poppins, sans-serif; line-height: 1.55; }
       main { max-width: 780px; margin: 0 auto; }
       h1 { font-size: 20px; margin-bottom: 16px; }
-      pre { white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; font-size: 13px; }
+      pre { white-space: pre-wrap; word-wrap: break-word; font-family: Poppins, sans-serif; font-size: 13px; }
       footer { border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 11px; margin-top: 28px; padding-top: 10px; }
     </style></head><body><main><h1>TeachX Classroom Material</h1><pre>${escapeHtml(value)}</pre><footer>Generated with TeachX AI Studio</footer></main></body></html>`;
   }

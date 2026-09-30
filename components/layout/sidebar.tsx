@@ -25,7 +25,7 @@ export function Sidebar({ institutionName, logoUrl, roles }: { institutionName: 
   return (
     <aside className={cn("hidden min-h-screen border-r border-border bg-surface/95 shadow-soft transition-all duration-200 md:flex md:flex-col", collapsed ? "w-20" : "w-72")}>
       <div className="flex h-20 items-center gap-3 px-5">
-        {!isStudent && logoUrl ? <Image alt={`${institutionName} logo`} className="h-11 w-11 shrink-0 rounded-2xl object-cover" height={44} src={logoUrl} unoptimized width={44} /> : <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-base font-semibold text-white ${isStudent ? "from-indigo-500 via-cyan-500 to-emerald-400" : "from-sky-500 to-blue-700"}`}>{isStudent ? "LX" : "TX"}</div>}
+        {!isStudent && logoUrl ? <Image alt={`${institutionName} logo`} className="h-11 w-11 shrink-0 rounded-2xl object-cover" height={44} src={logoUrl} unoptimized width={44} /> : isStudent ? <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-cyan-500 to-emerald-400 text-base font-semibold text-white">LX</div> : <img alt="" className="h-11 w-11 shrink-0 object-contain" height={455} src="/brand/logo-mark.png" width={343} />}
         {!collapsed ? (
           <div className="min-w-0">
             <p className="truncate text-base font-semibold">{isStudent ? "LearnX Guru" : "TeachX"}</p>

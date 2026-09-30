@@ -53,9 +53,9 @@ export function AuthFormShell({ title, subtitle, children, journey = "login" }: 
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-surface px-5 py-8 text-foreground sm:px-8">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[42rem] bg-[radial-gradient(circle_at_50%_0%,rgba(37,99,235,0.16),transparent_58%)]" />
-      <div className="pointer-events-none absolute left-8 top-32 -z-10 h-72 w-72 rounded-full bg-brand-blue/10 opacity-70" />
-      <div className="pointer-events-none absolute right-0 bottom-24 -z-10 h-80 w-80 rounded-full bg-brand-gold/10 opacity-70" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[42rem] bg-[radial-gradient(circle_at_50%_0%,rgba(111,59,144,0.16),transparent_58%)]" />
+      <div className="pointer-events-none absolute left-8 top-32 -z-10 h-72 w-72 rounded-full bg-[#6f3b90]/10 opacity-70" />
+      <div className="pointer-events-none absolute right-0 bottom-24 -z-10 h-80 w-80 rounded-full bg-[#fcaa1d]/20 opacity-70" />
 
       <header className="mx-auto flex w-full max-w-7xl items-center justify-between">
         {isLearnXJourney ? <Link className="flex items-center gap-3" href="/"><span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-cyan-500 to-emerald-400 font-semibold text-white">LX</span><span><span className="block font-semibold">LearnX Guru</span><span className="block text-xs text-muted-foreground">AI Learning Operating System</span></span></Link> : <BrandLogo />}
